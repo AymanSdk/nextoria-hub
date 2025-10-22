@@ -25,7 +25,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditTaskDialog } from "./edit-task-dialog";
 
-type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+type TaskStatus =
+  | "BACKLOG"
+  | "TODO"
+  | "IN_PROGRESS"
+  | "IN_REVIEW"
+  | "BLOCKED"
+  | "DONE"
+  | "CANCELLED";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 interface TeamMember {
@@ -58,7 +65,6 @@ interface TaskCardProps {
 }
 
 const statusOptions = [
-  { value: "BACKLOG", label: "Backlog", color: "#6b7280" },
   { value: "TODO", label: "To Do", color: "#3b82f6" },
   { value: "IN_PROGRESS", label: "In Progress", color: "#f59e0b" },
   { value: "IN_REVIEW", label: "In Review", color: "#8b5cf6" },
@@ -125,46 +131,67 @@ export function TaskCard({ task, members = [] }: TaskCardProps) {
     transition,
   };
 
-  const priorityDot: Record<TaskPriority, string> = {
-    LOW: "bg-neutral-300",
-    MEDIUM: "bg-blue-400",
-    HIGH: "bg-orange-400",
-    URGENT: "bg-red-400",
+  const priorityConfig: Record<TaskPriority, { color: string; border: string; bg: string }> = {
+    LOW: { 
+      color: "bg-slate-400", 
+      border: "hover:border-slate-300",
+      bg: "bg-slate-50 dark:bg-slate-900/20"
+    },
+    MEDIUM: { 
+      color: "bg-blue-400", 
+      border: "hover:border-blue-300",
+      bg: "bg-blue-50 dark:bg-blue-900/20"
+    },
+    HIGH: { 
+      color: "bg-orange-400", 
+      border: "hover:border-orange-300",
+      bg: "bg-orange-50 dark:bg-orange-900/20"
+    },
+    URGENT: { 
+      color: "bg-red-400", 
+      border: "hover:border-red-300",
+      bg: "bg-red-50 dark:bg-red-900/20"
+    },
   };
+
+  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group bg-white dark:bg-neutral-950 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 transition-all hover:border-neutral-300 dark:hover:border-neutral-700 ${
-        updating ? "opacity-50" : ""
-      } ${isDragging ? "opacity-40 shadow-lg" : ""}`}>
+      className={`
+        group relative
+        bg-card rounded-lg border-2 border-border
+        p-3.5 transition-all duration-200
+        hover:shadow-md hover:border-primary/50
+        ${priorityConfig[task.priority].border}
+        ${updating ? "opacity-50" : ""}
+        ${isDragging ? "opacity-0" : "shadow-sm"}
+        cursor-pointer
+      `}>
       <div className='space-y-2.5'>
+        {/* Priority Stripe */}
+        <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${priorityConfig[task.priority].color}`} />
+        
         {/* Header Row */}
         <div className='flex items-start justify-between gap-2'>
-          <div className='flex items-center gap-2 flex-1 min-w-0'>
+          <div className='flex items-center gap-2.5 flex-1 min-w-0'>
             <button
               {...attributes}
               {...listeners}
-              className='opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-600 cursor-grab active:cursor-grabbing touch-none transition-opacity'>
-              <GripVertical className='h-3.5 w-3.5' />
+              className='opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing touch-none transition-opacity shrink-0'>
+              <GripVertical className='h-4 w-4' />
             </button>
-
-            {/* Priority Indicator */}
-            <div
-              className={`w-1.5 h-1.5 rounded-full ${
-                priorityDot[task.priority]
-              }`}
-            />
 
             {/* Project Badge */}
             {task.project && (
               <Link
                 href={`/projects/${task.project.slug}`}
                 onClick={(e) => e.stopPropagation()}
-                className='flex-1 min-w-0'>
+                className='shrink-0'>
                 <span
-                  className='inline-block px-1.5 py-0.5 rounded text-[10px] font-medium text-white truncate max-w-full hover:opacity-80 transition-opacity'
+                  className='inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold text-white hover:opacity-90 transition-opacity'
                   style={{
                     backgroundColor: task.project.color || "#6b7280",
                   }}>
@@ -218,34 +245,60 @@ export function TaskCard({ task, members = [] }: TaskCardProps) {
         </div>
 
         {/* Title */}
-        <h4 className='text-sm text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug'>
+        <h4 className='text-sm font-medium text-foreground line-clamp-2 leading-snug pl-0.5'>
           {task.title}
         </h4>
 
         {/* Description */}
         {task.description && (
-          <p className='text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed'>
+          <p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed pl-0.5'>
             {task.description}
           </p>
         )}
 
+        {/* Labels */}
+        {task.labels && (
+          <div className='flex flex-wrap gap-1.5 pl-0.5'>
+            {task.labels.split(',').map((label, idx) => (
+              <span
+                key={idx}
+                className='inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground'>
+                {label.trim()}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Footer */}
-        <div className='flex items-center justify-between pt-1'>
-          {/* Assignee */}
-          {task.assignee ? (
-            <Avatar className='h-5 w-5'>
-              <AvatarImage src={task.assignee.image || undefined} />
-              <AvatarFallback className='text-[9px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'>
-                {getInitials(task.assignee.name || task.assignee.name)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className='w-5 h-5' />
-          )}
+        <div className='flex items-center justify-between pt-1 pl-0.5'>
+          <div className='flex items-center gap-2'>
+            {/* Assignee */}
+            {task.assignee ? (
+              <Avatar className='h-6 w-6 border-2 border-background'>
+                <AvatarImage src={task.assignee.image || undefined} />
+                <AvatarFallback className='text-[10px] bg-muted text-muted-foreground font-semibold'>
+                  {getInitials(task.assignee.name || task.assignee.name)}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className='h-6 w-6 rounded-full border-2 border-dashed border-muted flex items-center justify-center'>
+                <span className='text-[10px] text-muted-foreground'>?</span>
+              </div>
+            )}
+            
+            {/* Priority Badge */}
+            <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase ${priorityConfig[task.priority].bg} ${priorityConfig[task.priority].color.replace('bg-', 'text-')}`}>
+              {task.priority}
+            </span>
+          </div>
 
           {/* Due Date */}
           {task.dueDate && (
-            <div className='flex items-center gap-1 text-[10px] text-neutral-400'>
+            <div className={`flex items-center gap-1 text-[10px] font-medium ${
+              isOverdue 
+                ? 'text-red-500 dark:text-red-400' 
+                : 'text-muted-foreground'
+            }`}>
               <Calendar className='h-3 w-3' />
               <span>
                 {new Date(task.dueDate).toLocaleDateString("en-US", {

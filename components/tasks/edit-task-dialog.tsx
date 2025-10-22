@@ -285,13 +285,10 @@ export function EditTaskDialog({ task, members, trigger }: EditTaskDialogProps) 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='BACKLOG'>Backlog</SelectItem>
                     <SelectItem value='TODO'>To Do</SelectItem>
                     <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
                     <SelectItem value='IN_REVIEW'>In Review</SelectItem>
-                    <SelectItem value='BLOCKED'>Blocked</SelectItem>
                     <SelectItem value='DONE'>Done</SelectItem>
-                    <SelectItem value='CANCELLED'>Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

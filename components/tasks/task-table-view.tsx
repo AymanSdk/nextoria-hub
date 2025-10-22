@@ -43,7 +43,14 @@ import {
 import { EditTaskDialog } from "./edit-task-dialog";
 import Link from "next/link";
 
-type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+type TaskStatus =
+  | "BACKLOG"
+  | "TODO"
+  | "IN_PROGRESS"
+  | "IN_REVIEW"
+  | "BLOCKED"
+  | "DONE"
+  | "CANCELLED";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 interface TeamMember {
@@ -76,7 +83,6 @@ interface TaskTableViewProps {
 }
 
 const statusOptions = [
-  { value: "BACKLOG", label: "Backlog", color: "#6b7280" },
   { value: "TODO", label: "To Do", color: "#3b82f6" },
   { value: "IN_PROGRESS", label: "In Progress", color: "#f59e0b" },
   { value: "IN_REVIEW", label: "In Review", color: "#8b5cf6" },
@@ -95,7 +101,9 @@ const statusColors: Record<TaskStatus, string> = {
   TODO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30",
   IN_PROGRESS: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30",
   IN_REVIEW: "bg-purple-100 text-purple-700 dark:bg-purple-900/30",
+  BLOCKED: "bg-red-100 text-red-700 dark:bg-red-900/30",
   DONE: "bg-green-100 text-green-700 dark:bg-green-900/30",
+  CANCELLED: "bg-gray-100 text-gray-700 dark:bg-gray-900/30",
 };
 
 export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {

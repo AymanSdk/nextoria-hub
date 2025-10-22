@@ -7,7 +7,14 @@ import { TaskKanbanBoard } from "./task-kanban-board";
 import { TaskListView } from "./task-list-view";
 import { TaskTableView } from "./task-table-view";
 
-type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+type TaskStatus =
+  | "BACKLOG"
+  | "TODO"
+  | "IN_PROGRESS"
+  | "IN_REVIEW"
+  | "BLOCKED"
+  | "DONE"
+  | "CANCELLED";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 interface TeamMember {
@@ -33,7 +40,10 @@ interface TaskViewSwitcherProps {
   members?: TeamMember[];
 }
 
-export function TaskViewSwitcher({ tasks, members = [] }: TaskViewSwitcherProps) {
+export function TaskViewSwitcher({
+  tasks,
+  members = [],
+}: TaskViewSwitcherProps) {
   const [view, setView] = useState<string>("board");
 
   return (

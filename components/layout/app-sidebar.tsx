@@ -24,6 +24,7 @@ import {
   ChevronUp,
   User2,
   Send,
+  BookOpen,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -348,6 +349,12 @@ export function AppSidebar() {
                   <Link href='/settings'>
                     <Settings className='mr-2 h-4 w-4' />
                     Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href='/docs'>
+                    <BookOpen className='mr-2 h-4 w-4' />
+                    Documentation
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
