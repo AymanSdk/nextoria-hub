@@ -14,16 +14,17 @@ const createCommentSchema = z.object({
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
+    const { taskId } = await params;
     const body = await req.json();
 
     const validated = createCommentSchema.parse(body);
 
     const comment = await addTaskComment({
-      taskId: params.taskId,
+      taskId,
       authorId: user.id,
       ...validated,
     });

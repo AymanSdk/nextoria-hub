@@ -46,12 +46,13 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requirePermission(request, "campaigns", "update");
   if ("error" in auth) return apiError(auth.error, auth.status);
 
   try {
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
@@ -75,7 +76,7 @@ export async function PATCH(
     const [existing] = await db
       .select()
       .from(campaigns)
-      .where(eq(campaigns.id, params.id));
+      .where(eq(campaigns.id, id));
 
     if (!existing) {
       return apiError("Campaign not found", 404);
@@ -106,7 +107,7 @@ export async function PATCH(
         ...(tags !== undefined && { tags }),
         updatedAt: new Date(),
       })
-      .where(eq(campaigns.id, params.id))
+      .where(eq(campaigns.id, id))
       .returning();
 
     // Audit log
@@ -134,22 +135,23 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requirePermission(request, "campaigns", "delete");
   if ("error" in auth) return apiError(auth.error, auth.status);
 
   try {
+    const { id } = await params;
     const [existing] = await db
       .select()
       .from(campaigns)
-      .where(eq(campaigns.id, params.id));
+      .where(eq(campaigns.id, id));
 
     if (!existing) {
       return apiError("Campaign not found", 404);
     }
 
-    await db.delete(campaigns).where(eq(campaigns.id, params.id));
+    await db.delete(campaigns).where(eq(campaigns.id, id));
 
     // Audit log
     await logDelete({
@@ -158,7 +160,7 @@ export async function DELETE(
       userEmail: auth.user.email || "",
       userRole: auth.user.role,
       entityType: "PROJECT",
-      entityId: params.id,
+      entityId: id,
       entityName: existing.name,
       ipAddress: getClientIp(request),
     });

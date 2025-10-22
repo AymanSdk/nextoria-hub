@@ -29,15 +29,16 @@ const updateClientSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
+    const { clientId } = await params;
 
     const [client] = await db
       .select()
       .from(clients)
-      .where(eq(clients.id, params.clientId))
+      .where(eq(clients.id, clientId))
       .limit(1);
 
     if (!client) {
@@ -60,10 +61,11 @@ export async function GET(
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
+    const { clientId } = await params;
     const body = await req.json();
 
     const validated = updateClientSchema.parse(body);
@@ -74,7 +76,7 @@ export async function PATCH(
         ...validated,
         updatedAt: new Date(),
       })
-      .where(eq(clients.id, params.clientId))
+      .where(eq(clients.id, clientId))
       .returning();
 
     if (!updatedClient) {
@@ -104,12 +106,13 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
+    const { clientId } = await params;
 
-    await db.delete(clients).where(eq(clients.id, params.clientId));
+    await db.delete(clients).where(eq(clients.id, clientId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

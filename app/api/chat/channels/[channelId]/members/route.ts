@@ -12,11 +12,11 @@ import { nanoid } from "nanoid";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { channelId: string } }
+  { params }: { params: Promise<{ channelId: string }> }
 ) {
   try {
     await getCurrentUser();
-    const { channelId } = params;
+    const { channelId } = await params;
 
     const members = await db
       .select({
@@ -44,11 +44,11 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { channelId: string } }
+  { params }: { params: Promise<{ channelId: string }> }
 ) {
   try {
     await getCurrentUser();
-    const { channelId } = params;
+    const { channelId } = await params;
     const { userId } = await request.json();
 
     if (!userId) {

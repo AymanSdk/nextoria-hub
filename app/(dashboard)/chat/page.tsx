@@ -183,7 +183,7 @@ export default function ChatPage() {
 
   if (!session?.user) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8'>
+      <div className='flex flex-1 items-center justify-center -m-4 md:-m-6 lg:-m-8'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>Loading...</p>
@@ -194,7 +194,7 @@ export default function ChatPage() {
 
   if (isLoading || !workspaceId) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8'>
+      <div className='flex flex-1 items-center justify-center -m-4 md:-m-6 lg:-m-8'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>
@@ -206,7 +206,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className='flex gap-0 h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8 relative overflow-hidden'>
+    <div className='flex flex-1 gap-0 -m-4 md:-m-6 lg:-m-8 overflow-hidden'>
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
@@ -218,8 +218,8 @@ export default function ChatPage() {
       {/* Channel List Sidebar */}
       <div
         className={cn(
-          "w-64 border-r bg-card/50 backdrop-blur-sm shrink-0 flex flex-col",
-          "fixed lg:static inset-y-0 left-0 z-50 lg:z-auto h-full",
+          "w-64 border-r bg-card/50 backdrop-blur-sm shrink-0 flex flex-col h-full",
+          "fixed lg:static inset-y-0 lg:inset-y-auto left-0 z-50 lg:z-auto",
           "transition-transform duration-300 ease-in-out lg:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
