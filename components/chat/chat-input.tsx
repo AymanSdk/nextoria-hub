@@ -58,41 +58,41 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className='p-4'>
-      <div className='flex items-end gap-3'>
+    <div className='p-3 sm:p-4'>
+      <div className='flex items-end gap-2 sm:gap-3'>
         <div className='flex-1 relative'>
           <Textarea
             ref={textareaRef}
             value={message}
             onChange={(e) => handleChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder='Type a message... (Enter to send, Shift+Enter for new line)'
+            placeholder='Type a message...'
             disabled={disabled}
-            className='min-h-[52px] max-h-[200px] resize-none pr-20 rounded-xl border-2 focus-visible:ring-2'
+            className='min-h-[48px] sm:min-h-[52px] max-h-[200px] resize-none pr-16 sm:pr-20 rounded-xl border-2 focus-visible:ring-2 text-sm sm:text-base'
             rows={1}
           />
 
-          <div className='absolute right-3 bottom-3 flex items-center gap-1'>
+          <div className='absolute right-2 sm:right-3 bottom-2 sm:bottom-3 flex items-center gap-0.5 sm:gap-1'>
             <Button
               type='button'
               variant='ghost'
               size='icon'
-              className='h-8 w-8 hover:bg-muted'
+              className='h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted'
               disabled={disabled}
               title='Add emoji'
             >
-              <Smile className='h-4 w-4 text-muted-foreground' />
+              <Smile className='h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground' />
             </Button>
 
             <Button
               type='button'
               variant='ghost'
               size='icon'
-              className='h-8 w-8 hover:bg-muted'
+              className='h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted'
               disabled={disabled}
               title='Attach file'
             >
-              <Paperclip className='h-4 w-4 text-muted-foreground' />
+              <Paperclip className='h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground' />
             </Button>
           </div>
         </div>
@@ -101,11 +101,15 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
           onClick={handleSubmit}
           disabled={!message.trim() || disabled}
           size='icon'
-          className='h-[52px] w-[52px] rounded-xl'
+          className='h-[48px] w-[48px] sm:h-[52px] sm:w-[52px] rounded-xl shrink-0'
+          title='Send message'
         >
-          <SendHorizonal className='h-5 w-5' />
+          <SendHorizonal className='h-4 w-4 sm:h-5 sm:w-5' />
         </Button>
       </div>
+      <p className='text-[10px] sm:text-xs text-muted-foreground mt-2 px-1'>
+        Press Enter to send, Shift+Enter for new line
+      </p>
     </div>
   );
 }

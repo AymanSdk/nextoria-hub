@@ -46,83 +46,87 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
 
   return (
     <div className='flex flex-col h-full'>
-      <ScrollArea className='flex-1 px-4 py-6' ref={scrollRef}>
-        <div className='space-y-6 max-w-4xl mx-auto'>
-          {messages.length === 0 ? (
-            <div className='flex flex-col items-center justify-center h-96 text-muted-foreground'>
-              <div className='h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4'>
-                <MessageSquare className='h-8 w-8' />
-              </div>
-              <p className='font-medium text-foreground'>No messages yet</p>
-              <p className='text-sm'>Be the first to say something!</p>
-            </div>
-          ) : (
-            messages.map((message) => {
-              const isCurrentUser = message.senderId === currentUser?.id;
-
-              return (
-                <div
-                  key={message.id}
-                  className='flex gap-3 group hover:bg-muted/30 -mx-4 px-4 py-2 rounded-lg transition-colors'
-                >
-                  {!isCurrentUser && (
-                    <Avatar className='h-10 w-10 mt-1'>
-                      <AvatarImage src={message.senderAvatar} />
-                      <AvatarFallback className='bg-primary/10 text-primary font-medium'>
-                        {message.senderName?.charAt(0).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-
-                  <div
-                    className={`flex-1 ${isCurrentUser ? "flex flex-col items-end" : ""}`}
-                  >
-                    <div
-                      className={`flex items-baseline gap-2 mb-1 ${
-                        isCurrentUser ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <span className='text-sm font-semibold text-foreground'>
-                        {isCurrentUser ? "You" : message.senderName}
-                      </span>
-                      <span className='text-xs text-muted-foreground'>
-                        {formatDistanceToNow(new Date(message.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    </div>
-
-                    <div
-                      className={`inline-block px-4 py-2.5 rounded-2xl ${
-                        isCurrentUser
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
-                      <p className='text-sm whitespace-pre-wrap wrap-break-word leading-relaxed'>
-                        {message.content}
-                      </p>
-                    </div>
-                  </div>
-
-                  {isCurrentUser && (
-                    <Avatar className='h-10 w-10 mt-1'>
-                      <AvatarImage src={message.senderAvatar} />
-                      <AvatarFallback className='bg-primary text-primary-foreground font-medium'>
-                        {message.senderName?.charAt(0).toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+      <ScrollArea className='flex-1'>
+        <div className='px-4 py-6' ref={scrollRef}>
+          <div className='space-y-6 max-w-4xl mx-auto'>
+            {messages.length === 0 ? (
+              <div className='flex flex-col items-center justify-center h-96 text-muted-foreground'>
+                <div className='h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4'>
+                  <MessageSquare className='h-8 w-8' />
                 </div>
-              );
-            })
-          )}
+                <p className='font-medium text-foreground'>No messages yet</p>
+                <p className='text-sm'>Be the first to say something!</p>
+              </div>
+            ) : (
+              messages.map((message) => {
+                const isCurrentUser = message.senderId === currentUser?.id;
+
+                return (
+                  <div
+                    key={message.id}
+                    className='flex gap-3 group hover:bg-muted/30 -mx-4 px-4 py-2 rounded-lg transition-colors'
+                  >
+                    {!isCurrentUser && (
+                      <Avatar className='h-10 w-10 mt-1 shrink-0'>
+                        <AvatarImage src={message.senderAvatar} />
+                        <AvatarFallback className='bg-primary/10 text-primary font-medium'>
+                          {message.senderName?.charAt(0).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+
+                    <div
+                      className={`flex-1 min-w-0 ${
+                        isCurrentUser ? "flex flex-col items-end" : ""
+                      }`}
+                    >
+                      <div
+                        className={`flex items-baseline gap-2 mb-1 ${
+                          isCurrentUser ? "flex-row-reverse" : ""
+                        }`}
+                      >
+                        <span className='text-sm font-semibold text-foreground'>
+                          {isCurrentUser ? "You" : message.senderName}
+                        </span>
+                        <span className='text-xs text-muted-foreground whitespace-nowrap'>
+                          {formatDistanceToNow(new Date(message.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+
+                      <div
+                        className={`inline-block px-4 py-2.5 rounded-2xl max-w-[85%] ${
+                          isCurrentUser
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
+                        }`}
+                      >
+                        <p className='text-sm whitespace-pre-wrap break-words leading-relaxed'>
+                          {message.content}
+                        </p>
+                      </div>
+                    </div>
+
+                    {isCurrentUser && (
+                      <Avatar className='h-10 w-10 mt-1 shrink-0'>
+                        <AvatarImage src={message.senderAvatar} />
+                        <AvatarFallback className='bg-primary text-primary-foreground font-medium'>
+                          {message.senderName?.charAt(0).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </ScrollArea>
 
       {/* Typing Indicator */}
       {typingUsers.length > 0 && (
-        <div className='px-4 py-2 text-sm text-muted-foreground flex items-center gap-2 border-t'>
+        <div className='px-4 py-2 text-sm text-muted-foreground flex items-center gap-2 border-t bg-background/95'>
           <Loader2 className='h-3 w-3 animate-spin' />
           <span className='font-medium'>
             {typingUsers.length === 1

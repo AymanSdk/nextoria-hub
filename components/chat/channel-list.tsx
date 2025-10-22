@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Hash, Plus, Lock } from "lucide-react";
+import { Hash, Plus, Lock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Channel {
@@ -38,6 +38,7 @@ interface ChannelListProps {
     isPrivate: boolean;
   }) => Promise<void>;
   workspaceId: string;
+  onClose?: () => void;
 }
 
 export function ChannelList({
@@ -45,6 +46,7 @@ export function ChannelList({
   currentChannelId,
   onChannelSelect,
   onCreateChannel,
+  onClose,
 }: ChannelListProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -70,96 +72,111 @@ export function ChannelList({
   };
 
   return (
-    <div className='flex flex-col h-full'>
+    <div className='flex flex-col h-full bg-card'>
       {/* Header */}
       <div className='h-14 px-4 border-b flex items-center justify-between shrink-0 bg-muted/30'>
         <h2 className='font-semibold text-sm uppercase tracking-wide text-muted-foreground'>
           Channels
         </h2>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
+        <div className='flex items-center gap-1'>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors'
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-[500px]'>
+              <DialogHeader>
+                <DialogTitle>Create Channel</DialogTitle>
+                <DialogDescription>
+                  Create a new channel for team communication
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='name'>Channel Name</Label>
+                  <Input
+                    id='name'
+                    placeholder='e.g., general, design, dev'
+                    value={newChannel.name}
+                    onChange={(e) =>
+                      setNewChannel({ ...newChannel, name: e.target.value })
+                    }
+                    className='focus-visible:ring-primary'
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='description'>Description</Label>
+                  <Textarea
+                    id='description'
+                    placeholder="What's this channel about?"
+                    value={newChannel.description}
+                    onChange={(e) =>
+                      setNewChannel({
+                        ...newChannel,
+                        description: e.target.value,
+                      })
+                    }
+                    className='focus-visible:ring-primary resize-none'
+                    rows={3}
+                  />
+                </div>
+
+                <div className='flex items-center justify-between p-3 rounded-lg border bg-muted/30'>
+                  <div className='space-y-0.5'>
+                    <Label htmlFor='private' className='text-sm font-medium'>
+                      Private Channel
+                    </Label>
+                    <p className='text-xs text-muted-foreground'>
+                      Only invited members can access
+                    </p>
+                  </div>
+                  <Switch
+                    id='private'
+                    checked={newChannel.isPrivate}
+                    onCheckedChange={(checked) =>
+                      setNewChannel({ ...newChannel, isPrivate: checked })
+                    }
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateChannel}
+                  disabled={isCreating || !newChannel.name.trim()}
+                >
+                  {isCreating ? "Creating..." : "Create Channel"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {onClose && (
             <Button
               variant='ghost'
               size='icon'
-              className='h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors'
+              className='h-7 w-7 lg:hidden hover:bg-muted'
+              onClick={onClose}
             >
-              <Plus className='h-4 w-4' />
+              <X className='h-4 w-4' />
             </Button>
-          </DialogTrigger>
-          <DialogContent className='sm:max-w-[500px]'>
-            <DialogHeader>
-              <DialogTitle>Create Channel</DialogTitle>
-              <DialogDescription>
-                Create a new channel for team communication
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className='space-y-4 py-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='name'>Channel Name</Label>
-                <Input
-                  id='name'
-                  placeholder='e.g., general, design, dev'
-                  value={newChannel.name}
-                  onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                  className='focus-visible:ring-primary'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='description'>Description</Label>
-                <Textarea
-                  id='description'
-                  placeholder="What's this channel about?"
-                  value={newChannel.description}
-                  onChange={(e) =>
-                    setNewChannel({
-                      ...newChannel,
-                      description: e.target.value,
-                    })
-                  }
-                  className='focus-visible:ring-primary resize-none'
-                  rows={3}
-                />
-              </div>
-
-              <div className='flex items-center justify-between p-3 rounded-lg border bg-muted/30'>
-                <div className='space-y-0.5'>
-                  <Label htmlFor='private' className='text-sm font-medium'>
-                    Private Channel
-                  </Label>
-                  <p className='text-xs text-muted-foreground'>
-                    Only invited members can access
-                  </p>
-                </div>
-                <Switch
-                  id='private'
-                  checked={newChannel.isPrivate}
-                  onCheckedChange={(checked) =>
-                    setNewChannel({ ...newChannel, isPrivate: checked })
-                  }
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant='outline'
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={isCreating}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateChannel}
-                disabled={isCreating || !newChannel.name.trim()}
-              >
-                {isCreating ? "Creating..." : "Create Channel"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
       </div>
 
       {/* Channel List */}
