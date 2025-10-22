@@ -9,6 +9,7 @@ import {
   invoiceLineItems,
   milestones,
   projects,
+  tasks,
 } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";

@@ -1,42 +1,20 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { invoices, users, projects } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { invoices, users } from "@/src/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Plus,
-  Download,
-  Send,
-  MoreHorizontal,
-  DollarSign,
-  AlertCircle,
-  Clock,
-} from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    DRAFT:
-      "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-    SENT: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    VIEWED:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-    PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    OVERDUE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-    CANCELLED:
-      "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-  };
-  return colors[status] || colors.DRAFT;
-};
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, DollarSign, Download, Eye } from "lucide-react";
 
 export default async function InvoicesPage() {
   const session = await getSession();
@@ -45,199 +23,173 @@ export default async function InvoicesPage() {
     redirect("/auth/signin");
   }
 
-  // Fetch all invoices with client and project details
-  const allInvoices = await db
-    .select({
-      id: invoices.id,
-      invoiceNumber: invoices.invoiceNumber,
-      status: invoices.status,
-      total: invoices.total,
-      issueDate: invoices.issueDate,
-      dueDate: invoices.dueDate,
-      paidAt: invoices.paidAt,
-      currency: invoices.currency,
-      clientName: users.name,
-      projectName: projects.name,
-    })
-    .from(invoices)
-    .leftJoin(users, eq(invoices.clientId, users.id))
-    .leftJoin(projects, eq(invoices.projectId, projects.id));
+  // Fetch invoices based on user role
+  const userInvoices =
+    session.user.role === "CLIENT"
+      ? await db
+          .select()
+          .from(invoices)
+          .where(eq(invoices.clientId, session.user.id))
+          .orderBy(desc(invoices.createdAt))
+          .limit(20)
+      : await db
+          .select()
+          .from(invoices)
+          .orderBy(desc(invoices.createdAt))
+          .limit(20);
 
-  // Calculate stats
-  const totalRevenue = allInvoices
+  const totalRevenue = userInvoices
     .filter((inv) => inv.status === "PAID")
-    .reduce((sum, inv) => sum + (inv.total || 0), 0);
+    .reduce((acc, inv) => acc + inv.total, 0);
 
-  const pendingAmount = allInvoices
-    .filter((inv) => inv.status === "SENT" || inv.status === "VIEWED")
-    .reduce((sum, inv) => sum + (inv.total || 0), 0);
+  const pendingRevenue = userInvoices
+    .filter((inv) => inv.status === "SENT")
+    .reduce((acc, inv) => acc + inv.total, 0);
 
-  const overdueAmount = allInvoices
-    .filter((inv) => inv.status === "OVERDUE")
-    .reduce((sum, inv) => sum + (inv.total || 0), 0);
-
-  const paidCount = allInvoices.filter((i) => i.status === "PAID").length;
-  const overdueCount = allInvoices.filter((i) => i.status === "OVERDUE").length;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PAID":
+        return "bg-green-500";
+      case "SENT":
+        return "bg-blue-500";
+      case "OVERDUE":
+        return "bg-red-500";
+      case "DRAFT":
+        return "bg-gray-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
 
   return (
     <div className='space-y-6'>
-      {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Invoices</h1>
           <p className='text-neutral-500 dark:text-neutral-400 mt-2'>
-            Manage and track all your invoices
+            Create, send, and track invoices
           </p>
         </div>
-        <Link href='/invoices/new'>
+        {session.user.role !== "CLIENT" && (
           <Button>
             <Plus className='mr-2 h-4 w-4' />
             New Invoice
           </Button>
-        </Link>
+        )}
       </div>
 
       {/* Stats */}
       <div className='grid gap-4 md:grid-cols-3'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium text-neutral-600 dark:text-neutral-400'>
-              Total Revenue
-            </CardTitle>
-            <DollarSign className='h-4 w-4 text-green-600' />
+            <CardTitle className='text-sm font-medium'>Total Revenue</CardTitle>
+            <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              $
-              {(totalRevenue / 100).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              ${(totalRevenue / 100).toLocaleString()}
             </div>
             <p className='text-xs text-neutral-500 mt-1'>
-              From {paidCount} paid invoice{paidCount !== 1 ? "s" : ""}
+              {userInvoices.filter((i) => i.status === "PAID").length} paid
+              invoices
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium text-neutral-600 dark:text-neutral-400'>
-              Pending
+            <CardTitle className='text-sm font-medium'>
+              Pending Payment
             </CardTitle>
-            <Clock className='h-4 w-4 text-blue-600' />
+            <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              $
-              {(pendingAmount / 100).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              ${(pendingRevenue / 100).toLocaleString()}
             </div>
-            <p className='text-xs text-neutral-500 mt-1'>Awaiting payment</p>
+            <p className='text-xs text-neutral-500 mt-1'>
+              {userInvoices.filter((i) => i.status === "SENT").length} sent
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium text-neutral-600 dark:text-neutral-400'>
-              Overdue
+            <CardTitle className='text-sm font-medium'>
+              Total Invoices
             </CardTitle>
-            <AlertCircle className='h-4 w-4 text-red-600' />
+            <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-red-600 dark:text-red-400'>
-              $
-              {(overdueAmount / 100).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
-            </div>
-            <p className='text-xs text-neutral-500 mt-1'>
-              {overdueCount} overdue invoice{overdueCount !== 1 ? "s" : ""}
-            </p>
+            <div className='text-2xl font-bold'>{userInvoices.length}</div>
+            <p className='text-xs text-neutral-500 mt-1'>All time</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Invoices List */}
+      {/* Invoices Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Invoices</CardTitle>
-          <CardDescription>Recent invoices and their status</CardDescription>
         </CardHeader>
         <CardContent>
-          {allInvoices.length > 0 ? (
-            <div className='space-y-3'>
-              {allInvoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className='flex items-center justify-between p-4 border rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'>
-                  <div className='flex-1'>
-                    <div className='flex items-center gap-3 mb-1'>
-                      <p className='font-semibold'>{invoice.invoiceNumber}</p>
+          {userInvoices.length === 0 ? (
+            <div className='text-center py-12 text-neutral-500'>
+              <p>No invoices yet</p>
+              {session.user.role !== "CLIENT" && (
+                <Button className='mt-4'>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Create your first invoice
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice #</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className='text-right'>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userInvoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell className='font-medium'>
+                      {invoice.invoiceNumber}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(invoice.issueDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(invoice.dueDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      ${(invoice.total / 100).toLocaleString()}{" "}
+                      {invoice.currency}
+                    </TableCell>
+                    <TableCell>
                       <Badge className={getStatusColor(invoice.status)}>
                         {invoice.status}
                       </Badge>
-                    </div>
-                    <p className='text-sm text-neutral-600 dark:text-neutral-400'>
-                      {invoice.clientName || "Unknown Client"} •{" "}
-                      {invoice.projectName || "No Project"}
-                    </p>
-                    <p className='text-xs text-neutral-500 mt-1'>
-                      Issued{" "}
-                      {invoice.issueDate
-                        ? new Date(invoice.issueDate).toLocaleDateString()
-                        : "N/A"}{" "}
-                      • Due{" "}
-                      {invoice.dueDate
-                        ? new Date(invoice.dueDate).toLocaleDateString()
-                        : "N/A"}
-                      {invoice.paidAt &&
-                        ` • Paid ${new Date(
-                          invoice.paidAt
-                        ).toLocaleDateString()}`}
-                    </p>
-                  </div>
-                  <div className='flex items-center gap-4'>
-                    <div className='text-right'>
-                      <p className='text-xl font-bold'>
-                        {invoice.currency} $
-                        {((invoice.total || 0) / 100).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      {invoice.status === "DRAFT" && (
-                        <Button variant='outline' size='sm'>
-                          <Send className='mr-2 h-4 w-4' />
-                          Send
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <div className='flex justify-end gap-2'>
+                        <Button variant='ghost' size='sm'>
+                          <Eye className='h-4 w-4' />
                         </Button>
-                      )}
-                      <Button variant='ghost' size='sm'>
-                        <Download className='h-4 w-4' />
-                      </Button>
-                      <Button variant='ghost' size='sm'>
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='text-center py-12'>
-              <DollarSign className='mx-auto h-12 w-12 text-neutral-400' />
-              <h3 className='mt-4 text-lg font-semibold'>No invoices yet</h3>
-              <p className='mt-2 text-neutral-500'>
-                Get started by creating your first invoice
-              </p>
-              <Link href='/invoices/new'>
-                <Button className='mt-4'>
-                  <Plus className='mr-2 h-4 w-4' />
-                  Create Invoice
-                </Button>
-              </Link>
-            </div>
+                        <Button variant='ghost' size='sm'>
+                          <Download className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

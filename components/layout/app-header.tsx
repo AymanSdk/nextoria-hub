@@ -12,20 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-interface AppHeaderProps {
-  user?: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: string;
-  };
-}
-
-export function AppHeader({ user }: AppHeaderProps) {
+export function AppHeader() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -44,37 +37,37 @@ export function AppHeader({ user }: AppHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-white/80 backdrop-blur-sm dark:bg-neutral-950/80 px-6">
+    <header className='sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-white/80 backdrop-blur-sm dark:bg-neutral-950/80 px-6'>
       {/* Left: Search */}
-      <div className="flex flex-1 items-center gap-4">
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
+      <div className='flex flex-1 items-center gap-4'>
+        <Button variant='ghost' size='icon' className='md:hidden'>
+          <Menu className='h-5 w-5' />
         </Button>
-        
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+
+        <div className='relative w-full max-w-md'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500' />
           <Input
-            type="search"
-            placeholder="Search projects, tasks, or people..."
-            className="pl-10 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+            type='search'
+            placeholder='Search projects, tasks, or people...'
+            className='pl-10 bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800'
           />
         </div>
       </div>
 
       {/* Right: Notifications & User */}
-      <div className="flex items-center gap-2">
+      <div className='flex items-center gap-2'>
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+            <Button variant='ghost' size='icon' className='relative'>
+              <Bell className='h-5 w-5' />
+              <span className='absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500' />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
+          <DropdownMenuContent align='end' className='w-80'>
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <div className="p-4 text-center text-sm text-neutral-500">
+            <div className='p-4 text-center text-sm text-neutral-500'>
               No new notifications
             </div>
           </DropdownMenuContent>
@@ -83,36 +76,46 @@ export function AppHeader({ user }: AppHeaderProps) {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 px-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
+            <Button variant='ghost' className='gap-2 px-2'>
+              <Avatar className='h-8 w-8'>
+                <AvatarImage
+                  src={user?.image || undefined}
+                  alt={user?.name || "User"}
+                />
                 <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
               </Avatar>
-              <div className="hidden flex-col items-start text-left md:flex">
-                <span className="text-sm font-medium">{user?.name || "User"}</span>
-                <span className="text-xs text-neutral-500">{user?.role || "Member"}</span>
+              <div className='hidden flex-col items-start text-left md:flex'>
+                <span className='text-sm font-medium'>
+                  {user?.name || "User"}
+                </span>
+                <span className='text-xs text-neutral-500'>
+                  {user?.role || "Member"}
+                </span>
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align='end' className='w-56'>
             <DropdownMenuLabel>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{user?.name}</span>
-                <span className="text-xs text-neutral-500">{user?.email}</span>
+              <div className='flex flex-col'>
+                <span className='text-sm font-medium'>{user?.name}</span>
+                <span className='text-xs text-neutral-500'>{user?.email}</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
               Profile Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/settings/workspace")}>
+            <DropdownMenuItem
+              onClick={() => router.push("/settings/workspace")}>
               Workspace Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/settings/billing")}>
               Billing
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className='text-red-600 dark:text-red-400'>
               Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -121,4 +124,3 @@ export function AppHeader({ user }: AppHeaderProps) {
     </header>
   );
 }
-

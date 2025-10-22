@@ -5,7 +5,7 @@
 
 import { db } from "@/src/db";
 import { notifications, notificationPreferences, users } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { sendEmail } from "@/src/lib/notifications/email";
 
 type NotificationType =
