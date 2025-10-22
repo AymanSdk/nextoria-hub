@@ -1,5 +1,21 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TaskCard } from "./task-card";
 
@@ -22,6 +38,12 @@ interface Task {
   assignee: { id: string; name: string; image: string | null } | null;
   dueDate?: Date;
   labels?: string;
+  project?: {
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+  } | null;
 }
 
 interface TaskKanbanBoardProps {
@@ -29,56 +51,167 @@ interface TaskKanbanBoardProps {
   members?: TeamMember[];
 }
 
-const columns: { id: TaskStatus; title: string; color: string }[] = [
-  { id: "BACKLOG", title: "Backlog", color: "#6b7280" },
-  { id: "TODO", title: "To Do", color: "#3b82f6" },
-  { id: "IN_PROGRESS", title: "In Progress", color: "#f59e0b" },
-  { id: "IN_REVIEW", title: "In Review", color: "#8b5cf6" },
-  { id: "DONE", title: "Done", color: "#10b981" },
+const columns: {
+  id: TaskStatus;
+  title: string;
+  dotColor: string;
+}[] = [
+  {
+    id: "BACKLOG",
+    title: "Backlog",
+    dotColor: "bg-neutral-400",
+  },
+  {
+    id: "TODO",
+    title: "To Do",
+    dotColor: "bg-slate-400",
+  },
+  {
+    id: "IN_PROGRESS",
+    title: "In Progress",
+    dotColor: "bg-amber-400",
+  },
+  {
+    id: "IN_REVIEW",
+    title: "In Review",
+    dotColor: "bg-violet-400",
+  },
+  {
+    id: "DONE",
+    title: "Done",
+    dotColor: "bg-emerald-400",
+  },
 ];
 
 export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
+  const router = useRouter();
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
   const getTasksByStatus = (status: TaskStatus) => {
     return tasks.filter((task) => task.status === status);
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const task = tasks.find((t) => t.id === event.active.id);
+    if (task) {
+      setActiveTask(task);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
+
+    if (!over) return;
+
+    const taskId = active.id as string;
+    const newStatus = over.id as TaskStatus;
+
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task || task.status === newStatus) return;
+
+    // Optimistically update UI
+    setIsUpdating(true);
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update task status");
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error updating task:", error);
+      // Could show a toast notification here
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
-    <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4'>
-      {columns.map((column) => {
-        const columnTasks = getTasksByStatus(column.id);
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}>
+      <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 min-h-[600px]'>
+        {columns.map((column) => {
+          const columnTasks = getTasksByStatus(column.id);
 
-        return (
-          <div key={column.id} className='flex flex-col'>
-            {/* Column Header */}
-            <div className='flex items-center gap-2 mb-3 px-1'>
-              <div
-                className='h-2 w-2 rounded-full'
-                style={{ backgroundColor: column.color }}
-              />
-              <h3 className='font-semibold text-sm'>{column.title}</h3>
-              <span className='ml-auto text-xs text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full'>
-                {columnTasks.length}
-              </span>
-            </div>
-
-            {/* Task Cards */}
-            <ScrollArea className='flex-1 pr-4'>
-              <div className='space-y-3'>
-                {columnTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} members={members} />
-                ))}
-
-                {/* Add New Task Card */}
-                {columnTasks.length === 0 && (
-                  <div className='text-center py-8 text-sm text-neutral-400'>
-                    No tasks
+          return (
+            <SortableContext
+              key={column.id}
+              items={columnTasks.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+              id={column.id}>
+              <div className='flex flex-col h-full rounded-lg bg-neutral-50/50 dark:bg-neutral-900/20'>
+                {/* Column Header */}
+                <div className='px-4 py-3'>
+                  <div className='flex items-center gap-2 mb-1'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${column.dotColor}`}
+                    />
+                    <h3 className='text-sm font-medium text-neutral-700 dark:text-neutral-300'>
+                      {column.title}
+                    </h3>
+                    <span className='ml-auto text-xs text-neutral-400'>
+                      {columnTasks.length}
+                    </span>
                   </div>
-                )}
+                </div>
+
+                {/* Droppable Area */}
+                <ScrollArea className='flex-1 px-3 pb-3'>
+                  <div
+                    className='space-y-2 min-h-[400px]'
+                    style={{
+                      opacity: isUpdating ? 0.6 : 1,
+                      transition: "opacity 0.2s",
+                    }}>
+                    {columnTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} members={members} />
+                    ))}
+
+                    {columnTasks.length === 0 && (
+                      <div className='flex flex-col items-center justify-center py-16 text-center'>
+                        <div
+                          className={`w-10 h-10 rounded-full mb-2 ${column.dotColor} opacity-20`}
+                        />
+                        <p className='text-xs text-neutral-400'>
+                          Drop tasks here
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
+            </SortableContext>
+          );
+        })}
+      </div>
+
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {activeTask ? (
+          <div className='rotate-3 scale-105 shadow-2xl opacity-90'>
+            <TaskCard task={activeTask} members={members} />
           </div>
-        );
-      })}
-    </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

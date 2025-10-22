@@ -15,7 +15,9 @@ import {
   Pencil,
   MoveRight,
   Clock,
+  FolderKanban,
 } from "lucide-react";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +56,12 @@ interface Task {
   assignee: { id: string; name: string; image: string | null } | null;
   dueDate?: Date;
   labels?: string;
+  project?: {
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+  } | null;
 }
 
 interface TaskListViewProps {
@@ -201,6 +209,22 @@ export function TaskListView({ tasks, members = [] }: TaskListViewProps) {
                 <div className='flex-1 min-w-0'>
                   <div className='flex items-start gap-3'>
                     <div className='flex-1 min-w-0'>
+                      {/* Project Badge */}
+                      {task.project && (
+                        <Link
+                          href={`/projects/${task.project.slug}`}
+                          className='inline-block mb-2'
+                          onClick={(e) => e.stopPropagation()}>
+                          <div
+                            className='inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium text-white hover:opacity-80 transition-opacity'
+                            style={{
+                              backgroundColor: task.project.color || "#6b7280",
+                            }}>
+                            <FolderKanban className='h-3 w-3' />
+                            {task.project.name}
+                          </div>
+                        </Link>
+                      )}
                       <h3 className='font-medium text-sm truncate'>
                         {task.title}
                       </h3>

@@ -38,8 +38,10 @@ import {
   Pencil,
   MoveRight,
   Flag,
+  FolderKanban,
 } from "lucide-react";
 import { EditTaskDialog } from "./edit-task-dialog";
+import Link from "next/link";
 
 type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -60,6 +62,12 @@ interface Task {
   assignee: { id: string; name: string; image: string | null } | null;
   dueDate?: Date;
   labels?: string;
+  project?: {
+    id: string;
+    name: string;
+    slug: string;
+    color: string | null;
+  } | null;
 }
 
 interface TaskTableViewProps {
@@ -142,6 +150,28 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         />
       ),
       size: 60,
+    },
+    {
+      accessorKey: "project",
+      header: "Project",
+      cell: ({ row }) =>
+        row.original.project ? (
+          <Link href={`/projects/${row.original.project.slug}`}>
+            <div
+              className='inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white hover:opacity-80 transition-opacity'
+              style={{
+                backgroundColor: row.original.project.color || "#6b7280",
+              }}>
+              <FolderKanban className='h-3 w-3' />
+              <span className='truncate max-w-[120px]'>
+                {row.original.project.name}
+              </span>
+            </div>
+          </Link>
+        ) : (
+          <span className='text-xs text-neutral-400'>No project</span>
+        ),
+      size: 150,
     },
     {
       accessorKey: "title",
