@@ -23,7 +23,7 @@ interface Task {
   description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee: { id: string; name: string; image: string | null } | null;
+  assignee: { id: string; name: string | null; image: string | null } | null;
   dueDate: Date | null;
   labels: string | null;
 }
