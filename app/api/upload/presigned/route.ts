@@ -33,10 +33,7 @@ export async function POST(req: NextRequest) {
 
     // Validate file type
     if (!validateFileType(validated.mimeType, ALLOWED_FILE_TYPES)) {
-      return NextResponse.json(
-        { error: "File type not allowed" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
     }
 
     // Determine folder
@@ -60,10 +57,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
 
     console.error("Presigned URL error:", error);
@@ -73,4 +67,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

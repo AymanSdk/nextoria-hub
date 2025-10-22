@@ -9,9 +9,7 @@ const createProjectSchema = z.object({
   description: z.string().optional(),
   workspaceId: z.string(),
   clientId: z.string().optional(),
-  status: z
-    .enum(["DRAFT", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"])
-    .optional(),
+  status: z.enum(["DRAFT", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]).optional(),
   priority: z.number().optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -31,10 +29,7 @@ export async function GET(req: NextRequest) {
     const workspaceId = searchParams.get("workspaceId");
 
     if (!workspaceId) {
-      return NextResponse.json(
-        { error: "workspaceId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "workspaceId is required" }, { status: 400 });
     }
 
     const projects = await getProjects(workspaceId);
@@ -42,10 +37,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ projects });
   } catch (error) {
     console.error("Error fetching projects:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch projects" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
   }
 }
 
@@ -63,25 +55,17 @@ export async function POST(req: NextRequest) {
     const project = await createProject({
       ...validated,
       ownerId: user.id,
-      startDate: validated.startDate
-        ? new Date(validated.startDate)
-        : undefined,
+      startDate: validated.startDate ? new Date(validated.startDate) : undefined,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : undefined,
     });
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
 
     console.error("Error creating project:", error);
-    return NextResponse.json(
-      { error: "Failed to create project" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create project" }, { status: 500 });
   }
 }

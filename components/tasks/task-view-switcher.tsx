@@ -33,10 +33,7 @@ interface TaskViewSwitcherProps {
   members?: TeamMember[];
 }
 
-export function TaskViewSwitcher({
-  tasks,
-  members = [],
-}: TaskViewSwitcherProps) {
+export function TaskViewSwitcher({ tasks, members = [] }: TaskViewSwitcherProps) {
   const [view, setView] = useState<string>("board");
 
   return (

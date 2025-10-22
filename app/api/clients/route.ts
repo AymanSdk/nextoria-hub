@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     const workspaceId = searchParams.get("workspaceId");
 
     // If workspaceId is provided, use it; otherwise fetch all clients for the user's workspace
-    let allClients;
+    let allClients: (typeof clients.$inferSelect)[] = [];
 
     if (workspaceId) {
       allClients = await db
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ client: newClient }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
 
     console.error("Error creating client:", error);

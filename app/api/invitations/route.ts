@@ -31,10 +31,7 @@ export async function GET(req: NextRequest) {
       .limit(1);
 
     if (!workspace) {
-      return NextResponse.json(
-        { error: "Workspace not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
     // Get pending invitations
@@ -51,10 +48,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ invitations: pendingInvitations });
   } catch (error) {
     console.error("Error fetching invitations:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch invitations" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch invitations" }, { status: 500 });
   }
 }
 
@@ -80,10 +74,7 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (!workspace) {
-      return NextResponse.json(
-        { error: "Workspace not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
     // Generate unique token
@@ -109,7 +100,9 @@ export async function POST(req: NextRequest) {
 
     // In a production app, you would send an email here
     // For now, we'll return the invitation link
-    const invitationLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/signup?token=${token}`;
+    const invitationLink = `${
+      process.env.NEXTAUTH_URL || "http://localhost:3000"
+    }/auth/signup?token=${token}`;
 
     console.log(`
       ✉️  Invitation created for ${validated.email}
@@ -126,16 +119,9 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
     console.error("Error creating invitation:", error);
-    return NextResponse.json(
-      { error: "Failed to create invitation" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create invitation" }, { status: 500 });
   }
 }
-

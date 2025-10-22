@@ -48,10 +48,7 @@ export async function GET(
     return NextResponse.json({ client });
   } catch (error) {
     console.error("Error fetching client:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch client" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch client" }, { status: 500 });
   }
 }
 
@@ -86,17 +83,11 @@ export async function PATCH(
     return NextResponse.json({ client: updatedClient });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
 
     console.error("Error updating client:", error);
-    return NextResponse.json(
-      { error: "Failed to update client" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update client" }, { status: 500 });
   }
 }
 
@@ -117,10 +108,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting client:", error);
-    return NextResponse.json(
-      { error: "Failed to delete client" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete client" }, { status: 500 });
   }
 }
-

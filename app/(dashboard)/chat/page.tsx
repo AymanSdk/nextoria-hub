@@ -8,31 +8,16 @@ import { ChannelList } from "@/components/chat/channel-list";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatPresence } from "@/components/chat/chat-presence";
+import { ChatSync } from "@/components/chat/chat-sync";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Loader2, Menu, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ChatMessage, ChatChannel } from "@/types/chat";
 
-interface Channel {
-  id: string;
-  name: string;
-  description: string | null;
-  isPrivate: boolean;
-  isArchived: boolean;
-  projectId: string | null;
-}
-
-interface Message {
-  id: string;
-  channelId: string;
-  senderId: string;
-  senderName: string;
-  senderEmail: string;
-  senderImage?: string;
-  content: string;
-  createdAt: Date;
-}
+type Message = ChatMessage;
+type Channel = ChatChannel;
 
 export default function ChatPage() {
   const { data: session } = useSession();
@@ -43,6 +28,9 @@ export default function ChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState<
+    ((message: ChatMessage) => void) | null
+  >(null);
 
   // Fetch user's workspace on mount
   useEffect(() => {
@@ -75,6 +63,8 @@ export default function ChatPage() {
   useEffect(() => {
     if (currentChannel) {
       fetchMessages(currentChannel.id);
+      // Reset broadcast function when channel changes
+      setBroadcastMessage(null);
     }
   }, [currentChannel]);
 
@@ -171,14 +161,39 @@ export default function ChatPage() {
 
       const newMessage = await response.json();
 
-      // Add to local state immediately for optimistic UI
-      setMessages([...messages, newMessage]);
+      // Validate message structure
+      if (!newMessage || !newMessage.id) {
+        console.error("Invalid message received from API:", newMessage);
+        throw new Error("Invalid message format received");
+      }
 
-      toast.success("Message sent");
+      // Add to local state immediately for optimistic UI
+      setMessages((prev) => [...prev, newMessage]);
+
+      // Broadcast to other users in real-time (only if broadcast is ready)
+      if (broadcastMessage && newMessage) {
+        try {
+          broadcastMessage(newMessage);
+        } catch (broadcastError) {
+          console.error("Error broadcasting message:", broadcastError);
+          // Don't fail the message send if broadcast fails
+        }
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to send message");
     }
+  };
+
+  // Handle incoming real-time messages from other users
+  const handleNewMessage = (newMessage: ChatMessage) => {
+    setMessages((prev) => {
+      // Check if message already exists (avoid duplicates)
+      if (prev.some((msg) => msg.id === newMessage.id)) {
+        return prev;
+      }
+      return [...prev, newMessage];
+    });
   };
 
   if (!session?.user) {
@@ -244,6 +259,13 @@ export default function ChatPage() {
       <div className='flex-1 flex flex-col min-w-0 bg-background'>
         {currentChannel && workspaceId ? (
           <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
+            {/* Real-time message sync */}
+            <ChatSync
+              channelId={currentChannel.id}
+              onNewMessage={handleNewMessage}
+              onBroadcastReady={setBroadcastMessage}
+            />
+
             {/* Channel Header */}
             <div className='h-14 px-4 sm:px-6 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between shrink-0'>
               <div className='flex items-center gap-3 min-w-0'>

@@ -79,7 +79,7 @@ export async function GET(
       fileId: file.id,
       userId: user.id,
       action: "download",
-      ipAddress: req.headers.get("x-forwarded-for") || req.ip || undefined,
+      ipAddress: req.headers.get("x-forwarded-for") || undefined,
       userAgent: req.headers.get("user-agent") || undefined,
     });
 

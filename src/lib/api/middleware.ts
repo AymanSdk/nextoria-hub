@@ -87,8 +87,11 @@ export function apiSuccess<T>(data: T, status = 200) {
   return NextResponse.json({ success: true, data }, { status });
 }
 
-export function apiError(message: string, status = 400) {
-  return NextResponse.json({ success: false, error: message }, { status });
+export function apiError(message: string | undefined, status = 400) {
+  return NextResponse.json(
+    { success: false, error: message || "An error occurred" },
+    { status }
+  );
 }
 
 export function apiValidationError(errors: Record<string, string>) {

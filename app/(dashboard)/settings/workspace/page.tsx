@@ -59,9 +59,7 @@ export default async function WorkspaceSettingsPage() {
     <div className='space-y-6 max-w-4xl'>
       {/* Header */}
       <div>
-        <h1 className='text-3xl font-bold tracking-tight'>
-          Workspace Settings
-        </h1>
+        <h1 className='text-3xl font-bold tracking-tight'>Workspace Settings</h1>
         <p className='text-neutral-500 dark:text-neutral-400 mt-2'>
           Manage your workspace branding, features, and integrations
         </p>
@@ -118,9 +116,7 @@ export default async function WorkspaceSettingsPage() {
                     defaultValue={workspace.slug}
                     placeholder='acme-agency'
                   />
-                  <Badge variant='outline'>
-                    app.domain.com/{workspace.slug}
-                  </Badge>
+                  <Badge variant='outline'>app.domain.com/{workspace.slug}</Badge>
                 </div>
               </div>
 
@@ -169,9 +165,7 @@ export default async function WorkspaceSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Brand Colors</CardTitle>
-              <CardDescription>
-                Customize your workspace colors and logo
-              </CardDescription>
+              <CardDescription>Customize your workspace colors and logo</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='grid grid-cols-2 gap-4'>
@@ -228,9 +222,7 @@ export default async function WorkspaceSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Custom Domain</CardTitle>
-              <CardDescription>
-                Use your own domain for the client portal
-              </CardDescription>
+              <CardDescription>Use your own domain for the client portal</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-2'>
@@ -262,9 +254,7 @@ export default async function WorkspaceSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Feature Toggles</CardTitle>
-              <CardDescription>
-                Enable or disable workspace features
-              </CardDescription>
+              <CardDescription>Enable or disable workspace features</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='flex items-center justify-between'>
@@ -326,9 +316,7 @@ export default async function WorkspaceSettingsPage() {
             <CardContent className='space-y-4'>
               <div className='flex items-center justify-between'>
                 <div className='space-y-0.5'>
-                  <Label htmlFor='email-notifications'>
-                    Email Notifications
-                  </Label>
+                  <Label htmlFor='email-notifications'>Email Notifications</Label>
                   <p className='text-sm text-neutral-500'>
                     Send email notifications for important events
                   </p>
@@ -374,9 +362,7 @@ export default async function WorkspaceSettingsPage() {
                 <div className='flex items-center justify-between'>
                   <div>
                     <p className='font-semibold'>Pro Plan</p>
-                    <p className='text-sm text-neutral-500'>
-                      $49/month • Billed monthly
-                    </p>
+                    <p className='text-sm text-neutral-500'>$49/month • Billed monthly</p>
                   </div>
                   <Badge>Active</Badge>
                 </div>

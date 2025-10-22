@@ -7,6 +7,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2, MessageSquare } from "lucide-react";
 
+/**
+ * Safely parse date from various formats
+ */
+function parseMessageDate(date: Date | string | number): Date {
+  if (date instanceof Date) return date;
+  if (typeof date === "number") return new Date(date);
+  if (typeof date === "string") {
+    const parsed = new Date(date);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  // Fallback to current time if invalid
+  return new Date();
+}
+
 interface Message {
   id: string;
   senderId: string;
@@ -91,7 +105,7 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                           {isCurrentUser ? "You" : message.senderName}
                         </span>
                         <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                          {formatDistanceToNow(new Date(message.createdAt), {
+                          {formatDistanceToNow(parseMessageDate(message.createdAt), {
                             addSuffix: true,
                           })}
                         </span>
