@@ -106,11 +106,11 @@ export default async function ProjectDetailPage({
   const formattedTasks = projectTasks.map((task) => ({
     id: task.id,
     title: task.title,
-    description: task.description || "",
+    description: task.description,
     status: task.status as "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "BACKLOG",
     priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | "URGENT",
-    labels: task.labels || "",
-    dueDate: task.dueDate ? task.dueDate : undefined,
+    labels: task.labels,
+    dueDate: task.dueDate,
     assignee: task.assigneeId
       ? {
           id: task.assigneeId,
