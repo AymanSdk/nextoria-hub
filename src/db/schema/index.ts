@@ -13,6 +13,9 @@ export * from "./workspaces";
 export * from "./projects";
 export * from "./tasks";
 
+// Clients
+export * from "./clients";
+
 // Files
 export * from "./files";
 
@@ -61,6 +64,7 @@ import { contentCalendar } from "./content-calendar";
 import { expenses } from "./expenses";
 import { approvals, approvalFiles, approvalComments } from "./approvals";
 import { recurringTasks } from "./recurring-tasks";
+import { clients, clientContacts } from "./clients";
 
 /**
  * User Relations
@@ -108,6 +112,10 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   owner: one(users, {
     fields: [projects.ownerId],
     references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [projects.clientId],
+    references: [clients.id],
   }),
   members: many(projectMembers),
   tasks: many(tasks),
@@ -191,3 +199,15 @@ export const chatChannelsRelations = relations(
     members: many(chatChannelMembers),
   })
 );
+
+/**
+ * Client Relations
+ */
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  workspace: one(workspaces, {
+    fields: [clients.workspaceId],
+    references: [workspaces.id],
+  }),
+  projects: many(projects),
+  contacts: many(clientContacts),
+}));

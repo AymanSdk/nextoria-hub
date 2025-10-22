@@ -19,6 +19,7 @@ import {
   Calendar,
   Receipt,
   UserCheck,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,12 @@ const navItems: NavItem[] = [
     href: "/content-calendar",
     icon: Calendar,
     roles: ["ADMIN", "MARKETER", "DESIGNER"],
+  },
+  {
+    title: "Clients",
+    href: "/clients",
+    icon: Building2,
+    roles: ["ADMIN", "DEVELOPER", "DESIGNER", "MARKETER"],
   },
   {
     title: "Team",

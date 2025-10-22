@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default async function OnboardingPage() {
   const session = await getSession();
@@ -24,7 +25,7 @@ export default async function OnboardingPage() {
   // For now, we'll just show the onboarding for all users
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 flex items-center justify-center p-4'>
+    <div className='min-h-screen bg-linear-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 flex items-center justify-center p-4'>
       <div className='w-full max-w-2xl space-y-6'>
         {/* Progress */}
         <div className='flex items-center justify-between mb-8'>
@@ -59,7 +60,7 @@ export default async function OnboardingPage() {
               Welcome to Nextoria Hub! 🎉
             </CardTitle>
             <CardDescription>
-              Let's get you set up in just a few steps
+              Let&apos;s get you set up in just a few steps
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-6'>
@@ -116,13 +117,13 @@ export default async function OnboardingPage() {
 
             <div className='flex items-center justify-between pt-4'>
               <Button variant='outline' asChild>
-                <a href='/'>Skip for now</a>
+                <Link href='/'>Skip for now</Link>
               </Button>
               <Button asChild>
-                <a href='/'>
+                <Link href='/'>
                   Continue to Dashboard
                   <ArrowRight className='ml-2 h-4 w-4' />
-                </a>
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -131,9 +132,9 @@ export default async function OnboardingPage() {
         {/* Features Preview */}
         <Card>
           <CardHeader>
-            <CardTitle className='text-lg'>What's Next?</CardTitle>
+            <CardTitle className='text-lg'>What&apos;s Next?</CardTitle>
             <CardDescription>
-              Here's what you can do with Nextoria Hub
+              Here&apos;s what you can do with Nextoria Hub
             </CardDescription>
           </CardHeader>
           <CardContent>

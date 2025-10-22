@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Plus,
   MoreHorizontal,
   Calendar,
   Target,
@@ -17,11 +16,12 @@ import {
 } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
 import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board";
+import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
   const session = await getSession();
 
@@ -29,11 +29,13 @@ export default async function ProjectDetailPage({
     redirect("/auth/signin");
   }
 
+  const { slug } = await params;
+
   // Fetch project by slug
   const [project] = await db
     .select()
     .from(projects)
-    .where(eq(projects.slug, params.slug))
+    .where(eq(projects.slug, slug))
     .limit(1);
 
   if (!project) {
@@ -87,12 +89,12 @@ export default async function ProjectDetailPage({
       | "BACKLOG",
     priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | "URGENT",
     labels: task.labels || "",
-    dueDate: task.dueDate,
+    dueDate: task.dueDate ? task.dueDate : undefined,
     assignee: task.assigneeId
       ? {
           id: task.assigneeId,
           name: task.assigneeName || "Unknown",
-          image: task.assigneeImage,
+          image: task.assigneeImage || null,
         }
       : null,
   }));
@@ -117,66 +119,70 @@ export default async function ProjectDetailPage({
   };
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-6 max-w-[1600px]'>
       {/* Project Header */}
-      <div className='flex items-start justify-between flex-wrap gap-4'>
-        <div className='flex items-start gap-4'>
-          <div
-            className='h-16 w-16 rounded-lg flex items-center justify-center flex-shrink-0'
-            style={{ backgroundColor: project.color || "#0070f3" }}>
-            <Target className='h-8 w-8 text-white' />
-          </div>
-          <div>
-            <h1 className='text-3xl font-bold tracking-tight'>
-              {project.name}
-            </h1>
-            <p className='text-neutral-500 dark:text-neutral-400 mt-1'>
-              {project.description || "No description"}
-            </p>
-            <div className='flex items-center gap-4 mt-3 flex-wrap'>
-              <Badge variant={getStatusVariant(project.status)}>
-                {project.status}
-              </Badge>
-              {project.dueDate && (
-                <div className='flex items-center gap-2 text-sm text-neutral-500'>
-                  <Calendar className='h-4 w-4' />
-                  <span>
-                    Due{" "}
-                    {new Date(project.dueDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-              )}
-              {members.length > 0 && (
-                <div className='flex items-center gap-2'>
-                  <div className='flex -space-x-2'>
-                    {members.slice(0, 5).map((member) => (
-                      <Avatar
-                        key={member.id}
-                        className='h-8 w-8 border-2 border-background'>
-                        <AvatarFallback className='text-xs'>
-                          {member.name?.substring(0, 2).toUpperCase() || "??"}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                  </div>
-                  {members.length > 5 && (
-                    <span className='text-sm text-neutral-500'>
-                      +{members.length - 5}
-                    </span>
-                  )}
-                </div>
-              )}
+      <div className='space-y-4'>
+        <div className='flex flex-col sm:flex-row items-start justify-between gap-4'>
+          <div className='flex items-start gap-4 flex-1 min-w-0 w-full'>
+            <div
+              className='h-16 w-16 rounded-lg flex items-center justify-center shrink-0'
+              style={{ backgroundColor: project.color || "#0070f3" }}>
+              <Target className='h-8 w-8 text-white' />
+            </div>
+            <div className='flex-1 min-w-0'>
+              <h1 className='text-3xl font-bold tracking-tight wrap-break-word'>
+                {project.name}
+              </h1>
+              <p className='text-neutral-500 dark:text-neutral-400 mt-1 wrap-break-word'>
+                {project.description || "No description"}
+              </p>
             </div>
           </div>
+          <div className='flex items-center gap-2 shrink-0'>
+            <Button variant='outline' size='icon'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </div>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button variant='outline'>
-            <MoreHorizontal className='h-4 w-4' />
-          </Button>
+
+        {/* Project Meta Info */}
+        <div className='flex items-center gap-4 flex-wrap'>
+          <Badge variant={getStatusVariant(project.status)}>
+            {project.status}
+          </Badge>
+          {project.dueDate && (
+            <div className='flex items-center gap-2 text-sm text-neutral-500'>
+              <Calendar className='h-4 w-4' />
+              <span>
+                Due{" "}
+                {new Date(project.dueDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+          )}
+          {members.length > 0 && (
+            <div className='flex items-center gap-2'>
+              <div className='flex -space-x-2'>
+                {members.slice(0, 5).map((member) => (
+                  <Avatar
+                    key={member.id}
+                    className='h-8 w-8 border-2 border-background'>
+                    <AvatarFallback className='text-xs'>
+                      {member.name?.substring(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+              </div>
+              {members.length > 5 && (
+                <span className='text-sm text-neutral-500'>
+                  +{members.length - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -255,17 +261,16 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Kanban Board */}
-      <div>
+      <div className='w-full overflow-hidden'>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-xl font-semibold'>Tasks</h2>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            New Task
-          </Button>
+          <CreateTaskDialog projectId={project.id} members={members} />
         </div>
 
         {formattedTasks.length > 0 ? (
-          <TaskKanbanBoard tasks={formattedTasks} />
+          <div className='overflow-x-auto -mx-6 px-6'>
+            <TaskKanbanBoard tasks={formattedTasks} />
+          </div>
         ) : (
           <Card className='p-12'>
             <div className='text-center'>
@@ -274,10 +279,9 @@ export default async function ProjectDetailPage({
               <p className='mt-2 text-neutral-500'>
                 Get started by creating your first task
               </p>
-              <Button className='mt-4'>
-                <Plus className='mr-2 h-4 w-4' />
-                Create Task
-              </Button>
+              <div className='mt-4 flex justify-center'>
+                <CreateTaskDialog projectId={project.id} members={members} />
+              </div>
             </div>
           </Card>
         )}

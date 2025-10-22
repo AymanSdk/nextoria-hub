@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/src/db";
-import { users } from "@/src/db/schema";
+import { users, workspaces, workspaceMembers } from "@/src/db/schema";
 import { hashPassword, validatePassword } from "@/src/lib/auth/password";
 import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,10 +51,30 @@ export async function POST(req: NextRequest) {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        role: "CLIENT", // Default role
+        role: "CLIENT", // Default role - admin can change this later
         isActive: true,
       })
       .returning();
+
+    // Auto-add user to Nextoria Agency workspace (if it exists)
+    const [agencyWorkspace] = await db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.slug, "nextoria-agency"))
+      .limit(1);
+
+    if (agencyWorkspace) {
+      await db.insert(workspaceMembers).values({
+        id: nanoid(),
+        workspaceId: agencyWorkspace.id,
+        userId: newUser.id,
+        role: "CLIENT", // Default role in workspace
+        isActive: true,
+        joinedAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log(`✓ User ${email} added to Nextoria Agency workspace`);
+    }
 
     // Return success (without password)
     return NextResponse.json({
@@ -72,4 +93,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

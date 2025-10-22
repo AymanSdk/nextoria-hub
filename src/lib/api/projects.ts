@@ -76,6 +76,7 @@ export async function createProject(data: {
   description?: string;
   workspaceId: string;
   ownerId: string;
+  clientId?: string;
   status?: "DRAFT" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
   priority?: number;
   startDate?: Date;
@@ -191,4 +192,3 @@ export async function createMilestone(data: {
 
   return milestone;
 }
-

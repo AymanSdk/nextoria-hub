@@ -8,7 +8,10 @@ const createProjectSchema = z.object({
   slug: z.string().min(1, "Slug is required"),
   description: z.string().optional(),
   workspaceId: z.string(),
-  status: z.enum(["DRAFT", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]).optional(),
+  clientId: z.string().optional(),
+  status: z
+    .enum(["DRAFT", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"])
+    .optional(),
   priority: z.number().optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -60,7 +63,9 @@ export async function POST(req: NextRequest) {
     const project = await createProject({
       ...validated,
       ownerId: user.id,
-      startDate: validated.startDate ? new Date(validated.startDate) : undefined,
+      startDate: validated.startDate
+        ? new Date(validated.startDate)
+        : undefined,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : undefined,
     });
 
@@ -80,4 +85,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
