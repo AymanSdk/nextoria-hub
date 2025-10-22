@@ -28,6 +28,22 @@ export * from "./integrations";
 // Chat
 export * from "./chat";
 
+// Audit Logs
+export * from "./audit-logs";
+
+// Campaigns & Marketing
+export * from "./campaigns";
+export * from "./content-calendar";
+
+// Finance
+export * from "./expenses";
+
+// Approvals
+export * from "./approvals";
+
+// Recurring Tasks
+export * from "./recurring-tasks";
+
 // Relations (for Drizzle relational queries)
 import { relations } from "drizzle-orm";
 import { users, accounts, sessions, invitations } from "./users";
@@ -39,6 +55,12 @@ import { invoices, invoiceLineItems, payments } from "./invoices";
 import { notifications, notificationPreferences } from "./notifications";
 import { integrations, webhooks, webhookDeliveries } from "./integrations";
 import { chatChannels, chatMessages, chatChannelMembers } from "./chat";
+import { auditLogs } from "./audit-logs";
+import { campaigns, campaignUpdates } from "./campaigns";
+import { contentCalendar } from "./content-calendar";
+import { expenses } from "./expenses";
+import { approvals, approvalFiles, approvalComments } from "./approvals";
+import { recurringTasks } from "./recurring-tasks";
 
 /**
  * User Relations
@@ -150,20 +172,22 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
 /**
  * Chat Relations
  */
-export const chatChannelsRelations = relations(chatChannels, ({ one, many }) => ({
-  workspace: one(workspaces, {
-    fields: [chatChannels.workspaceId],
-    references: [workspaces.id],
-  }),
-  project: one(projects, {
-    fields: [chatChannels.projectId],
-    references: [projects.id],
-  }),
-  creator: one(users, {
-    fields: [chatChannels.createdBy],
-    references: [users.id],
-  }),
-  messages: many(chatMessages),
-  members: many(chatChannelMembers),
-}));
-
+export const chatChannelsRelations = relations(
+  chatChannels,
+  ({ one, many }) => ({
+    workspace: one(workspaces, {
+      fields: [chatChannels.workspaceId],
+      references: [workspaces.id],
+    }),
+    project: one(projects, {
+      fields: [chatChannels.projectId],
+      references: [projects.id],
+    }),
+    creator: one(users, {
+      fields: [chatChannels.createdBy],
+      references: [users.id],
+    }),
+    messages: many(chatMessages),
+    members: many(chatChannelMembers),
+  })
+);

@@ -1,33 +1,39 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { users, workspaceMembers, workspaces } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { users, workspaceMembers } from "@/src/db/schema";
+import { eq, and } from "drizzle-orm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Mail, Shield, UserCheck, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Plus,
+  Mail,
+  Shield,
+  UserCheck,
+  UserX,
+  MoreHorizontal,
+  Users,
+  Crown,
+} from "lucide-react";
 import { redirect } from "next/navigation";
-
-const getRoleBadgeVariant = (
-  role: string
-): "default" | "secondary" | "destructive" | "outline" => {
-  if (role === "ADMIN") return "destructive";
-  if (role === "DEVELOPER") return "default";
-  if (role === "DESIGNER") return "secondary";
-  return "outline";
-};
-
-const getRoleIcon = (role: string) => {
-  if (role === "ADMIN") return Shield;
-  return UserCheck;
-};
+import { isAdmin, canManageUsers } from "@/src/lib/auth/rbac";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default async function TeamPage() {
   const session = await getSession();
@@ -36,27 +42,67 @@ export default async function TeamPage() {
     redirect("/auth/signin");
   }
 
-  // Fetch all team members (users in workspaces)
-  const allMembers = await db
+  // Check if user can manage users
+  if (!canManageUsers(session.user.role)) {
+    redirect("/");
+  }
+
+  // Fetch all users
+  const allUsers = await db
     .select({
       id: users.id,
       name: users.name,
       email: users.email,
-      role: users.role,
       image: users.image,
+      role: users.role,
       isActive: users.isActive,
+      phone: users.phone,
       createdAt: users.createdAt,
     })
     .from(users)
-    .where(eq(users.isActive, true));
+    .orderBy(users.createdAt);
 
-  // Calculate statistics
-  const totalMembers = allMembers.length;
-  const adminCount = allMembers.filter((m) => m.role === "ADMIN").length;
-  const developerCount = allMembers.filter(
-    (m) => m.role === "DEVELOPER"
+  // Calculate stats
+  const totalUsers = allUsers.length;
+  const activeUsers = allUsers.filter((u) => u.isActive).length;
+  const adminCount = allUsers.filter((u) => u.role === "ADMIN").length;
+  const clientCount = allUsers.filter((u) => u.role === "CLIENT").length;
+  const teamCount = allUsers.filter((u) =>
+    ["DEVELOPER", "DESIGNER", "MARKETER"].includes(u.role)
   ).length;
-  const designerCount = allMembers.filter((m) => m.role === "DESIGNER").length;
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "ADMIN":
+        return "bg-purple-500";
+      case "DEVELOPER":
+        return "bg-blue-500";
+      case "DESIGNER":
+        return "bg-pink-500";
+      case "MARKETER":
+        return "bg-green-500";
+      case "CLIENT":
+        return "bg-gray-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    if (role === "ADMIN") return <Crown className='h-3 w-3' />;
+    if (role === "CLIENT") return <Users className='h-3 w-3' />;
+    return <Shield className='h-3 w-3' />;
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className='space-y-6'>
@@ -65,122 +111,179 @@ export default async function TeamPage() {
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Team</h1>
           <p className='text-neutral-500 dark:text-neutral-400 mt-2'>
-            Manage your team members and their roles
+            Manage users, roles, and permissions
           </p>
         </div>
-        <Button>
-          <Plus className='mr-2 h-4 w-4' />
-          Invite Member
-        </Button>
+        <div className='flex gap-2'>
+          <Button variant='outline'>
+            <Mail className='mr-2 h-4 w-4' />
+            Invite Users
+          </Button>
+          <Button>
+            <Plus className='mr-2 h-4 w-4' />
+            Add User
+          </Button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
       <div className='grid gap-4 md:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Members</CardTitle>
+            <CardTitle className='text-sm font-medium'>Total Users</CardTitle>
             <Users className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalMembers}</div>
-            <p className='text-xs text-neutral-500 mt-1'>Active team members</p>
+            <div className='text-2xl font-bold'>{totalUsers}</div>
+            <p className='text-xs text-neutral-500 mt-1'>
+              {activeUsers} active
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Admins</CardTitle>
-            <Shield className='h-4 w-4 text-neutral-500' />
+            <Crown className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{adminCount}</div>
-            <p className='text-xs text-neutral-500 mt-1'>With full access</p>
+            <p className='text-xs text-neutral-500 mt-1'>Full access</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Developers</CardTitle>
-            <UserCheck className='h-4 w-4 text-neutral-500' />
+            <CardTitle className='text-sm font-medium'>Team Members</CardTitle>
+            <Shield className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{developerCount}</div>
-            <p className='text-xs text-neutral-500 mt-1'>Technical team</p>
+            <div className='text-2xl font-bold'>{teamCount}</div>
+            <p className='text-xs text-neutral-500 mt-1'>
+              Developers, Designers, Marketers
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Designers</CardTitle>
-            <UserCheck className='h-4 w-4 text-neutral-500' />
+            <CardTitle className='text-sm font-medium'>Clients</CardTitle>
+            <Users className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{designerCount}</div>
-            <p className='text-xs text-neutral-500 mt-1'>Creative team</p>
+            <div className='text-2xl font-bold'>{clientCount}</div>
+            <p className='text-xs text-neutral-500 mt-1'>External users</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Team Members Grid */}
+      {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>View and manage all team members</CardDescription>
+          <CardTitle>All Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {allMembers.map((member) => {
-              const RoleIcon = getRoleIcon(member.role);
-
-              return (
-                <Card
-                  key={member.id}
-                  className='hover:shadow-md transition-shadow'>
-                  <CardContent className='pt-6'>
-                    <div className='flex items-start gap-4'>
-                      <Avatar className='h-12 w-12'>
-                        <AvatarFallback className='bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold'>
-                          {member.name?.substring(0, 2).toUpperCase() || "??"}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    <div className='flex items-center gap-3'>
+                      <Avatar>
+                        <AvatarImage src={user.image || undefined} />
+                        <AvatarFallback>
+                          {getInitials(user.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between gap-2'>
-                          <div className='flex-1 min-w-0'>
-                            <h3 className='font-semibold truncate'>
-                              {member.name}
-                            </h3>
-                            <p className='text-sm text-neutral-500 truncate'>
-                              {member.email}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={getRoleBadgeVariant(member.role)}
-                            className='text-xs flex-shrink-0'>
-                            {member.role}
-                          </Badge>
-                        </div>
-                        <div className='flex items-center gap-2 mt-3'>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            className='flex-1'>
-                            <Mail className='h-3 w-3 mr-1' />
-                            Email
-                          </Button>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            className='flex-1'>
-                            View Profile
-                          </Button>
-                        </div>
+                      <div>
+                        <p className='font-medium'>
+                          {user.name || "Unnamed User"}
+                        </p>
+                        <p className='text-sm text-neutral-500'>{user.email}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getRoleBadgeColor(user.role)}>
+                      <span className='flex items-center gap-1'>
+                        {getRoleIcon(user.role)}
+                        {user.role}
+                      </span>
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='text-sm text-neutral-500'>
+                    {user.phone || "—"}
+                  </TableCell>
+                  <TableCell>
+                    {user.isActive ? (
+                      <Badge variant='outline' className='bg-green-50'>
+                        <UserCheck className='mr-1 h-3 w-3' />
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant='outline' className='bg-red-50'>
+                        <UserX className='mr-1 h-3 w-3' />
+                        Inactive
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className='text-sm text-neutral-500'>
+                    {new Date(user.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant='ghost' size='sm'>
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Edit User</DropdownMenuItem>
+                        <DropdownMenuItem>Change Role</DropdownMenuItem>
+                        <DropdownMenuItem>View Activity</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {user.isActive ? (
+                          <DropdownMenuItem className='text-red-600'>
+                            Deactivate
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem className='text-green-600'>
+                            Activate
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {allUsers.length === 0 && (
+            <div className='text-center py-12'>
+              <Users className='mx-auto h-12 w-12 text-neutral-400' />
+              <h3 className='mt-4 text-lg font-semibold'>No users yet</h3>
+              <p className='mt-2 text-neutral-500'>
+                Get started by inviting team members
+              </p>
+              <Button className='mt-4'>
+                <Plus className='mr-2 h-4 w-4' />
+                Invite Users
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
