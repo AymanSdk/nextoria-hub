@@ -1,6 +1,6 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { projects, projectMembers, tasks, users } from "@/src/db/schema";
+import { projects, tasks, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,19 +42,31 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
-  // Fetch project members with user details
-  const members = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      email: users.email,
-      image: users.image,
-      role: users.role,
-      canEdit: projectMembers.canEdit,
-    })
-    .from(projectMembers)
-    .innerJoin(users, eq(projectMembers.userId, users.id))
-    .where(eq(projectMembers.projectId, project.id));
+  // Fetch all workspace team members (for task assignment)
+  // Since this is an internal agency tool, show all team members regardless of project membership
+  const { workspaceMembers, workspaces } = await import("@/src/db/schema");
+
+  // Get the workspace
+  const [workspace] = await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.slug, "nextoria-agency"))
+    .limit(1);
+
+  // Fetch all team members from the workspace (excluding clients)
+  const members = workspace
+    ? await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          image: users.image,
+          role: users.role,
+        })
+        .from(workspaceMembers)
+        .innerJoin(users, eq(workspaceMembers.userId, users.id))
+        .where(eq(workspaceMembers.workspaceId, workspace.id))
+    : [];
 
   // Fetch all tasks for this project with assignee details
   const projectTasks = await db
