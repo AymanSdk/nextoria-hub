@@ -30,6 +30,11 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB for deliverables
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const clientId = searchParams.get("clientId");
 
@@ -37,7 +42,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Client ID is required" }, { status: 400 });
     }
 
-    // Verify client exists and user has access
+    // Verify client exists
     const client = await db.query.clients.findFirst({
       where: eq(clients.id, clientId),
     });
@@ -45,6 +50,31 @@ export async function GET(req: NextRequest) {
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
+
+    // Authorization: Clients can only access their own deliverables
+    if (user.role === "CLIENT") {
+      // Find the client record for this user
+      const [clientRecord] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.email, user.email || ""))
+        .limit(1);
+
+      if (!clientRecord) {
+        return NextResponse.json({ error: "Client record not found" }, { status: 403 });
+      }
+
+      // Ensure they're requesting their own deliverables
+      if (clientRecord.id !== clientId) {
+        return NextResponse.json(
+          {
+            error: "You don't have permission to access these deliverables",
+          },
+          { status: 403 }
+        );
+      }
+    }
+    // For non-client users (team members), allow access to all deliverables
 
     // Get all deliverables for this client
     const deliverables = await db.query.files.findMany({

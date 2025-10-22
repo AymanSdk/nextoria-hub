@@ -15,6 +15,11 @@ export async function DELETE(
 ) {
   try {
     const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { fileId } = await params;
 
     // Get file record
@@ -26,9 +31,16 @@ export async function DELETE(
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
+    // Clients cannot delete files
+    if (user.role === "CLIENT") {
+      return NextResponse.json(
+        { error: "Clients are not allowed to delete files" },
+        { status: 403 }
+      );
+    }
+
     // Check if user has permission to delete (must be uploader or admin)
-    // TODO: Add proper RBAC check here
-    if (file.uploadedBy !== user.id) {
+    if (file.uploadedBy !== user.id && user.role !== "ADMIN") {
       return NextResponse.json(
         { error: "Unauthorized to delete this file" },
         { status: 403 }

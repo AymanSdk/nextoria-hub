@@ -179,7 +179,53 @@ if (session.user.role === "CLIENT") {
 
 ---
 
-### 6. **Tasks Page**
+### 6. **Files Page Filtering**
+
+**File:** `app/api/files/route.ts`
+
+**Security Implementation:**
+
+- ✅ Clients only see files directly assigned to them
+- ✅ Clients only see files from their projects
+- ✅ Team members see all files
+
+**How it works:**
+
+```typescript
+if (isClient) {
+  // Find client record by email
+  // Get all client's project IDs
+  // Filter files by: clientId OR projectId IN (client's projects)
+}
+```
+
+---
+
+### 7. **File Download Authorization**
+
+**File:** `app/api/deliverables/[fileId]/download/route.ts`
+
+**Security Implementation:**
+
+- ✅ Clients can only download their own files
+- ✅ Verification checks both direct file ownership and project ownership
+- ✅ Returns 403 if client tries to access unauthorized files
+
+---
+
+### 8. **Deliverables API Authorization**
+
+**File:** `app/api/deliverables/route.ts`
+
+**Security Implementation:**
+
+- ✅ Clients can only request their own deliverables
+- ✅ Prevents clients from accessing other clients' deliverables via API
+- ✅ Team members can access all deliverables
+
+---
+
+### 9. **Tasks Page**
 
 **File:** `app/(dashboard)/tasks/page.tsx`
 
@@ -204,16 +250,16 @@ if (isClient) {
 
 ### ✅ **Allowed Pages**
 
-| Page          | Route            | What They See                            |
-| ------------- | ---------------- | ---------------------------------------- |
-| Dashboard     | `/client-portal` | Their projects, tasks, invoices overview |
-| My Projects   | `/projects`      | Only their assigned projects             |
-| My Tasks      | `/tasks`         | Tasks from their projects                |
-| My Invoices   | `/invoices`      | Their invoices only                      |
-| Chat          | `/chat`          | Future: Client communication             |
-| Files         | `/files`         | Files from their projects                |
-| Settings      | `/settings`      | Their profile settings                   |
-| Notifications | `/notifications` | Their notifications                      |
+| Page          | Route            | What They See                                         |
+| ------------- | ---------------- | ----------------------------------------------------- |
+| Dashboard     | `/client-portal` | Their projects, tasks, invoices overview              |
+| My Projects   | `/projects`      | Only their assigned projects                          |
+| My Tasks      | `/tasks`         | Tasks from their projects                             |
+| My Invoices   | `/invoices`      | Their invoices only                                   |
+| Chat          | `/chat`          | Future: Client communication                          |
+| Files         | `/files`         | Only files from their projects and their deliverables |
+| Settings      | `/settings`      | Their profile settings                                |
+| Notifications | `/notifications` | Their notifications                                   |
 
 ### ❌ **Restricted/Hidden**
 

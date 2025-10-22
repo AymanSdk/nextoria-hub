@@ -36,6 +36,13 @@ import {
 import { toast } from "sonner";
 import { formatFileSize } from "@/src/lib/storage/s3";
 import { FileUpload } from "@/components/upload/file-upload";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
 
 interface FileItem {
   id: string;
@@ -561,12 +568,16 @@ export function FilesBrowser() {
 
     if (totalCount === 0) {
       return (
-        <div className='space-y-6'>
-          <div className='text-center py-8'>
-            <FileText className='mx-auto h-12 w-12 text-neutral-400 mb-4' />
-            <h3 className='text-lg font-medium mb-2'>No files yet</h3>
-            <p className='text-neutral-500 text-sm mb-4'>Upload files to get started</p>
-          </div>
+        <div className='space-y-4'>
+          <Empty className='border'>
+            <EmptyHeader>
+              <EmptyMedia variant='icon'>
+                <FileText className='h-6 w-6' />
+              </EmptyMedia>
+              <EmptyTitle>No files yet</EmptyTitle>
+              <EmptyDescription>Upload files to get started</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
 
           <FileUpload
             onUploadComplete={handleUploadComplete}
@@ -589,51 +600,132 @@ export function FilesBrowser() {
     <div className='space-y-6'>
       {/* Stats Cards */}
       {stats && (
-        <div className='grid gap-4 md:grid-cols-4'>
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-neutral-500'>Total Files</p>
-                  <p className='text-2xl font-bold'>{stats.total}</p>
+        <div className='grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
+          {/* Total Files */}
+          <Card className='group relative overflow-hidden border-0 bg-linear-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300'>
+            <div className='absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500' />
+            <CardContent className='p-3.5 relative'>
+              <div className='flex items-center justify-between mb-2'>
+                <div className='p-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 shadow-sm ring-1 ring-blue-500/20'>
+                  <FileText className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                 </div>
-                <FileText className='h-8 w-8 text-neutral-400' />
+                <div className='text-right'>
+                  <div className='text-xl sm:text-2xl font-bold text-blue-900 dark:text-blue-100'>
+                    {stats.total}
+                  </div>
+                  <div className='text-[9px] sm:text-[10px] font-medium text-blue-600/70 dark:text-blue-400/70 uppercase tracking-wide'>
+                    Total Files
+                  </div>
+                </div>
+              </div>
+              <div className='flex items-center gap-1.5 text-[9px] sm:text-[10px] text-blue-700/60 dark:text-blue-300/60'>
+                <span className='flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-neutral-900/60'>
+                  <FolderKanban className='h-2.5 w-2.5' />
+                  <span>{stats.byType.projects}</span>
+                </span>
+                <span className='flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-neutral-900/60'>
+                  <Users className='h-2.5 w-2.5' />
+                  <span>{stats.byType.tasks}</span>
+                </span>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-neutral-500'>Storage Used</p>
-                  <p className='text-2xl font-bold'>{formatFileSize(stats.totalSize)}</p>
+          {/* Storage Used */}
+          <Card className='group relative overflow-hidden border-0 bg-linear-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300'>
+            <div className='absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500' />
+            <CardContent className='p-3.5 relative'>
+              <div className='flex items-center justify-between mb-2'>
+                <div className='p-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 shadow-sm ring-1 ring-purple-500/20'>
+                  <HardDrive className='h-4 w-4 text-purple-600 dark:text-purple-400' />
                 </div>
-                <HardDrive className='h-8 w-8 text-neutral-400' />
+                <div className='text-right'>
+                  <div className='text-base sm:text-lg font-bold text-purple-900 dark:text-purple-100'>
+                    {formatFileSize(stats.totalSize)}
+                  </div>
+                  <div className='text-[9px] sm:text-[10px] font-medium text-purple-600/70 dark:text-purple-400/70 uppercase tracking-wide'>
+                    Storage Used
+                  </div>
+                </div>
+              </div>
+              <div className='space-y-1'>
+                <div className='flex items-center justify-between text-[9px] text-purple-700/60 dark:text-purple-300/60'>
+                  <span>Usage</span>
+                  <span className='font-medium'>
+                    {((stats.totalSize / (100 * 1024 * 1024)) * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className='relative h-1.5 bg-white/60 dark:bg-neutral-900/60 rounded-full overflow-hidden'>
+                  <div
+                    className='absolute inset-y-0 left-0 bg-linear-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-500'
+                    style={{
+                      width: `${Math.min(
+                        (stats.totalSize / (100 * 1024 * 1024)) * 100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className='p-6'>
+          {/* Client Files */}
+          <Card className='group relative overflow-hidden border-0 bg-linear-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300'>
+            <div className='absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500' />
+            <CardContent className='p-3.5 relative'>
               <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-neutral-500'>Client Files</p>
-                  <p className='text-2xl font-bold'>{stats.byType.clients}</p>
+                <div className='p-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 shadow-sm ring-1 ring-green-500/20'>
+                  <Building2 className='h-4 w-4 text-green-600 dark:text-green-400' />
                 </div>
-                <Building2 className='h-8 w-8 text-neutral-400' />
+                <div className='text-right'>
+                  <div className='text-xl sm:text-2xl font-bold text-green-900 dark:text-green-100'>
+                    {stats.byType.clients}
+                  </div>
+                  <div className='text-[9px] sm:text-[10px] font-medium text-green-600/70 dark:text-green-400/70 uppercase tracking-wide'>
+                    Client Files
+                  </div>
+                </div>
+              </div>
+              <div className='mt-2 flex items-center justify-end'>
+                <div className='px-2 py-0.5 rounded-full bg-white/80 dark:bg-neutral-900/80 shadow-sm'>
+                  <span className='text-[10px] font-bold text-green-700 dark:text-green-300'>
+                    {stats.total > 0
+                      ? ((stats.byType.clients / stats.total) * 100).toFixed(0)
+                      : 0}
+                    % of total
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className='p-6'>
+          {/* Project Files */}
+          <Card className='group relative overflow-hidden border-0 bg-linear-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300'>
+            <div className='absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500' />
+            <CardContent className='p-3.5 relative'>
               <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-neutral-500'>Project Files</p>
-                  <p className='text-2xl font-bold'>{stats.byType.projects}</p>
+                <div className='p-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 shadow-sm ring-1 ring-orange-500/20'>
+                  <FolderKanban className='h-4 w-4 text-orange-600 dark:text-orange-400' />
                 </div>
-                <FolderKanban className='h-8 w-8 text-neutral-400' />
+                <div className='text-right'>
+                  <div className='text-xl sm:text-2xl font-bold text-orange-900 dark:text-orange-100'>
+                    {stats.byType.projects}
+                  </div>
+                  <div className='text-[9px] sm:text-[10px] font-medium text-orange-600/70 dark:text-orange-400/70 uppercase tracking-wide'>
+                    Project Files
+                  </div>
+                </div>
+              </div>
+              <div className='mt-2 flex items-center justify-end'>
+                <div className='px-2 py-0.5 rounded-full bg-white/80 dark:bg-neutral-900/80 shadow-sm'>
+                  <span className='text-[10px] font-bold text-orange-700 dark:text-orange-300'>
+                    {stats.total > 0
+                      ? ((stats.byType.projects / stats.total) * 100).toFixed(0)
+                      : 0}
+                    % of total
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -783,13 +875,24 @@ export function FilesBrowser() {
         </TabsContent>
 
         <TabsContent value='tasks' className='space-y-4'>
-          {renderFileList(getPaginatedFiles("tasks"), filterFiles("tasks").length)}
-          {renderPagination("tasks")}
-          <div className='pt-4'>
-            <p className='text-sm text-neutral-500 text-center py-8'>
-              Attach files to tasks from the task edit dialog
-            </p>
-          </div>
+          {filterFiles("tasks").length === 0 ? (
+            <Empty className='border'>
+              <EmptyHeader>
+                <EmptyMedia variant='icon'>
+                  <FileText className='h-6 w-6' />
+                </EmptyMedia>
+                <EmptyTitle>No task files yet</EmptyTitle>
+                <EmptyDescription>
+                  Attach files to tasks from the task edit dialog when working on tasks
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <>
+              {renderFileList(getPaginatedFiles("tasks"), filterFiles("tasks").length)}
+              {renderPagination("tasks")}
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
