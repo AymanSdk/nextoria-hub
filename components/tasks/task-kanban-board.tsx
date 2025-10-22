@@ -12,12 +12,10 @@ import {
   useSensors,
   closestCorners,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TaskCard } from "./task-card";
+import { toast } from "sonner";
 
 type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
@@ -130,13 +128,17 @@ export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to update task status");
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update task status");
       }
 
+      toast.success("Task status updated successfully");
       router.refresh();
     } catch (error) {
       console.error("Error updating task:", error);
-      // Could show a toast notification here
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update task status"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -147,7 +149,8 @@ export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}>
+      onDragEnd={handleDragEnd}
+    >
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3 min-h-[600px]'>
         {columns.map((column) => {
           const columnTasks = getTasksByStatus(column.id);
@@ -157,14 +160,13 @@ export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
               key={column.id}
               items={columnTasks.map((t) => t.id)}
               strategy={verticalListSortingStrategy}
-              id={column.id}>
+              id={column.id}
+            >
               <div className='flex flex-col h-full rounded-lg bg-neutral-50/50 dark:bg-neutral-900/20'>
                 {/* Column Header */}
                 <div className='px-4 py-3'>
                   <div className='flex items-center gap-2 mb-1'>
-                    <div
-                      className={`w-2 h-2 rounded-full ${column.dotColor}`}
-                    />
+                    <div className={`w-2 h-2 rounded-full ${column.dotColor}`} />
                     <h3 className='text-sm font-medium text-neutral-700 dark:text-neutral-300'>
                       {column.title}
                     </h3>
@@ -181,7 +183,8 @@ export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
                     style={{
                       opacity: isUpdating ? 0.6 : 1,
                       transition: "opacity 0.2s",
-                    }}>
+                    }}
+                  >
                     {columnTasks.map((task) => (
                       <TaskCard key={task.id} task={task} members={members} />
                     ))}
@@ -191,9 +194,7 @@ export function TaskKanbanBoard({ tasks, members = [] }: TaskKanbanBoardProps) {
                         <div
                           className={`w-10 h-10 rounded-full mb-2 ${column.dotColor} opacity-20`}
                         />
-                        <p className='text-xs text-neutral-400'>
-                          Drop tasks here
-                        </p>
+                        <p className='text-xs text-neutral-400'>Drop tasks here</p>
                       </div>
                     )}
                   </div>

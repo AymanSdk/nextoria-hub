@@ -10,15 +10,7 @@ const updateTaskSchema = z.object({
   description: z.string().optional(),
   assigneeId: z.string().optional().nullable(),
   status: z
-    .enum([
-      "BACKLOG",
-      "TODO",
-      "IN_PROGRESS",
-      "IN_REVIEW",
-      "BLOCKED",
-      "DONE",
-      "CANCELLED",
-    ])
+    .enum(["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "BLOCKED", "DONE", "CANCELLED"])
     .optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   labels: z.string().optional(),
@@ -37,7 +29,11 @@ export async function PATCH(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    await getCurrentUser();
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { taskId } = await params;
     const body = await req.json();
 
@@ -51,14 +47,10 @@ export async function PATCH(
 
     // Handle date conversions
     if (validated.startDate !== undefined) {
-      updateData.startDate = validated.startDate
-        ? new Date(validated.startDate)
-        : null;
+      updateData.startDate = validated.startDate ? new Date(validated.startDate) : null;
     }
     if (validated.dueDate !== undefined) {
-      updateData.dueDate = validated.dueDate
-        ? new Date(validated.dueDate)
-        : null;
+      updateData.dueDate = validated.dueDate ? new Date(validated.dueDate) : null;
     }
 
     // Update the task
@@ -72,20 +64,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ task: updatedTask });
+    return NextResponse.json({ success: true, task: updatedTask });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
     }
 
     console.error("Error updating task:", error);
-    return NextResponse.json(
-      { error: "Failed to update task" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
   }
 }
 
@@ -106,9 +92,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting task:", error);
-    return NextResponse.json(
-      { error: "Failed to delete task" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete task" }, { status: 500 });
   }
 }

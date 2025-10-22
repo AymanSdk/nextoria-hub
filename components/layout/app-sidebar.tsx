@@ -1,9 +1,9 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -20,21 +20,44 @@ import {
   Receipt,
   UserCheck,
   Building2,
+  ChevronUp,
+  User2,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signOut } from "next-auth/react";
 
 interface NavItem {
   title: string;
   href: string;
   icon: LucideIcon;
   badge?: number;
-  roles?: string[]; // Roles that can see this item
+  roles?: string[];
 }
 
-const navItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
   {
     title: "Dashboard",
     href: "/",
@@ -50,6 +73,9 @@ const navItems: NavItem[] = [
     href: "/tasks",
     icon: CheckSquare,
   },
+];
+
+const workspaceItems: NavItem[] = [
   {
     title: "Campaigns",
     href: "/campaigns",
@@ -80,6 +106,9 @@ const navItems: NavItem[] = [
     icon: UserCheck,
     roles: ["CLIENT"],
   },
+];
+
+const toolsItems: NavItem[] = [
   {
     title: "Chat",
     href: "/chat",
@@ -96,6 +125,9 @@ const navItems: NavItem[] = [
     icon: BarChart3,
     roles: ["ADMIN", "MARKETER"],
   },
+];
+
+const financeItems: NavItem[] = [
   {
     title: "Invoices",
     href: "/invoices",
@@ -109,7 +141,7 @@ const navItems: NavItem[] = [
   },
 ];
 
-const bottomNavItems: NavItem[] = [
+const settingsItems: NavItem[] = [
   {
     title: "Notifications",
     href: "/notifications",
@@ -127,79 +159,154 @@ export function AppSidebar() {
   const { data: session } = useSession();
 
   const userRole = session?.user?.role || "CLIENT";
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const userImage = session?.user?.image;
 
-  const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true;
-    return item.roles.includes(userRole);
-  });
+  const filterByRole = (items: NavItem[]) => {
+    return items.filter((item) => {
+      if (!item.roles) return true;
+      return item.roles.includes(userRole);
+    });
+  };
+
+  const renderNavGroup = (items: NavItem[], label?: string) => {
+    const filteredItems = filterByRole(items);
+    if (filteredItems.length === 0) return null;
+
+    return (
+      <SidebarGroup>
+        {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {filteredItems.map((item) => {
+              const Icon = item.icon;
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+
+              return (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                    <Link href={item.href}>
+                      <Icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {item.badge && item.badge > 0 && (
+                    <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
 
   return (
-    <div className='flex h-full w-64 flex-col border-r bg-neutral-50/50 dark:bg-neutral-900/50'>
-      {/* Logo */}
-      <div className='flex h-16 items-center border-b px-6'>
-        <Link href='/' className='flex items-center gap-2'>
-          <div className='h-8 w-8 rounded-lg bg-gradient-to-br from-neutral-900 to-neutral-700 dark:from-neutral-100 dark:to-neutral-300' />
-          <span className='text-lg font-semibold tracking-tight'>Nextoria</span>
-        </Link>
-      </div>
-
-      {/* Navigation */}
-      <ScrollArea className='flex-1 px-3 py-4'>
-        <nav className='space-y-1'>
-          {filteredNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-            return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 px-3",
-                    isActive && "bg-neutral-100 dark:bg-neutral-800"
-                  )}>
-                  <Icon className='h-4 w-4' />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className='ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-medium text-white dark:bg-neutral-100 dark:text-neutral-900'>
-                      {item.badge}
-                    </span>
-                  )}
-                </Button>
+    <Sidebar collapsible='icon'>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size='lg' asChild>
+              <Link href='/'>
+                <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-neutral-900 to-neutral-700 dark:from-neutral-100 dark:to-neutral-300'>
+                  <span className='text-sm font-bold text-white dark:text-neutral-900'>
+                    N
+                  </span>
+                </div>
+                <div className='grid flex-1 text-left text-sm leading-tight'>
+                  <span className='truncate font-semibold'>Nextoria</span>
+                  <span className='truncate text-xs text-muted-foreground'>Hub</span>
+                </div>
               </Link>
-            );
-          })}
-        </nav>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-        <Separator className='my-4' />
+      <SidebarContent className='overflow-hidden'>
+        {renderNavGroup(mainNavItems)}
+        {renderNavGroup(workspaceItems, "Workspace")}
+        {renderNavGroup(toolsItems, "Tools")}
+        {renderNavGroup(financeItems, "Finance")}
+        <SidebarSeparator />
+        {renderNavGroup(settingsItems)}
+      </SidebarContent>
 
-        <nav className='space-y-1'>
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-
-            return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3 px-3",
-                    isActive && "bg-neutral-100 dark:bg-neutral-800"
-                  )}>
-                  <Icon className='h-4 w-4' />
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className='ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white'>
-                      {item.badge}
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size='lg'
+                  className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+                >
+                  <Avatar className='h-8 w-8 rounded-lg'>
+                    <AvatarImage src={userImage || undefined} alt={userName} />
+                    <AvatarFallback className='rounded-lg'>
+                      {userName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='grid flex-1 text-left text-sm leading-tight'>
+                    <span className='truncate font-semibold'>{userName}</span>
+                    <span className='truncate text-xs text-muted-foreground'>
+                      {userEmail}
                     </span>
-                  )}
-                </Button>
-              </Link>
-            );
-          })}
-        </nav>
-      </ScrollArea>
-    </div>
+                  </div>
+                  <ChevronUp className='ml-auto size-4' />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className='w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg'
+                side='bottom'
+                align='end'
+                sideOffset={4}
+              >
+                <DropdownMenuLabel className='p-0 font-normal'>
+                  <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
+                    <Avatar className='h-8 w-8 rounded-lg'>
+                      <AvatarImage src={userImage || undefined} alt={userName} />
+                      <AvatarFallback className='rounded-lg'>
+                        {userName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className='grid flex-1 text-left text-sm leading-tight'>
+                      <span className='truncate font-semibold'>{userName}</span>
+                      <span className='truncate text-xs text-muted-foreground'>
+                        {userEmail}
+                      </span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href='/settings/profile'>
+                    <User2 className='mr-2 h-4 w-4' />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href='/settings'>
+                    <Settings className='mr-2 h-4 w-4' />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className='text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
