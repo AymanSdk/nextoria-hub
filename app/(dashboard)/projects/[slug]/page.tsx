@@ -15,8 +15,9 @@ import {
   Clock,
 } from "lucide-react";
 import { redirect, notFound } from "next/navigation";
-import { TaskKanbanBoard } from "@/components/tasks/task-kanban-board";
+import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 
 export default async function ProjectDetailPage({
   params,
@@ -44,7 +45,9 @@ export default async function ProjectDetailPage({
 
   // Fetch all workspace team members (for task assignment)
   // Since this is an internal agency tool, show all team members regardless of project membership
-  const { workspaceMembers, workspaces } = await import("@/src/db/schema");
+  const { workspaceMembers, workspaces, clients } = await import(
+    "@/src/db/schema"
+  );
 
   // Get the workspace
   const [workspace] = await db
@@ -66,6 +69,18 @@ export default async function ProjectDetailPage({
         .from(workspaceMembers)
         .innerJoin(users, eq(workspaceMembers.userId, users.id))
         .where(eq(workspaceMembers.workspaceId, workspace.id))
+    : [];
+
+  // Fetch all clients for project editing
+  const allClients = workspace
+    ? await db
+        .select({
+          id: clients.id,
+          name: clients.name,
+          companyName: clients.companyName,
+        })
+        .from(clients)
+        .where(eq(clients.workspaceId, workspace.id))
     : [];
 
   // Fetch all tasks for this project with assignee details
@@ -151,9 +166,7 @@ export default async function ProjectDetailPage({
             </div>
           </div>
           <div className='flex items-center gap-2 shrink-0'>
-            <Button variant='outline' size='icon'>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
+            <EditProjectDialog project={project} clients={allClients} />
           </div>
         </div>
 
@@ -272,7 +285,7 @@ export default async function ProjectDetailPage({
         </Card>
       </div>
 
-      {/* Kanban Board */}
+      {/* Tasks */}
       <div className='w-full overflow-hidden'>
         <div className='flex items-center justify-between mb-4'>
           <h2 className='text-xl font-semibold'>Tasks</h2>
@@ -280,9 +293,7 @@ export default async function ProjectDetailPage({
         </div>
 
         {formattedTasks.length > 0 ? (
-          <div className='overflow-x-auto -mx-6 px-6'>
-            <TaskKanbanBoard tasks={formattedTasks} />
-          </div>
+          <TaskViewSwitcher tasks={formattedTasks} members={members} />
         ) : (
           <Card className='p-12'>
             <div className='text-center'>

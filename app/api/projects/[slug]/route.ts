@@ -1,47 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { tasks } from "@/src/db/schema";
+import { projects } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-const updateTaskSchema = z.object({
-  title: z.string().min(1, "Task title is required").optional(),
-  description: z.string().optional(),
-  assigneeId: z.string().optional().nullable(),
+const updateProjectSchema = z.object({
+  name: z.string().min(1, "Project name is required").optional(),
+  description: z.string().optional().nullable(),
   status: z
-    .enum([
-      "BACKLOG",
-      "TODO",
-      "IN_PROGRESS",
-      "IN_REVIEW",
-      "BLOCKED",
-      "DONE",
-      "CANCELLED",
-    ])
+    .enum(["DRAFT", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"])
     .optional(),
-  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
-  labels: z.string().optional(),
+  priority: z.number().min(0).max(10).optional(),
+  color: z.string().optional(),
   startDate: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
-  estimatedHours: z.number().optional().nullable(),
-  actualHours: z.number().optional().nullable(),
+  budgetAmount: z.number().optional().nullable(),
+  budgetCurrency: z.string().optional(),
+  clientId: z.string().optional().nullable(),
 });
 
 /**
- * PATCH /api/tasks/[taskId]
- * Update a task
+ * PATCH /api/projects/[slug]
+ * Update a project
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await getCurrentUser();
-    const { taskId } = await params;
+    const { slug } = await params;
     const body = await req.json();
 
-    const validated = updateTaskSchema.parse(body);
+    const validated = updateProjectSchema.parse(body);
 
     // Build update object
     const updateData: any = {
@@ -61,18 +53,18 @@ export async function PATCH(
         : null;
     }
 
-    // Update the task
-    const [updatedTask] = await db
-      .update(tasks)
+    // Update the project
+    const [updatedProject] = await db
+      .update(projects)
       .set(updateData)
-      .where(eq(tasks.id, taskId))
+      .where(eq(projects.slug, slug))
       .returning();
 
-    if (!updatedTask) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    if (!updatedProject) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ task: updatedTask });
+    return NextResponse.json({ project: updatedProject });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -81,33 +73,33 @@ export async function PATCH(
       );
     }
 
-    console.error("Error updating task:", error);
+    console.error("Error updating project:", error);
     return NextResponse.json(
-      { error: "Failed to update task" },
+      { error: "Failed to update project" },
       { status: 500 }
     );
   }
 }
 
 /**
- * DELETE /api/tasks/[taskId]
- * Delete a task
+ * DELETE /api/projects/[slug]
+ * Delete a project
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ taskId: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await getCurrentUser();
-    const { taskId } = await params;
+    const { slug } = await params;
 
-    await db.delete(tasks).where(eq(tasks.id, taskId));
+    await db.delete(projects).where(eq(projects.slug, slug));
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error("Error deleting project:", error);
     return NextResponse.json(
-      { error: "Failed to delete task" },
+      { error: "Failed to delete project" },
       { status: 500 }
     );
   }
