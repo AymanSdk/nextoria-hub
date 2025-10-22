@@ -34,6 +34,11 @@ export default async function DashboardPage() {
     redirect("/auth/signin");
   }
 
+  // Redirect clients to their dedicated portal
+  if (session.user.role === "CLIENT") {
+    redirect("/client-portal");
+  }
+
   const userIsAdmin = isAdmin(session.user.role);
 
   // Fetch comprehensive statistics
@@ -88,9 +93,7 @@ export default async function DashboardPage() {
   const mrrData = await db
     .select({ total: sql<number>`COALESCE(SUM(${invoices.total}), 0)` })
     .from(invoices)
-    .where(
-      and(eq(invoices.status, "PAID"), gte(invoices.paidAt, thirtyDaysAgo))
-    );
+    .where(and(eq(invoices.status, "PAID"), gte(invoices.paidAt, thirtyDaysAgo)));
 
   // Campaign stats
   const [campaignsCount] = await db.select({ count: count() }).from(campaigns);
@@ -152,9 +155,7 @@ export default async function DashboardPage() {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Projects
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Total Projects</CardTitle>
             <FolderKanban className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
@@ -173,8 +174,8 @@ export default async function DashboardPage() {
           <CardContent>
             <div className='text-2xl font-bold'>{tasksCount.count}</div>
             <p className='text-xs text-neutral-500 mt-1'>
-              {completedTasksCount.count} completed,{" "}
-              {inProgressTasksCount.count} in progress
+              {completedTasksCount.count} completed, {inProgressTasksCount.count} in
+              progress
             </p>
           </CardContent>
         </Card>
@@ -189,8 +190,7 @@ export default async function DashboardPage() {
               ${((totalRevenue[0]?.total || 0) / 100).toLocaleString()}
             </div>
             <p className='text-xs text-neutral-500 mt-1'>
-              ${((pendingRevenue[0]?.total || 0) / 100).toLocaleString()}{" "}
-              pending
+              ${((pendingRevenue[0]?.total || 0) / 100).toLocaleString()} pending
             </p>
           </CardContent>
         </Card>
@@ -202,9 +202,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{teamCount.count}</div>
-            <p className='text-xs text-neutral-500 mt-1'>
-              {clientCount.count} clients
-            </p>
+            <p className='text-xs text-neutral-500 mt-1'>{clientCount.count} clients</p>
           </CardContent>
         </Card>
       </div>
@@ -255,16 +253,12 @@ export default async function DashboardPage() {
 
           <Card>
             <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Team Utilization
-              </CardTitle>
+              <CardTitle className='text-sm font-medium'>Team Utilization</CardTitle>
               <Activity className='h-4 w-4 text-neutral-500' />
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>{avgUtilization}</div>
-              <p className='text-xs text-neutral-500 mt-1'>
-                Avg tasks per member
-              </p>
+              <p className='text-xs text-neutral-500 mt-1'>Avg tasks per member</p>
             </CardContent>
           </Card>
         </div>
@@ -283,9 +277,7 @@ export default async function DashboardPage() {
             <p className='text-sm'>
               You have {blockedTasksCount.count} blocked task
               {blockedTasksCount.count > 1 ? "s" : ""} that need attention.{" "}
-              <Link
-                href='/tasks?status=BLOCKED'
-                className='underline font-medium'>
+              <Link href='/tasks?status=BLOCKED' className='underline font-medium'>
                 View blocked tasks
               </Link>
             </p>
@@ -305,11 +297,13 @@ export default async function DashboardPage() {
                 <Link
                   key={project.id}
                   href={`/projects/${project.slug}`}
-                  className='flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'>
+                  className='flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'
+                >
                   <div className='flex items-center gap-3'>
                     <div
                       className='h-10 w-10 rounded-lg flex items-center justify-center'
-                      style={{ backgroundColor: project.color || "#0070f3" }}>
+                      style={{ backgroundColor: project.color || "#0070f3" }}
+                    >
                       <FolderKanban className='h-5 w-5 text-white' />
                     </div>
                     <div>
@@ -319,9 +313,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <div className='text-sm text-neutral-500'>
-                    {project.status}
-                  </div>
+                  <div className='text-sm text-neutral-500'>{project.status}</div>
                 </Link>
               ))}
             </div>

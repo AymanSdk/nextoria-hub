@@ -1,7 +1,7 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { invoices, users } from "@/src/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { invoices, users, clients, projects } from "@/src/db/schema";
+import { eq, desc, or, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,19 +24,51 @@ export default async function InvoicesPage() {
   }
 
   // Fetch invoices based on user role
-  const userInvoices =
-    session.user.role === "CLIENT"
-      ? await db
+  let userInvoices;
+
+  if (session.user.role === "CLIENT") {
+    // Find client record
+    const [clientRecord] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.email, session.user.email || ""))
+      .limit(1);
+
+    if (clientRecord) {
+      // Get invoices for this client's projects
+      const clientProjects = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.clientId, clientRecord.id));
+
+      const projectIds = clientProjects.map((p) => p.id);
+
+      if (projectIds.length > 0) {
+        userInvoices = await db
           .select()
           .from(invoices)
-          .where(eq(invoices.clientId, session.user.id))
-          .orderBy(desc(invoices.createdAt))
-          .limit(20)
-      : await db
-          .select()
-          .from(invoices)
+          .where(
+            or(
+              eq(invoices.clientId, clientRecord.id),
+              inArray(invoices.projectId, projectIds)
+            )
+          )
           .orderBy(desc(invoices.createdAt))
           .limit(20);
+      } else {
+        userInvoices = [];
+      }
+    } else {
+      userInvoices = [];
+    }
+  } else {
+    // For non-clients, show all invoices
+    userInvoices = await db
+      .select()
+      .from(invoices)
+      .orderBy(desc(invoices.createdAt))
+      .limit(20);
+  }
 
   const totalRevenue = userInvoices
     .filter((inv) => inv.status === "PAID")
@@ -65,9 +97,13 @@ export default async function InvoicesPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Invoices</h1>
+          <h1 className='text-3xl font-bold tracking-tight'>
+            {session.user.role === "CLIENT" ? "My Invoices" : "Invoices"}
+          </h1>
           <p className='text-neutral-500 dark:text-neutral-400 mt-2'>
-            Create, send, and track invoices
+            {session.user.role === "CLIENT"
+              ? "View and download your invoices"
+              : "Create, send, and track invoices"}
           </p>
         </div>
         {session.user.role !== "CLIENT" && (
@@ -90,17 +126,14 @@ export default async function InvoicesPage() {
               ${(totalRevenue / 100).toLocaleString()}
             </div>
             <p className='text-xs text-neutral-500 mt-1'>
-              {userInvoices.filter((i) => i.status === "PAID").length} paid
-              invoices
+              {userInvoices.filter((i) => i.status === "PAID").length} paid invoices
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Pending Payment
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Pending Payment</CardTitle>
             <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
@@ -115,9 +148,7 @@ export default async function InvoicesPage() {
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Invoices
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Total Invoices</CardTitle>
             <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
@@ -158,9 +189,7 @@ export default async function InvoicesPage() {
               <TableBody>
                 {userInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
-                    <TableCell className='font-medium'>
-                      {invoice.invoiceNumber}
-                    </TableCell>
+                    <TableCell className='font-medium'>{invoice.invoiceNumber}</TableCell>
                     <TableCell>
                       {new Date(invoice.issueDate).toLocaleDateString()}
                     </TableCell>
@@ -168,8 +197,7 @@ export default async function InvoicesPage() {
                       {new Date(invoice.dueDate).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      ${(invoice.total / 100).toLocaleString()}{" "}
-                      {invoice.currency}
+                      ${(invoice.total / 100).toLocaleString()} {invoice.currency}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(invoice.status)}>

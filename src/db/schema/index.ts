@@ -13,6 +13,9 @@ export * from "./workspaces";
 export * from "./projects";
 export * from "./tasks";
 
+// Project Requests
+export * from "./project-requests";
+
 // Clients
 export * from "./clients";
 
@@ -65,6 +68,7 @@ import { expenses } from "./expenses";
 import { approvals, approvalFiles, approvalComments } from "./approvals";
 import { recurringTasks } from "./recurring-tasks";
 import { clients, clientContacts } from "./clients";
+import { projectRequests, projectRequestComments } from "./project-requests";
 
 /**
  * User Relations
@@ -84,6 +88,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   notifications: many(notifications),
   notificationPreferences: one(notificationPreferences),
   chatMessages: many(chatMessages),
+  projectRequests: many(projectRequests),
 }));
 
 /**
@@ -99,6 +104,7 @@ export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   projects: many(projects),
   integrations: many(integrations),
   chatChannels: many(chatChannels),
+  projectRequests: many(projectRequests),
 }));
 
 /**
@@ -180,25 +186,22 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
 /**
  * Chat Relations
  */
-export const chatChannelsRelations = relations(
-  chatChannels,
-  ({ one, many }) => ({
-    workspace: one(workspaces, {
-      fields: [chatChannels.workspaceId],
-      references: [workspaces.id],
-    }),
-    project: one(projects, {
-      fields: [chatChannels.projectId],
-      references: [projects.id],
-    }),
-    creator: one(users, {
-      fields: [chatChannels.createdBy],
-      references: [users.id],
-    }),
-    messages: many(chatMessages),
-    members: many(chatChannelMembers),
-  })
-);
+export const chatChannelsRelations = relations(chatChannels, ({ one, many }) => ({
+  workspace: one(workspaces, {
+    fields: [chatChannels.workspaceId],
+    references: [workspaces.id],
+  }),
+  project: one(projects, {
+    fields: [chatChannels.projectId],
+    references: [projects.id],
+  }),
+  creator: one(users, {
+    fields: [chatChannels.createdBy],
+    references: [users.id],
+  }),
+  messages: many(chatMessages),
+  members: many(chatChannelMembers),
+}));
 
 /**
  * Client Relations
@@ -210,4 +213,28 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   }),
   projects: many(projects),
   contacts: many(clientContacts),
+  projectRequests: many(projectRequests),
+}));
+
+/**
+ * Project Request Relations
+ */
+export const projectRequestsRelations = relations(projectRequests, ({ one, many }) => ({
+  workspace: one(workspaces, {
+    fields: [projectRequests.workspaceId],
+    references: [workspaces.id],
+  }),
+  requestedBy: one(users, {
+    fields: [projectRequests.requestedBy],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [projectRequests.clientId],
+    references: [clients.id],
+  }),
+  reviewedBy: one(users, {
+    fields: [projectRequests.reviewedBy],
+    references: [users.id],
+  }),
+  comments: many(projectRequestComments),
 }));

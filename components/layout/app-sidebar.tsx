@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useProjectRequestStats } from "@/hooks/use-project-request-stats";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -22,6 +23,7 @@ import {
   Building2,
   ChevronUp,
   User2,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -75,6 +77,15 @@ const mainNavItems: NavItem[] = [
   },
 ];
 
+const clientRequestItems: NavItem[] = [
+  {
+    title: "Project Requests",
+    href: "/project-requests",
+    icon: Send,
+    roles: ["CLIENT"],
+  },
+];
+
 const workspaceItems: NavItem[] = [
   {
     title: "Campaigns",
@@ -92,6 +103,12 @@ const workspaceItems: NavItem[] = [
     title: "Clients",
     href: "/clients",
     icon: Building2,
+    roles: ["ADMIN", "DEVELOPER", "DESIGNER", "MARKETER"],
+  },
+  {
+    title: "Project Requests",
+    href: "/project-requests",
+    icon: Send,
     roles: ["ADMIN", "DEVELOPER", "DESIGNER", "MARKETER"],
   },
   {
@@ -157,11 +174,40 @@ const settingsItems: NavItem[] = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { pendingCount } = useProjectRequestStats();
 
   const userRole = session?.user?.role || "CLIENT";
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
   const userImage = session?.user?.image;
+  const isClient = userRole === "CLIENT";
+
+  // Customize navigation items based on role
+  const customMainNavItems = mainNavItems.map((item) => {
+    if (isClient) {
+      // For clients, change "Dashboard" to point to client portal
+      if (item.href === "/") {
+        return { ...item, href: "/client-portal", title: "Dashboard" };
+      }
+      // Change "Projects" to "My Projects" for clients
+      if (item.href === "/projects") {
+        return { ...item, title: "My Projects" };
+      }
+      // Change "Tasks" to "My Tasks" for clients
+      if (item.href === "/tasks") {
+        return { ...item, title: "My Tasks" };
+      }
+    }
+    return item;
+  });
+
+  // Add badge count to Project Requests for admins/team
+  const customWorkspaceItems = workspaceItems.map((item) => {
+    if (item.href === "/project-requests" && pendingCount > 0) {
+      return { ...item, badge: pendingCount };
+    }
+    return item;
+  });
 
   const filterByRole = (items: NavItem[]) => {
     return items.filter((item) => {
@@ -228,10 +274,19 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className='overflow-hidden'>
-        {renderNavGroup(mainNavItems)}
-        {renderNavGroup(workspaceItems, "Workspace")}
-        {renderNavGroup(toolsItems, "Tools")}
-        {renderNavGroup(financeItems, "Finance")}
+        {renderNavGroup(customMainNavItems)}
+        {isClient && renderNavGroup(clientRequestItems)}
+        {!isClient && renderNavGroup(customWorkspaceItems, "Workspace")}
+        {!isClient && renderNavGroup(toolsItems, "Tools")}
+        {isClient &&
+          renderNavGroup(
+            toolsItems.filter((item) => item.href === "/chat" || item.href === "/files"),
+            "Tools"
+          )}
+        {renderNavGroup(
+          financeItems.filter((item) => item.href === "/invoices"),
+          isClient ? "Invoices" : "Finance"
+        )}
         <SidebarSeparator />
         {renderNavGroup(settingsItems)}
       </SidebarContent>
