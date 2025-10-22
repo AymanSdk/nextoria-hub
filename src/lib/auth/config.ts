@@ -1,11 +1,7 @@
 import NextAuth, { DefaultSession } from "next-auth";
-// import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
 import { db } from "@/src/db";
 import { users } from "@/src/db/schema";
-// import { accounts, sessions, verificationTokens } from "@/src/db/schema";
 import { compare } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { Role } from "@/src/lib/constants/roles";
@@ -43,17 +39,8 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  // Note: Cannot use adapter with Credentials provider
-  // Adapter is only for OAuth providers
-  // adapter: DrizzleAdapter(db, {
-  //   usersTable: users,
-  //   accountsTable: accounts,
-  //   sessionsTable: sessions,
-  //   verificationTokensTable: verificationTokens,
-  // }),
-
   providers: [
-    // Email/Password
+    // Email/Password Authentication Only
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -100,20 +87,6 @@ export const {
         };
       },
     }),
-
-    // Google OAuth
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
-
-    // GitHub OAuth
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
   ],
 
   pages: {
@@ -154,13 +127,8 @@ export const {
       return session;
     },
 
-    async signIn({ user, account }) {
-      // Allow OAuth sign-ins
-      if (account?.provider !== "credentials") {
-        return true;
-      }
-
-      // For credentials, check if user is active
+    async signIn({ user }) {
+      // Check if user is active
       return user.id ? true : false;
     },
   },
@@ -168,12 +136,9 @@ export const {
   events: {
     async createUser({ user }) {
       console.log("New user created:", user.email);
-      // You can add logic here to:
-      // - Send welcome email
-      // - Create default workspace
-      // - Set up notification preferences
     },
   },
 
-  debug: process.env.NODE_ENV === "development",
+  // Disable debug mode to prevent bloated session cookies
+  debug: false,
 });

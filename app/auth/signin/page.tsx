@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/card";
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -26,6 +28,8 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,113 +43,123 @@ export default function SignInPage() {
       });
 
       if (result?.error) {
+        console.error("Sign in error:", result.error);
         toast.error("Invalid email or password");
-      } else {
+      } else if (result?.ok) {
         toast.success("Welcome back!");
         router.push(callbackUrl);
         router.refresh();
+      } else {
+        console.error("Unexpected sign in result:", result);
+        toast.error("Something went wrong. Please try again.");
       }
     } catch (error) {
+      console.error("Sign in exception:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
-    setIsLoading(true);
-    try {
-      await signIn(provider, { callbackUrl });
-    } catch (error) {
-      toast.error("Failed to sign in");
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className='flex min-h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-950 px-4'>
-      <Card className='w-full max-w-md'>
-        <CardHeader className='space-y-1'>
-          <CardTitle className='text-2xl font-bold tracking-tight'>
+    <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-8'>
+      <Card className='w-full max-w-md shadow-xl'>
+        <CardHeader className='space-y-3 text-center'>
+          <div className='mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2'>
+            <Lock className='h-6 w-6 text-primary-foreground' />
+          </div>
+          <CardTitle className='text-3xl font-bold tracking-tight'>
             Welcome back
           </CardTitle>
-          <CardDescription>Sign in to your account to continue</CardDescription>
+          <CardDescription className='text-base'>
+            Sign in to your Nextoria account
+          </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-4'>
+        <CardContent>
           <form onSubmit={handleSubmit} className='space-y-4'>
             <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='you@example.com'
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
+              <Label htmlFor='email' className='text-sm font-medium'>
+                Email Address
+              </Label>
+              <div className='relative'>
+                <Mail className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Input
+                  id='email'
+                  type='email'
+                  placeholder='you@example.com'
+                  className='pl-10'
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
             </div>
             <div className='space-y-2'>
               <div className='flex items-center justify-between'>
-                <Label htmlFor='password'>Password</Label>
+                <Label htmlFor='password' className='text-sm font-medium'>
+                  Password
+                </Label>
                 <Link
                   href='/auth/reset-password'
-                  className='text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'>
+                  className='text-xs text-primary hover:underline'
+                >
                   Forgot password?
                 </Link>
               </div>
-              <Input
-                id='password'
-                type='password'
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+              <div className='relative'>
+                <Lock className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Input
+                  id='password'
+                  type={showPassword ? "text" : "password"}
+                  className='pl-10 pr-10'
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors'
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className='h-4 w-4' />
+                  ) : (
+                    <Eye className='h-4 w-4' />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className='flex items-center space-x-2'>
+              <Checkbox
+                id='remember'
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                 disabled={isLoading}
               />
+              <Label
+                htmlFor='remember'
+                className='text-sm font-normal cursor-pointer select-none'
+              >
+                Remember me for 30 days
+              </Label>
             </div>
-            <Button type='submit' className='w-full' disabled={isLoading}>
-              {isLoading && (
-                <Icons.spinner className='mr-2 h-4 w-4 animate-spin' />
-              )}
+            <Button type='submit' className='w-full h-11' disabled={isLoading}>
+              {isLoading && <Icons.spinner className='mr-2 h-4 w-4 animate-spin' />}
               Sign In
             </Button>
           </form>
-
-          <div className='relative'>
-            <div className='absolute inset-0 flex items-center'>
-              <span className='w-full border-t' />
-            </div>
-            <div className='relative flex justify-center text-xs uppercase'>
-              <span className='bg-white dark:bg-neutral-950 px-2 text-neutral-500'>
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className='grid grid-cols-2 gap-4'>
-            <Button
-              variant='outline'
-              onClick={() => handleOAuthSignIn("google")}
-              disabled={isLoading}>
-              <Icons.google className='mr-2 h-4 w-4' />
-              Google
-            </Button>
-            <Button
-              variant='outline'
-              onClick={() => handleOAuthSignIn("github")}
-              disabled={isLoading}>
-              <Icons.gitHub className='mr-2 h-4 w-4' />
-              GitHub
-            </Button>
-          </div>
         </CardContent>
-        <CardFooter className='flex flex-col space-y-4'>
-          <div className='text-sm text-neutral-600 dark:text-neutral-400'>
-            Don't have an account?{" "}
+        <CardFooter className='flex flex-col space-y-4 border-t pt-6'>
+          <div className='text-sm text-center text-muted-foreground'>
+            Need access?{" "}
             <Link
               href='/auth/signup'
-              className='font-medium text-neutral-900 dark:text-neutral-100 hover:underline'>
-              Sign up
+              className='font-medium text-primary hover:underline'
+            >
+              Request an invitation
             </Link>
           </div>
         </CardFooter>
