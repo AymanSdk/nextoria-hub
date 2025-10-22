@@ -4,10 +4,15 @@ import { chatChannels, chatChannelMembers } from "@/src/db/schema/chat";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { isTeamMember } from "@/src/lib/constants/roles";
 
 /**
  * GET /api/chat/channels
  * Get all chat channels for the current user's workspace
+ * 
+ * Access Control:
+ * - Team members (ADMIN, DEVELOPER, DESIGNER, MARKETER): See all channels
+ * - Clients (CLIENT): See only channels they're members of
  */
 export async function GET(request: NextRequest) {
   try {
@@ -19,30 +24,60 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Workspace ID required" }, { status: 400 });
     }
 
-    // Get all channels in the workspace where the user is a member
-    const channels = await db
-      .select({
-        id: chatChannels.id,
-        name: chatChannels.name,
-        description: chatChannels.description,
-        isPrivate: chatChannels.isPrivate,
-        isArchived: chatChannels.isArchived,
-        projectId: chatChannels.projectId,
-        createdAt: chatChannels.createdAt,
-        createdBy: chatChannels.createdBy,
-      })
-      .from(chatChannels)
-      .leftJoin(chatChannelMembers, eq(chatChannels.id, chatChannelMembers.channelId))
-      .where(
-        and(eq(chatChannels.workspaceId, workspaceId), eq(chatChannels.isArchived, false))
-      );
+    const userIsTeamMember = isTeamMember(user.role);
 
-    // Filter channels where user is a member or channel is not private
-    const accessibleChannels = channels.filter(
-      (channel) => !channel.isPrivate || user.id === channel.createdBy
-    );
+    if (userIsTeamMember) {
+      // Team members see all channels in the workspace
+      const channels = await db
+        .select({
+          id: chatChannels.id,
+          name: chatChannels.name,
+          description: chatChannels.description,
+          isPrivate: chatChannels.isPrivate,
+          isArchived: chatChannels.isArchived,
+          projectId: chatChannels.projectId,
+          createdAt: chatChannels.createdAt,
+          createdBy: chatChannels.createdBy,
+        })
+        .from(chatChannels)
+        .where(
+          and(
+            eq(chatChannels.workspaceId, workspaceId),
+            eq(chatChannels.isArchived, false)
+          )
+        );
 
-    return NextResponse.json(accessibleChannels);
+      return NextResponse.json(channels);
+    } else {
+      // Clients only see channels they're members of
+      const channels = await db
+        .select({
+          id: chatChannels.id,
+          name: chatChannels.name,
+          description: chatChannels.description,
+          isPrivate: chatChannels.isPrivate,
+          isArchived: chatChannels.isArchived,
+          projectId: chatChannels.projectId,
+          createdAt: chatChannels.createdAt,
+          createdBy: chatChannels.createdBy,
+        })
+        .from(chatChannels)
+        .innerJoin(
+          chatChannelMembers,
+          and(
+            eq(chatChannels.id, chatChannelMembers.channelId),
+            eq(chatChannelMembers.userId, user.id)
+          )
+        )
+        .where(
+          and(
+            eq(chatChannels.workspaceId, workspaceId),
+            eq(chatChannels.isArchived, false)
+          )
+        );
+
+      return NextResponse.json(channels);
+    }
   } catch (error) {
     console.error("Error fetching channels:", error);
     return NextResponse.json({ error: "Failed to fetch channels" }, { status: 500 });

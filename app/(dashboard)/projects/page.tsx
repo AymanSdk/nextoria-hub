@@ -34,7 +34,17 @@ export default async function ProjectsPage() {
   const isClient = session.user.role === "CLIENT";
 
   // Fetch projects based on user role
-  let allProjects;
+  let allProjects: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    status: string;
+    priority: number | null;
+    color: string | null;
+    dueDate: Date | null;
+    budget: number | null;
+  }[] = [];
 
   if (isClient) {
     // For clients, find their client record and fetch only their projects

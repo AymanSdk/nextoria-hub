@@ -24,10 +24,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const [campaign] = await db
-      .select()
-      .from(campaigns)
-      .where(eq(campaigns.id, id));
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, id));
 
     if (!campaign) {
       return apiError("Campaign not found", 404);
@@ -73,10 +70,7 @@ export async function PATCH(
       tags,
     } = body;
 
-    const [existing] = await db
-      .select()
-      .from(campaigns)
-      .where(eq(campaigns.id, id));
+    const [existing] = await db.select().from(campaigns).where(eq(campaigns.id, id));
 
     if (!existing) {
       return apiError("Campaign not found", 404);
@@ -142,10 +136,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const [existing] = await db
-      .select()
-      .from(campaigns)
-      .where(eq(campaigns.id, id));
+    const [existing] = await db.select().from(campaigns).where(eq(campaigns.id, id));
 
     if (!existing) {
       return apiError("Campaign not found", 404);

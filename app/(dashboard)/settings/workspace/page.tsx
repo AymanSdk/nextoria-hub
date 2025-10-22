@@ -276,7 +276,7 @@ export default async function WorkspaceSettingsPage() {
                 </div>
                 <Switch
                   id='client-portal'
-                  defaultChecked={settings?.enableClientPortal}
+                  defaultChecked={settings?.enableClientPortal ?? undefined}
                 />
               </div>
 
@@ -289,7 +289,7 @@ export default async function WorkspaceSettingsPage() {
                 </div>
                 <Switch
                   id='time-tracking'
-                  defaultChecked={settings?.enableTimeTracking}
+                  defaultChecked={settings?.enableTimeTracking ?? undefined}
                 />
               </div>
 
@@ -302,7 +302,7 @@ export default async function WorkspaceSettingsPage() {
                 </div>
                 <Switch
                   id='invoicing'
-                  defaultChecked={settings?.enableInvoicing}
+                  defaultChecked={settings?.enableInvoicing ?? undefined}
                 />
               </div>
 
@@ -335,7 +335,7 @@ export default async function WorkspaceSettingsPage() {
                 </div>
                 <Switch
                   id='email-notifications'
-                  defaultChecked={settings?.emailNotifications}
+                  defaultChecked={settings?.emailNotifications ?? undefined}
                 />
               </div>
 
@@ -348,7 +348,7 @@ export default async function WorkspaceSettingsPage() {
                 </div>
                 <Switch
                   id='slack-integration'
-                  defaultChecked={settings?.slackIntegration}
+                  defaultChecked={settings?.slackIntegration ?? undefined}
                 />
               </div>
 

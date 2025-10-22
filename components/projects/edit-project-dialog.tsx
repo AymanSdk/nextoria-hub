@@ -45,12 +45,12 @@ interface Project {
   slug: string;
   description: string | null;
   status: string;
-  priority: number;
+  priority: number | null;
   color: string | null;
   startDate: Date | null;
   dueDate: Date | null;
   budgetAmount: number | null;
-  budgetCurrency: string;
+  budgetCurrency: string | null;
   clientId: string | null;
 }
 
@@ -76,14 +76,12 @@ export function EditProjectDialog({
     name: project.name,
     description: project.description || "",
     status: project.status,
-    priority: project.priority.toString(),
+    priority: project.priority?.toString() || "1",
     color: project.color || "#0070f3",
     startDate: project.startDate
       ? new Date(project.startDate).toISOString().split("T")[0]
       : "",
-    dueDate: project.dueDate
-      ? new Date(project.dueDate).toISOString().split("T")[0]
-      : "",
+    dueDate: project.dueDate ? new Date(project.dueDate).toISOString().split("T")[0] : "",
     budgetAmount: project.budgetAmount?.toString() || "",
     budgetCurrency: project.budgetCurrency || "USD",
     clientId: project.clientId || "",
@@ -95,7 +93,7 @@ export function EditProjectDialog({
       name: project.name,
       description: project.description || "",
       status: project.status,
-      priority: project.priority.toString(),
+      priority: project.priority?.toString() || "1",
       color: project.color || "#0070f3",
       startDate: project.startDate
         ? new Date(project.startDate).toISOString().split("T")[0]
@@ -121,9 +119,7 @@ export function EditProjectDialog({
         body: JSON.stringify({
           ...formData,
           priority: parseInt(formData.priority),
-          budgetAmount: formData.budgetAmount
-            ? parseFloat(formData.budgetAmount)
-            : null,
+          budgetAmount: formData.budgetAmount ? parseFloat(formData.budgetAmount) : null,
           clientId: formData.clientId || null,
           startDate: formData.startDate || null,
           dueDate: formData.dueDate || null,
@@ -181,9 +177,7 @@ export function EditProjectDialog({
         <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
-            <DialogDescription>
-              Update project details and settings
-            </DialogDescription>
+            <DialogDescription>Update project details and settings</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className='space-y-4'>
@@ -200,9 +194,7 @@ export function EditProjectDialog({
               <Input
                 id='name'
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder='Enter project name'
                 required
               />
@@ -226,9 +218,8 @@ export function EditProjectDialog({
                 <Label htmlFor='status'>Status</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }>
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
                   <SelectTrigger id='status'>
                     <SelectValue />
                   </SelectTrigger>
@@ -250,9 +241,7 @@ export function EditProjectDialog({
                   min='0'
                   max='10'
                   value={formData.priority}
-                  onChange={(e) =>
-                    setFormData({ ...formData, priority: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
                   required
                 />
               </div>
@@ -262,9 +251,8 @@ export function EditProjectDialog({
               <Label htmlFor='clientId'>Client</Label>
               <Select
                 value={formData.clientId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, clientId: value })
-                }>
+                onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+              >
                 <SelectTrigger id='clientId'>
                   <SelectValue placeholder='No client (optional)' />
                 </SelectTrigger>
@@ -298,9 +286,7 @@ export function EditProjectDialog({
                   id='dueDate'
                   type='date'
                   value={formData.dueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dueDate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 />
               </div>
             </div>
@@ -327,7 +313,8 @@ export function EditProjectDialog({
                   value={formData.budgetCurrency}
                   onValueChange={(value) =>
                     setFormData({ ...formData, budgetCurrency: value })
-                  }>
+                  }
+                >
                   <SelectTrigger id='budgetCurrency'>
                     <SelectValue />
                   </SelectTrigger>
@@ -348,17 +335,13 @@ export function EditProjectDialog({
                   id='color'
                   type='color'
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                   className='w-20 h-10'
                 />
                 <Input
                   type='text'
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                   placeholder='#0070f3'
                   className='flex-1'
                 />
@@ -370,7 +353,8 @@ export function EditProjectDialog({
                 type='button'
                 variant='destructive'
                 onClick={() => setShowDeleteDialog(true)}
-                disabled={loading}>
+                disabled={loading}
+              >
                 <Trash2 className='h-4 w-4 mr-2' />
                 Delete Project
               </Button>
@@ -380,7 +364,8 @@ export function EditProjectDialog({
                   type='button'
                   variant='outline'
                   onClick={() => setOpen(false)}
-                  disabled={loading}>
+                  disabled={loading}
+                >
                   Cancel
                 </Button>
                 <Button type='submit' disabled={loading}>
@@ -404,9 +389,8 @@ export function EditProjectDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This will also
-              delete all tasks, milestones, and related data. This action cannot
-              be undone.
+              Are you sure you want to delete this project? This will also delete all
+              tasks, milestones, and related data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -414,7 +398,8 @@ export function EditProjectDialog({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className='bg-red-600 hover:bg-red-700'>
+              className='bg-red-600 hover:bg-red-700'
+            >
               {deleting ? (
                 <>
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />

@@ -55,3 +55,27 @@ export function getManageableRoles(userRole: Role): Role[] {
     .map(([role]) => role as Role);
 }
 
+/**
+ * Team member roles (Nextoria team)
+ */
+export const TEAM_ROLES: Role[] = [
+  ROLES.ADMIN,
+  ROLES.DEVELOPER,
+  ROLES.DESIGNER,
+  ROLES.MARKETER,
+];
+
+/**
+ * Check if a role is a team member (not a client)
+ */
+export function isTeamMember(role: Role): boolean {
+  return TEAM_ROLES.includes(role);
+}
+
+/**
+ * Check if a role is a client
+ */
+export function isClient(role: Role): boolean {
+  return role === ROLES.CLIENT;
+}
+

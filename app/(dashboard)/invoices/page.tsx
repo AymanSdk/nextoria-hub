@@ -24,7 +24,7 @@ export default async function InvoicesPage() {
   }
 
   // Fetch invoices based on user role
-  let userInvoices;
+  let userInvoices: (typeof invoices.$inferSelect)[] = [];
 
   if (session.user.role === "CLIENT") {
     // Find client record

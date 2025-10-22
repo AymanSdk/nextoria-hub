@@ -20,12 +20,12 @@ interface TeamMember {
 interface Task {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
   assignee: { id: string; name: string; image: string | null } | null;
-  dueDate?: Date;
-  labels?: string;
+  dueDate: Date | null;
+  labels: string | null;
 }
 
 interface TaskViewSwitcherProps {

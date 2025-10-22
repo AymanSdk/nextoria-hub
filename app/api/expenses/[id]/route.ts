@@ -25,10 +25,7 @@ export async function GET(
 
   try {
     const { id } = await params;
-    const [expense] = await db
-      .select()
-      .from(expenses)
-      .where(eq(expenses.id, id));
+    const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
 
     if (!expense) {
       return apiError("Expense not found", 404);
@@ -57,10 +54,7 @@ export async function PATCH(
     const body = await request.json();
     const { status, approvedBy, notes } = body;
 
-    const [existing] = await db
-      .select()
-      .from(expenses)
-      .where(eq(expenses.id, id));
+    const [existing] = await db.select().from(expenses).where(eq(expenses.id, id));
 
     if (!existing) {
       return apiError("Expense not found", 404);
@@ -120,10 +114,7 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    const [existing] = await db
-      .select()
-      .from(expenses)
-      .where(eq(expenses.id, id));
+    const [existing] = await db.select().from(expenses).where(eq(expenses.id, id));
 
     if (!existing) {
       return apiError("Expense not found", 404);

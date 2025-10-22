@@ -1,22 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/src/db";
-import { chatChannelMembers } from "@/src/db/schema/chat";
+import { chatChannelMembers, chatChannels } from "@/src/db/schema/chat";
 import { users } from "@/src/db/schema/users";
 import { getCurrentUser } from "@/src/lib/auth/session";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { isTeamMember } from "@/src/lib/constants/roles";
 
 /**
  * GET /api/chat/channels/[channelId]/members
  * Get all members of a channel
+ * 
+ * Access Control:
+ * - Team members: Can view all channel members
+ * - Clients: Can view members only if they're a member of the channel
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ channelId: string }> }
 ) {
   try {
-    await getCurrentUser();
+    const user = await getCurrentUser();
     const { channelId } = await params;
+
+    const userIsTeamMember = isTeamMember(user.role);
+
+    // If user is a client, verify they're a member of the channel
+    if (!userIsTeamMember) {
+      const [membership] = await db
+        .select()
+        .from(chatChannelMembers)
+        .where(
+          and(
+            eq(chatChannelMembers.channelId, channelId),
+            eq(chatChannelMembers.userId, user.id)
+          )
+        )
+        .limit(1);
+
+      if (!membership) {
+        return NextResponse.json(
+          { error: "Access denied: You are not a member of this channel" },
+          { status: 403 }
+        );
+      }
+    }
 
     const members = await db
       .select({
@@ -26,6 +54,7 @@ export async function GET(
         userName: users.name,
         userEmail: users.email,
         userImage: users.image,
+        userRole: users.role,
       })
       .from(chatChannelMembers)
       .innerJoin(users, eq(chatChannelMembers.userId, users.id))
@@ -41,13 +70,17 @@ export async function GET(
 /**
  * POST /api/chat/channels/[channelId]/members
  * Add a member to a channel
+ * 
+ * Access Control:
+ * - Only team members can add members to channels
+ * - Clients cannot add members
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ channelId: string }> }
 ) {
   try {
-    await getCurrentUser();
+    const user = await getCurrentUser();
     const { channelId } = await params;
     const { userId } = await request.json();
 
@@ -55,13 +88,35 @@ export async function POST(
       return NextResponse.json({ error: "User ID required" }, { status: 400 });
     }
 
+    // Only team members can add members to channels
+    const userIsTeamMember = isTeamMember(user.role);
+    if (!userIsTeamMember) {
+      return NextResponse.json(
+        { error: "Access denied: Only team members can add channel members" },
+        { status: 403 }
+      );
+    }
+
+    // Verify channel exists
+    const [channel] = await db
+      .select()
+      .from(chatChannels)
+      .where(eq(chatChannels.id, channelId))
+      .limit(1);
+
+    if (!channel) {
+      return NextResponse.json({ error: "Channel not found" }, { status: 404 });
+    }
+
     // Check if already a member
     const existing = await db
       .select()
       .from(chatChannelMembers)
       .where(
-        eq(chatChannelMembers.channelId, channelId) &&
+        and(
+          eq(chatChannelMembers.channelId, channelId),
           eq(chatChannelMembers.userId, userId)
+        )
       )
       .limit(1);
 

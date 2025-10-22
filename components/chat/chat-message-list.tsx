@@ -47,8 +47,8 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
   return (
     <div className='flex flex-col h-full'>
       <ScrollArea className='flex-1'>
-        <div className='px-4 py-6' ref={scrollRef}>
-          <div className='space-y-6 max-w-4xl mx-auto'>
+        <div className='px-4 sm:px-6 lg:px-8 py-6' ref={scrollRef}>
+          <div className='space-y-4'>
             {messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center h-96 text-muted-foreground'>
                 <div className='h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4'>
@@ -64,7 +64,9 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                 return (
                   <div
                     key={message.id}
-                    className='flex gap-3 group hover:bg-muted/30 -mx-4 px-4 py-2 rounded-lg transition-colors'
+                    className={`flex gap-3 group hover:bg-muted/30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 rounded-lg transition-colors ${
+                      isCurrentUser ? "justify-end" : "justify-start"
+                    }`}
                   >
                     {!isCurrentUser && (
                       <Avatar className='h-10 w-10 mt-1 shrink-0'>
@@ -76,8 +78,8 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                     )}
 
                     <div
-                      className={`flex-1 min-w-0 ${
-                        isCurrentUser ? "flex flex-col items-end" : ""
+                      className={`flex flex-col max-w-[75%] sm:max-w-[70%] ${
+                        isCurrentUser ? "items-end" : "items-start"
                       }`}
                     >
                       <div
@@ -96,10 +98,10 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                       </div>
 
                       <div
-                        className={`inline-block px-4 py-2.5 rounded-2xl max-w-[85%] ${
+                        className={`px-4 py-2.5 rounded-2xl ${
                           isCurrentUser
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground"
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted text-foreground rounded-bl-sm"
                         }`}
                       >
                         <p className='text-sm whitespace-pre-wrap break-words leading-relaxed'>
