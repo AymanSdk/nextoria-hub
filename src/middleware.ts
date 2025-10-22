@@ -6,7 +6,6 @@ import type { NextRequest } from "next/server";
  * Public routes that don't require authentication
  */
 const PUBLIC_ROUTES = [
-  "/",
   "/auth/signin",
   "/auth/signup",
   "/auth/signout",
@@ -19,7 +18,7 @@ const PUBLIC_ROUTES = [
 /**
  * Protected routes that require authentication
  */
-const PROTECTED_ROUTES = ["/dashboard", "/projects", "/tasks", "/settings"];
+const PROTECTED_ROUTES = ["/", "/projects", "/tasks", "/settings", "/clients"];
 
 /**
  * Admin-only routes
@@ -69,13 +68,13 @@ export default auth(async function middleware(req: NextRequest) {
   // Check admin routes
   if (matchesRoute(pathname, ADMIN_ROUTES)) {
     if (session?.user?.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
   // Redirect authenticated users from auth pages to dashboard
   if (session?.user && pathname.startsWith("/auth/")) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();

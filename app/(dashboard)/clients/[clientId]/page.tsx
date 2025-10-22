@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
+import { InviteClientDialog } from "@/components/clients/invite-client-dialog";
 
 export default async function ClientDetailPage({
   params,
@@ -71,7 +72,13 @@ export default async function ClientDetailPage({
                 </p>
               )}
             </div>
-            {client.isActive && <Badge variant='default'>Active</Badge>}
+            <div className='flex items-center gap-2'>
+              <InviteClientDialog
+                clientEmail={client.email}
+                clientName={client.name}
+              />
+              {client.isActive && <Badge variant='default'>Active</Badge>}
+            </div>
           </div>
         </div>
       </div>

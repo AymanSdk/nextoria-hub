@@ -1,19 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/src/db";
-import { users, workspaces, workspaceMembers } from "@/src/db/schema";
+import {
+  users,
+  workspaces,
+  workspaceMembers,
+  invitations,
+} from "@/src/db/schema";
 import { hashPassword, validatePassword } from "@/src/lib/auth/password";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password } = body;
+    const { name, email, password, invitationToken } = body;
 
     // Validate input
     if (!email || !password || !name) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Require invitation token
+    if (!invitationToken) {
+      return NextResponse.json(
+        { error: "Invitation token is required. Please contact an admin." },
+        { status: 400 }
+      );
+    }
+
+    // Validate invitation
+    const [invitation] = await db
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.token, invitationToken),
+          isNull(invitations.acceptedAt)
+        )
+      )
+      .limit(1);
+
+    if (!invitation) {
+      return NextResponse.json(
+        { error: "Invalid or expired invitation" },
+        { status: 400 }
+      );
+    }
+
+    // Check if invitation has expired
+    if (new Date() > new Date(invitation.expires)) {
+      return NextResponse.json(
+        { error: "Invitation has expired. Please request a new one." },
+        { status: 400 }
+      );
+    }
+
+    // Check if email matches invitation
+    if (invitation.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "Email does not match the invitation" },
         { status: 400 }
       );
     }
@@ -44,37 +92,40 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+    // Create user with role from invitation
     const [newUser] = await db
       .insert(users)
       .values({
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        role: "CLIENT", // Default role - admin can change this later
+        role: invitation.role as any, // Use role from invitation
         isActive: true,
       })
       .returning();
 
-    // Auto-add user to Nextoria Agency workspace (if it exists)
-    const [agencyWorkspace] = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.slug, "nextoria-agency"))
-      .limit(1);
+    // Add user to workspace
+    await db.insert(workspaceMembers).values({
+      id: nanoid(),
+      workspaceId: invitation.workspaceId,
+      userId: newUser.id,
+      role: invitation.role as any,
+      isActive: true,
+      joinedAt: new Date(),
+      updatedAt: new Date(),
+    });
 
-    if (agencyWorkspace) {
-      await db.insert(workspaceMembers).values({
-        id: nanoid(),
-        workspaceId: agencyWorkspace.id,
-        userId: newUser.id,
-        role: "CLIENT", // Default role in workspace
-        isActive: true,
-        joinedAt: new Date(),
-        updatedAt: new Date(),
-      });
-      console.log(`✓ User ${email} added to Nextoria Agency workspace`);
-    }
+    // Mark invitation as accepted
+    await db
+      .update(invitations)
+      .set({
+        acceptedAt: new Date(),
+      })
+      .where(eq(invitations.id, invitation.id));
+
+    console.log(
+      `✓ User ${email} created with role ${invitation.role} and added to workspace`
+    );
 
     // Return success (without password)
     return NextResponse.json({

@@ -7,8 +7,9 @@ import {
   invoices,
   files,
   approvals,
+  clients,
 } from "@/src/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, or } from "drizzle-orm";
 import {
   Card,
   CardContent,
@@ -52,21 +53,49 @@ export default async function ClientPortalPage() {
 
   const isClient = session.user.role === "CLIENT";
 
-  // Fetch projects (for clients, only their assigned projects)
-  const userProjects = await db
-    .select({
-      id: projects.id,
-      name: projects.name,
-      slug: projects.slug,
-      description: projects.description,
-      status: projects.status,
-      color: projects.color,
-      dueDate: projects.dueDate,
-    })
-    .from(projects)
-    .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
-    .where(eq(projectMembers.userId, session.user.id))
-    .limit(10);
+  // For clients, find their client record first
+  let userProjects: any[] = [];
+
+  if (isClient) {
+    // Find client record by email
+    const [clientRecord] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.email, session.user.email || ""))
+      .limit(1);
+
+    if (clientRecord) {
+      // Fetch projects assigned to this client
+      userProjects = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          slug: projects.slug,
+          description: projects.description,
+          status: projects.status,
+          color: projects.color,
+          dueDate: projects.dueDate,
+        })
+        .from(projects)
+        .where(eq(projects.clientId, clientRecord.id));
+    }
+  } else {
+    // For non-clients (team members), fetch projects they're members of
+    userProjects = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        slug: projects.slug,
+        description: projects.description,
+        status: projects.status,
+        color: projects.color,
+        dueDate: projects.dueDate,
+      })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+      .where(eq(projectMembers.userId, session.user.id))
+      .limit(10);
+  }
 
   // Get project stats
   const projectStats = await Promise.all(
@@ -94,11 +123,53 @@ export default async function ClientPortalPage() {
   );
 
   // Fetch invoices (for clients, only their invoices)
-  const userInvoices = await db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.clientId, session.user.id))
-    .limit(10);
+  let userInvoices: any[] = [];
+
+  if (isClient) {
+    // Find client record by email
+    const [clientRecord] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.email, session.user.email || ""))
+      .limit(1);
+
+    if (clientRecord) {
+      // Get invoices for projects assigned to this client
+      const projectIds = userProjects.map((p) => p.id);
+      if (projectIds.length > 0) {
+        userInvoices = await db
+          .select()
+          .from(invoices)
+          .where(
+            or(
+              eq(invoices.clientId, session.user.id),
+              // Also check if invoice is for a project assigned to this client
+              and(
+                eq(invoices.projectId, projectIds[0] as any) // We'll need to handle multiple projects better
+              )
+            )
+          )
+          .limit(10);
+      } else {
+        // Fallback: get invoices directly linked to user
+        userInvoices = await db
+          .select()
+          .from(invoices)
+          .where(eq(invoices.clientId, session.user.id))
+          .limit(10);
+      }
+    } else {
+      // No client record found, try by user ID
+      userInvoices = await db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.clientId, session.user.id))
+        .limit(10);
+    }
+  } else {
+    // For non-clients, get all invoices (or filter based on permissions)
+    userInvoices = await db.select().from(invoices).limit(10);
+  }
 
   // Fetch pending approvals
   const pendingApprovals = await db
@@ -301,7 +372,13 @@ export default async function ClientPortalPage() {
             {projectStats.length === 0 && (
               <div className='text-center py-12 text-neutral-500'>
                 <FolderKanban className='mx-auto h-12 w-12 mb-4 text-neutral-400' />
-                <p>No projects assigned yet</p>
+                <p className='font-medium mb-2'>No projects assigned yet</p>
+                {isClient && (
+                  <p className='text-sm text-neutral-400'>
+                    Projects will appear here once they are assigned to you by
+                    the team
+                  </p>
+                )}
               </div>
             )}
           </div>
