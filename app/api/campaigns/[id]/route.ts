@@ -17,16 +17,17 @@ import { logUpdate, logDelete } from "@/src/lib/audit/logger";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requirePermission(request, "campaigns", "read");
   if ("error" in auth) return apiError(auth.error, auth.status);
 
   try {
+    const { id } = await params;
     const [campaign] = await db
       .select()
       .from(campaigns)
-      .where(eq(campaigns.id, params.id));
+      .where(eq(campaigns.id, id));
 
     if (!campaign) {
       return apiError("Campaign not found", 404);
