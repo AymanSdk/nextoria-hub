@@ -203,9 +203,9 @@ export default function ChatPage() {
   }
 
   return (
-    <div className='fixed inset-0 top-14 left-0 right-0 bottom-0 flex bg-background'>
+    <div className='flex gap-0 h-[calc(100vh-8rem)] -m-4 md:-m-6 lg:-m-8'>
       {/* Channel List Sidebar */}
-      <div className='w-64 border-r bg-muted/10 shrink-0'>
+      <div className='w-64 border-r bg-card/50 backdrop-blur-sm shrink-0 flex flex-col'>
         <ChannelList
           channels={channels}
           currentChannelId={currentChannel?.id}
@@ -219,19 +219,21 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Area */}
-      <div className='flex-1 flex flex-col min-w-0'>
+      <div className='flex-1 flex flex-col min-w-0 bg-background'>
         {currentChannel && workspaceId ? (
           <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
             {/* Channel Header */}
-            <div className='h-14 px-4 border-b bg-background flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center'>
+            <div className='h-14 px-4 sm:px-6 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between shrink-0'>
+              <div className='flex items-center gap-3 min-w-0'>
+                <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0'>
                   <MessageSquare className='h-4 w-4 text-primary' />
                 </div>
-                <div>
-                  <h2 className='font-semibold text-base'>#{currentChannel.name}</h2>
+                <div className='min-w-0'>
+                  <h2 className='font-semibold text-base truncate'>
+                    #{currentChannel.name}
+                  </h2>
                   {currentChannel.description && (
-                    <p className='text-xs text-muted-foreground'>
+                    <p className='text-xs text-muted-foreground truncate'>
                       {currentChannel.description}
                     </p>
                   )}
@@ -239,13 +241,15 @@ export default function ChatPage() {
               </div>
 
               {/* Presence Indicator - Right side of header */}
-              <ChatPresence />
+              <div className='shrink-0'>
+                <ChatPresence />
+              </div>
             </div>
 
             {/* Messages Area */}
-            <div className='flex-1 overflow-hidden bg-background'>
+            <div className='flex-1 overflow-hidden bg-background relative'>
               {isLoadingMessages ? (
-                <div className='h-full flex items-center justify-center'>
+                <div className='absolute inset-0 flex items-center justify-center'>
                   <div className='text-center'>
                     <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2' />
                     <p className='text-sm text-muted-foreground'>Loading messages...</p>
@@ -267,7 +271,7 @@ export default function ChatPage() {
             </div>
 
             {/* Message Input - Fixed at bottom */}
-            <div className='border-t bg-background'>
+            <div className='border-t bg-background/95 backdrop-blur-sm shrink-0'>
               <ChatInput onSendMessage={handleSendMessage} />
             </div>
           </ChatRoomProvider>

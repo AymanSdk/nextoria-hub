@@ -71,18 +71,23 @@ export function ChannelList({
 
   return (
     <div className='flex flex-col h-full'>
-      <div className='h-14 px-4 border-b flex items-center justify-between bg-muted/50'>
+      {/* Header */}
+      <div className='h-14 px-4 border-b flex items-center justify-between shrink-0 bg-muted/30'>
         <h2 className='font-semibold text-sm uppercase tracking-wide text-muted-foreground'>
           Channels
         </h2>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant='ghost' size='icon' className='h-7 w-7'>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors'
+            >
               <Plus className='h-4 w-4' />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className='sm:max-w-[500px]'>
             <DialogHeader>
               <DialogTitle>Create Channel</DialogTitle>
               <DialogDescription>
@@ -98,6 +103,7 @@ export function ChannelList({
                   placeholder='e.g., general, design, dev'
                   value={newChannel.name}
                   onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
+                  className='focus-visible:ring-primary'
                 />
               </div>
 
@@ -113,13 +119,17 @@ export function ChannelList({
                       description: e.target.value,
                     })
                   }
+                  className='focus-visible:ring-primary resize-none'
+                  rows={3}
                 />
               </div>
 
-              <div className='flex items-center justify-between'>
+              <div className='flex items-center justify-between p-3 rounded-lg border bg-muted/30'>
                 <div className='space-y-0.5'>
-                  <Label htmlFor='private'>Private Channel</Label>
-                  <p className='text-sm text-neutral-500'>
+                  <Label htmlFor='private' className='text-sm font-medium'>
+                    Private Channel
+                  </Label>
+                  <p className='text-xs text-muted-foreground'>
                     Only invited members can access
                   </p>
                 </div>
@@ -134,10 +144,17 @@ export function ChannelList({
             </div>
 
             <DialogFooter>
-              <Button variant='outline' onClick={() => setIsCreateDialogOpen(false)}>
+              <Button
+                variant='outline'
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isCreating}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateChannel} disabled={isCreating}>
+              <Button
+                onClick={handleCreateChannel}
+                disabled={isCreating || !newChannel.name.trim()}
+              >
                 {isCreating ? "Creating..." : "Create Channel"}
               </Button>
             </DialogFooter>
@@ -145,12 +162,13 @@ export function ChannelList({
         </Dialog>
       </div>
 
+      {/* Channel List */}
       <ScrollArea className='flex-1'>
-        <div className='p-3 space-y-0.5'>
+        <div className='p-2 space-y-0.5'>
           {channels.length === 0 ? (
             <div className='p-6 text-center text-sm text-muted-foreground'>
-              <div className='h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3'>
-                <Hash className='h-6 w-6' />
+              <div className='h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3'>
+                <Hash className='h-6 w-6 text-muted-foreground' />
               </div>
               <p className='font-medium text-foreground mb-1'>No channels yet</p>
               <p className='text-xs'>Create one to get started!</p>
@@ -161,18 +179,25 @@ export function ChannelList({
                 key={channel.id}
                 onClick={() => onChannelSelect(channel.id)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-all",
-                  "hover:bg-muted",
+                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
+                  "hover:bg-muted/80",
                   currentChannelId === channel.id
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-muted-foreground"
+                    ? "bg-primary/10 text-primary font-medium shadow-sm ring-1 ring-primary/20"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {channel.isPrivate ? (
-                  <Lock className='h-4 w-4 shrink-0' />
-                ) : (
-                  <Hash className='h-4 w-4 shrink-0' />
-                )}
+                <div
+                  className={cn(
+                    "h-5 w-5 rounded flex items-center justify-center shrink-0",
+                    currentChannelId === channel.id ? "bg-primary/20" : "bg-muted"
+                  )}
+                >
+                  {channel.isPrivate ? (
+                    <Lock className='h-3 w-3' />
+                  ) : (
+                    <Hash className='h-3 w-3' />
+                  )}
+                </div>
                 <span className='truncate'>{channel.name}</span>
               </button>
             ))
