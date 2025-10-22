@@ -71,17 +71,23 @@ interface Client {
 interface TeamBrowserProps {
   initialTeamMembers: TeamMember[];
   currentUserId: string;
+  currentUserRole?: string;
 }
 
 type ViewMode = "list" | "grid" | "compact";
 
-export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserProps) {
+export function TeamBrowser({
+  initialTeamMembers,
+  currentUserId,
+  currentUserRole,
+}: TeamBrowserProps) {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("team");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [clientFormData, setClientFormData] = useState({
     name: "",
     companyName: "",
@@ -184,91 +190,102 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
   // Team Members View Renderers
   const renderTeamListView = () => (
     <div className='space-y-2'>
-      {teamMembers.map((member) => (
-        <div
-          key={member.id}
-          className='group flex items-center gap-3 p-3 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all'
-        >
-          <Avatar className='h-10 w-10'>
-            <AvatarImage src={member.image || undefined} />
-            <AvatarFallback>
-              {member.name?.substring(0, 2).toUpperCase() || "??"}
-            </AvatarFallback>
-          </Avatar>
+      {teamMembers
+        .filter((m) => m.role !== "CLIENT")
+        .map((member) => (
+          <div
+            key={member.id}
+            className={`group flex items-center gap-3 p-3 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all ${
+              currentUserRole !== "CLIENT" ? "cursor-pointer" : ""
+            }`}
+            onClick={() => currentUserRole !== "CLIENT" && setSelectedMember(member)}
+          >
+            <Avatar className='h-10 w-10'>
+              <AvatarImage src={member.image || undefined} />
+              <AvatarFallback>
+                {member.name?.substring(0, 2).toUpperCase() || "??"}
+              </AvatarFallback>
+            </Avatar>
 
-          <div className='flex-1 min-w-0'>
-            <div className='flex items-center gap-2 mb-0.5'>
-              <h4 className='font-medium text-sm'>{member.name || "Unknown"}</h4>
+            <div className='flex-1 min-w-0'>
+              <div className='flex items-center gap-2 mb-0.5'>
+                <h4 className='font-medium text-sm'>{member.name || "Unknown"}</h4>
+                {!member.isActive && (
+                  <Badge variant='destructive' className='text-xs'>
+                    Inactive
+                  </Badge>
+                )}
+              </div>
+              <div className='flex items-center gap-2 text-xs text-neutral-500 flex-wrap'>
+                <span className='flex items-center gap-1'>
+                  <Mail className='h-3 w-3' />
+                  <span className='hidden sm:inline'>{member.email}</span>
+                </span>
+                <span className='hidden sm:inline'>•</span>
+                <span className='hidden sm:inline'>
+                  Joined {formatDate(member.joinedAt)}
+                </span>
+              </div>
+            </div>
+
+            <Badge variant={getRoleBadgeVariant(member.role)} className='shrink-0'>
+              {member.role}
+            </Badge>
+
+            <TeamMemberActions
+              memberId={member.id}
+              memberName={member.name || member.email}
+              isActive={member.isActive}
+              currentUserId={currentUserId}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        ))}
+    </div>
+  );
+
+  const renderTeamGridView = () => (
+    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3'>
+      {teamMembers
+        .filter((m) => m.role !== "CLIENT")
+        .map((member) => (
+          <div
+            key={member.id}
+            className={`group flex flex-col p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all ${
+              currentUserRole !== "CLIENT" ? "cursor-pointer" : ""
+            }`}
+            onClick={() => currentUserRole !== "CLIENT" && setSelectedMember(member)}
+          >
+            <div className='flex flex-col items-center mb-3'>
+              <Avatar className='h-16 w-16 mb-2'>
+                <AvatarImage src={member.image || undefined} />
+                <AvatarFallback>
+                  {member.name?.substring(0, 2).toUpperCase() || "??"}
+                </AvatarFallback>
+              </Avatar>
+              <h4 className='font-medium text-sm text-center line-clamp-1 w-full'>
+                {member.name || "Unknown"}
+              </h4>
+              <p className='text-xs text-neutral-500 text-center truncate w-full'>
+                {member.email}
+              </p>
+            </div>
+
+            <div className='flex flex-col gap-1 text-xs text-neutral-500 mt-auto'>
+              <Badge
+                variant={getRoleBadgeVariant(member.role)}
+                className='text-xs text-center'
+              >
+                {member.role}
+              </Badge>
               {!member.isActive && (
                 <Badge variant='destructive' className='text-xs'>
                   Inactive
                 </Badge>
               )}
             </div>
-            <div className='flex items-center gap-2 text-xs text-neutral-500 flex-wrap'>
-              <span className='flex items-center gap-1'>
-                <Mail className='h-3 w-3' />
-                <span className='hidden sm:inline'>{member.email}</span>
-              </span>
-              <span className='hidden sm:inline'>•</span>
-              <span className='hidden sm:inline'>
-                Joined {formatDate(member.joinedAt)}
-              </span>
-            </div>
           </div>
-
-          <Badge variant={getRoleBadgeVariant(member.role)} className='shrink-0'>
-            {member.role}
-          </Badge>
-
-          <TeamMemberActions
-            memberId={member.id}
-            memberName={member.name || member.email}
-            isActive={member.isActive}
-            currentUserId={currentUserId}
-          />
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderTeamGridView = () => (
-    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3'>
-      {teamMembers.map((member) => (
-        <div
-          key={member.id}
-          className='group flex flex-col p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all'
-        >
-          <div className='flex flex-col items-center mb-3'>
-            <Avatar className='h-16 w-16 mb-2'>
-              <AvatarImage src={member.image || undefined} />
-              <AvatarFallback>
-                {member.name?.substring(0, 2).toUpperCase() || "??"}
-              </AvatarFallback>
-            </Avatar>
-            <h4 className='font-medium text-sm text-center line-clamp-1 w-full'>
-              {member.name || "Unknown"}
-            </h4>
-            <p className='text-xs text-neutral-500 text-center truncate w-full'>
-              {member.email}
-            </p>
-          </div>
-
-          <div className='flex flex-col gap-1 text-xs text-neutral-500 mt-auto'>
-            <Badge
-              variant={getRoleBadgeVariant(member.role)}
-              className='text-xs text-center'
-            >
-              {member.role}
-            </Badge>
-            {!member.isActive && (
-              <Badge variant='destructive' className='text-xs'>
-                Inactive
-              </Badge>
-            )}
-          </div>
-        </div>
-      ))}
+        ))}
     </div>
   );
 
@@ -283,55 +300,61 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
       </div>
 
       <div className='divide-y dark:divide-neutral-800'>
-        {teamMembers.map((member) => (
-          <div
-            key={member.id}
-            className='group grid grid-cols-12 gap-4 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors'
-          >
-            <div className='col-span-4 flex items-center gap-2 min-w-0'>
-              <Avatar className='h-7 w-7'>
-                <AvatarImage src={member.image || undefined} />
-                <AvatarFallback className='text-xs'>
-                  {member.name?.substring(0, 2).toUpperCase() || "??"}
-                </AvatarFallback>
-              </Avatar>
-              <span className='text-sm truncate'>{member.name || "Unknown"}</span>
-            </div>
+        {teamMembers
+          .filter((m) => m.role !== "CLIENT")
+          .map((member) => (
+            <div
+              key={member.id}
+              className={`group grid grid-cols-12 gap-4 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors ${
+                currentUserRole !== "CLIENT" ? "cursor-pointer" : ""
+              }`}
+              onClick={() => currentUserRole !== "CLIENT" && setSelectedMember(member)}
+            >
+              <div className='col-span-4 flex items-center gap-2 min-w-0'>
+                <Avatar className='h-7 w-7'>
+                  <AvatarImage src={member.image || undefined} />
+                  <AvatarFallback className='text-xs'>
+                    {member.name?.substring(0, 2).toUpperCase() || "??"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className='text-sm truncate'>{member.name || "Unknown"}</span>
+              </div>
 
-            <div className='col-span-3 hidden md:flex items-center text-xs text-neutral-600 dark:text-neutral-400 truncate'>
-              {member.email}
-            </div>
+              <div className='col-span-3 hidden md:flex items-center text-xs text-neutral-600 dark:text-neutral-400 truncate'>
+                {member.email}
+              </div>
 
-            <div className='col-span-2 hidden lg:flex items-center'>
-              <Badge variant={getRoleBadgeVariant(member.role)} className='text-xs'>
-                {member.role}
-              </Badge>
-            </div>
+              <div className='col-span-2 hidden lg:flex items-center'>
+                <Badge variant={getRoleBadgeVariant(member.role)} className='text-xs'>
+                  {member.role}
+                </Badge>
+              </div>
 
-            <div className='col-span-2 hidden lg:flex items-center text-xs text-neutral-600 dark:text-neutral-400'>
-              {formatDate(member.joinedAt)}
-            </div>
+              <div className='col-span-2 hidden lg:flex items-center text-xs text-neutral-600 dark:text-neutral-400'>
+                {formatDate(member.joinedAt)}
+              </div>
 
-            <div className='col-span-1 flex items-center justify-end'>
-              <TeamMemberActions
-                memberId={member.id}
-                memberName={member.name || member.email}
-                isActive={member.isActive}
-                currentUserId={currentUserId}
-              />
+              <div className='col-span-1 flex items-center justify-end'>
+                <TeamMemberActions
+                  memberId={member.id}
+                  memberName={member.name || member.email}
+                  isActive={member.isActive}
+                  currentUserId={currentUserId}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
 
   // Clients View Renderers
   const renderClientsListView = () => (
-    <div className='space-y-4'>
+    <div className='space-y-2'>
       {clients.map((client) => (
-        <Link key={client.id} href={`/clients/${client.id}`}>
-          <div className='group flex items-center gap-4 p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer'>
+        <Link key={client.id} href={`/clients/${client.id}`} className='block'>
+          <div className='group flex items-center gap-3 p-3 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer'>
             <div className='h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
               <Building2 className='h-5 w-5 text-white' />
             </div>
@@ -384,10 +407,10 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
   );
 
   const renderClientsGridView = () => (
-    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'>
       {clients.map((client) => (
-        <Link key={client.id} href={`/clients/${client.id}`}>
-          <div className='group flex flex-col p-5 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer h-full'>
+        <Link key={client.id} href={`/clients/${client.id}`} className='block h-full'>
+          <div className='group flex flex-col p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer h-full'>
             <div className='flex items-start gap-3 mb-3'>
               <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
                 <Building2 className='h-6 w-6 text-white' />
@@ -454,7 +477,7 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
 
       <div className='divide-y dark:divide-neutral-800'>
         {clients.map((client) => (
-          <Link key={client.id} href={`/clients/${client.id}`}>
+          <Link key={client.id} href={`/clients/${client.id}`} className='block'>
             <div className='group grid grid-cols-12 gap-4 px-4 py-3.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer'>
               <div className='col-span-3 flex items-center gap-2 min-w-0'>
                 <div className='h-7 w-7 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
@@ -497,7 +520,7 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
     <div className='space-y-6'>
       {/* Stats Cards */}
       <div className='grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
-        {/* Total Team Members */}
+        {/* Total Team Members (excluding clients) */}
         <Card className='group relative overflow-hidden border-0 bg-linear-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 hover:shadow-xl hover:scale-[1.02] transition-all duration-300'>
           <div className='absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500' />
           <CardContent className='p-3.5 relative'>
@@ -507,7 +530,7 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
               </div>
               <div className='text-right'>
                 <div className='text-xl sm:text-2xl font-bold text-blue-900 dark:text-blue-100'>
-                  {teamMembers.length}
+                  {teamMembers.filter((m) => m.role !== "CLIENT").length}
                 </div>
                 <div className='text-[9px] sm:text-[10px] font-medium text-blue-600/70 dark:text-blue-400/70 uppercase tracking-wide'>
                   Team Members
@@ -517,7 +540,10 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
             <div className='flex items-center gap-1.5 text-[9px] sm:text-[10px] text-blue-700/60 dark:text-blue-300/60'>
               <span className='flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-white/60 dark:bg-neutral-900/60'>
                 <Shield className='h-2.5 w-2.5' />
-                <span>{teamMembers.filter((m) => m.isActive).length} Active</span>
+                <span>
+                  {teamMembers.filter((m) => m.isActive && m.role !== "CLIENT").length}{" "}
+                  Active
+                </span>
               </span>
             </div>
           </CardContent>
@@ -598,7 +624,7 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
           <TabsList>
             <TabsTrigger value='team'>
               <Users className='mr-2 h-4 w-4' />
-              Team Members ({teamMembers.length})
+              Team Members ({teamMembers.filter((m) => m.role !== "CLIENT").length})
             </TabsTrigger>
             <TabsTrigger value='clients'>
               <Building2 className='mr-2 h-4 w-4' />
@@ -905,6 +931,119 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Team Member Detail Modal */}
+      {selectedMember && (
+        <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
+          <DialogContent className='max-w-2xl'>
+            <DialogHeader>
+              <DialogTitle className='flex items-center gap-3'>
+                <Avatar className='h-12 w-12'>
+                  <AvatarImage src={selectedMember.image || undefined} />
+                  <AvatarFallback>
+                    {selectedMember.name?.substring(0, 2).toUpperCase() || "??"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className='text-xl font-bold'>
+                    {selectedMember.name || "Unknown"}
+                  </div>
+                  <div className='text-sm font-normal text-muted-foreground'>
+                    {selectedMember.email}
+                  </div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className='space-y-6 py-4'>
+              {/* Role & Status */}
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                    Role
+                  </Label>
+                  <div>
+                    <Badge variant={getRoleBadgeVariant(selectedMember.role)}>
+                      {selectedMember.role}
+                    </Badge>
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                    Status
+                  </Label>
+                  <div>
+                    <Badge variant={selectedMember.isActive ? "default" : "destructive"}>
+                      {selectedMember.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className='space-y-3'>
+                <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                  Contact Information
+                </Label>
+                <div className='space-y-2 p-4 border rounded-lg bg-muted/30'>
+                  <div className='flex items-center gap-2 text-sm'>
+                    <Mail className='h-4 w-4 text-muted-foreground' />
+                    <span className='font-medium'>Email:</span>
+                    <span>{selectedMember.email}</span>
+                  </div>
+                  {selectedMember.joinedAt && (
+                    <div className='flex items-center gap-2 text-sm'>
+                      <Calendar className='h-4 w-4 text-muted-foreground' />
+                      <span className='font-medium'>Joined:</span>
+                      <span>{formatDate(selectedMember.joinedAt)}</span>
+                    </div>
+                  )}
+                  {selectedMember.createdAt && (
+                    <div className='flex items-center gap-2 text-sm'>
+                      <Calendar className='h-4 w-4 text-muted-foreground' />
+                      <span className='font-medium'>Member Since:</span>
+                      <span>{formatDate(selectedMember.createdAt)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Workspace Role */}
+              {selectedMember.memberRole && (
+                <div className='space-y-3'>
+                  <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                    Workspace Role
+                  </Label>
+                  <div className='p-4 border rounded-lg bg-muted/30'>
+                    <Badge variant='outline'>{selectedMember.memberRole}</Badge>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions Section (for admins only) */}
+              {selectedMember.id !== currentUserId && (
+                <div className='pt-4 border-t space-y-3'>
+                  <Label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                    Quick Actions
+                  </Label>
+                  <div className='flex gap-2'>
+                    <Button variant='outline' size='sm' className='flex-1'>
+                      <Mail className='h-4 w-4 mr-2' />
+                      Send Email
+                    </Button>
+                    <TeamMemberActions
+                      memberId={selectedMember.id}
+                      memberName={selectedMember.name || selectedMember.email}
+                      isActive={selectedMember.isActive}
+                      currentUserId={currentUserId}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

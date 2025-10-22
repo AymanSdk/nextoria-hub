@@ -17,6 +17,7 @@ interface TeamMemberActionsProps {
   memberName: string;
   isActive: boolean;
   currentUserId: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function TeamMemberActions({
@@ -24,6 +25,7 @@ export function TeamMemberActions({
   memberName,
   isActive,
   currentUserId,
+  onClick,
 }: TeamMemberActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export function TeamMemberActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon' disabled={loading}>
+        <Button variant='ghost' size='icon' disabled={loading} onClick={onClick}>
           <MoreHorizontal className='h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>

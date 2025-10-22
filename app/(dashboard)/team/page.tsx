@@ -1,7 +1,7 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
 import { users, workspaceMembers, workspaces } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/src/lib/auth/rbac";
 import { TeamBrowser } from "@/components/team/team-browser";
@@ -29,7 +29,7 @@ export default async function TeamManagementPage() {
     return <div>Workspace not found</div>;
   }
 
-  // Get all team members
+  // Get all team members (exclude CLIENT role users)
   const teamMembers = await db
     .select({
       id: users.id,
@@ -44,7 +44,7 @@ export default async function TeamManagementPage() {
     })
     .from(workspaceMembers)
     .innerJoin(users, eq(workspaceMembers.userId, users.id))
-    .where(eq(workspaceMembers.workspaceId, workspace.id));
+    .where(and(eq(workspaceMembers.workspaceId, workspace.id), ne(users.role, "CLIENT")));
 
   return (
     <div className='space-y-6'>
@@ -59,7 +59,11 @@ export default async function TeamManagementPage() {
       </div>
 
       {/* Team Browser Component */}
-      <TeamBrowser initialTeamMembers={teamMembers} currentUserId={session.user.id} />
+      <TeamBrowser
+        initialTeamMembers={teamMembers}
+        currentUserId={session.user.id}
+        currentUserRole={session.user.role}
+      />
     </div>
   );
 }
