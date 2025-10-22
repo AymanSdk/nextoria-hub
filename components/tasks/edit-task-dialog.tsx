@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Loader2, Trash2 } from "lucide-react";
+import { Pencil, Loader2, Trash2, Upload, FileText, Download } from "lucide-react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,17 +61,15 @@ interface EditTaskDialogProps {
   trigger?: React.ReactNode;
 }
 
-export function EditTaskDialog({
-  task,
-  members,
-  trigger,
-}: EditTaskDialogProps) {
+export function EditTaskDialog({ task, members, trigger }: EditTaskDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [taskFiles, setTaskFiles] = useState<any[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   const [formData, setFormData] = useState({
     title: task.title,
@@ -79,12 +78,8 @@ export function EditTaskDialog({
     priority: task.priority,
     assigneeId: task.assigneeId || "",
     labels: task.labels || "",
-    dueDate: task.dueDate
-      ? new Date(task.dueDate).toISOString().split("T")[0]
-      : "",
-    startDate: task.startDate
-      ? new Date(task.startDate).toISOString().split("T")[0]
-      : "",
+    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
+    startDate: task.startDate ? new Date(task.startDate).toISOString().split("T")[0] : "",
     estimatedHours: task.estimatedHours?.toString() || "",
     actualHours: task.actualHours?.toString() || "",
   });
@@ -98,9 +93,7 @@ export function EditTaskDialog({
       priority: task.priority,
       assigneeId: task.assigneeId || "",
       labels: task.labels || "",
-      dueDate: task.dueDate
-        ? new Date(task.dueDate).toISOString().split("T")[0]
-        : "",
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
       startDate: task.startDate
         ? new Date(task.startDate).toISOString().split("T")[0]
         : "",
@@ -108,6 +101,71 @@ export function EditTaskDialog({
       actualHours: task.actualHours?.toString() || "",
     });
   }, [task]);
+
+  // Load task files when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchTaskFiles();
+    }
+  }, [open]);
+
+  const fetchTaskFiles = async () => {
+    try {
+      setLoadingFiles(true);
+      const response = await fetch(`/api/files?category=tasks`);
+      if (response.ok) {
+        const data = await response.json();
+        const filteredFiles = data.files.filter((f: any) => f.taskId === task.id);
+        setTaskFiles(filteredFiles);
+      }
+    } catch (error) {
+      console.error("Error fetching task files:", error);
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("taskId", task.id);
+
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+
+        toast.success(`${file.name} uploaded successfully`);
+        fetchTaskFiles();
+      } catch (error) {
+        console.error("Upload error:", error);
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+
+    e.target.value = "";
+  };
+
+  const handleDownload = async (file: any) => {
+    try {
+      const response = await fetch(`/api/deliverables/${file.id}/download`);
+      if (!response.ok) throw new Error("Failed to get download URL");
+      const data = await response.json();
+      window.open(data.downloadUrl, "_blank");
+      toast.success(`Downloading ${file.name}`);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download file");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,9 +181,7 @@ export function EditTaskDialog({
           estimatedHours: formData.estimatedHours
             ? parseFloat(formData.estimatedHours)
             : null,
-          actualHours: formData.actualHours
-            ? parseFloat(formData.actualHours)
-            : null,
+          actualHours: formData.actualHours ? parseFloat(formData.actualHours) : null,
           assigneeId: formData.assigneeId || null,
           dueDate: formData.dueDate || null,
           startDate: formData.startDate || null,
@@ -182,9 +238,7 @@ export function EditTaskDialog({
         <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
-            <DialogDescription>
-              Update task details and assignee
-            </DialogDescription>
+            <DialogDescription>Update task details and assignee</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className='space-y-4'>
@@ -201,9 +255,7 @@ export function EditTaskDialog({
               <Input
                 id='title'
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder='Enter task title'
                 required
               />
@@ -227,9 +279,8 @@ export function EditTaskDialog({
                 <Label htmlFor='status'>Status</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, status: value })
-                  }>
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
                   <SelectTrigger id='status'>
                     <SelectValue />
                   </SelectTrigger>
@@ -249,9 +300,8 @@ export function EditTaskDialog({
                 <Label htmlFor='priority'>Priority</Label>
                 <Select
                   value={formData.priority}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, priority: value })
-                  }>
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
                   <SelectTrigger id='priority'>
                     <SelectValue />
                   </SelectTrigger>
@@ -269,9 +319,8 @@ export function EditTaskDialog({
               <Label htmlFor='assigneeId'>Assign To</Label>
               <Select
                 value={formData.assigneeId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, assigneeId: value })
-                }>
+                onValueChange={(value) => setFormData({ ...formData, assigneeId: value })}
+              >
                 <SelectTrigger id='assigneeId'>
                   <SelectValue placeholder='Unassigned' />
                 </SelectTrigger>
@@ -304,9 +353,7 @@ export function EditTaskDialog({
                   id='dueDate'
                   type='date'
                   value={formData.dueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dueDate: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 />
               </div>
             </div>
@@ -348,11 +395,60 @@ export function EditTaskDialog({
               <Input
                 id='labels'
                 value={formData.labels}
-                onChange={(e) =>
-                  setFormData({ ...formData, labels: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, labels: e.target.value })}
                 placeholder='e.g., bug, feature, design (comma-separated)'
               />
+            </div>
+
+            {/* Task Files */}
+            <div className='space-y-3 border-t pt-4'>
+              <div className='flex items-center justify-between'>
+                <Label>Task Files ({taskFiles.length})</Label>
+                <div>
+                  <input
+                    type='file'
+                    id='task-file-input'
+                    className='hidden'
+                    multiple
+                    accept='.png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv'
+                    onChange={handleFileUpload}
+                  />
+                  <label
+                    htmlFor='task-file-input'
+                    className='inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded cursor-pointer transition-colors'
+                  >
+                    <Upload className='h-3.5 w-3.5' />
+                    Attach Files
+                  </label>
+                </div>
+              </div>
+
+              {loadingFiles ? (
+                <p className='text-sm text-neutral-500'>Loading files...</p>
+              ) : taskFiles.length > 0 ? (
+                <div className='space-y-2 max-h-40 overflow-y-auto'>
+                  {taskFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className='flex items-center justify-between p-2 bg-neutral-50 dark:bg-neutral-900 rounded text-sm'
+                    >
+                      <div className='flex items-center gap-2 flex-1 min-w-0'>
+                        <FileText className='h-4 w-4 text-neutral-500 shrink-0' />
+                        <span className='truncate'>{file.name}</span>
+                      </div>
+                      <button
+                        type='button'
+                        onClick={() => handleDownload(file)}
+                        className='text-blue-600 hover:text-blue-700 shrink-0'
+                      >
+                        <Download className='h-4 w-4' />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className='text-sm text-neutral-500'>No files attached yet</p>
+              )}
             </div>
 
             <div className='flex items-center justify-between gap-3 pt-4'>
@@ -360,7 +456,8 @@ export function EditTaskDialog({
                 type='button'
                 variant='destructive'
                 onClick={() => setShowDeleteDialog(true)}
-                disabled={loading}>
+                disabled={loading}
+              >
                 <Trash2 className='h-4 w-4 mr-2' />
                 Delete Task
               </Button>
@@ -370,7 +467,8 @@ export function EditTaskDialog({
                   type='button'
                   variant='outline'
                   onClick={() => setOpen(false)}
-                  disabled={loading}>
+                  disabled={loading}
+                >
                   Cancel
                 </Button>
                 <Button type='submit' disabled={loading}>
@@ -394,8 +492,7 @@ export function EditTaskDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Task</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this task? This action cannot be
-              undone.
+              Are you sure you want to delete this task? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -403,7 +500,8 @@ export function EditTaskDialog({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className='bg-red-600 hover:bg-red-700'>
+              className='bg-red-600 hover:bg-red-700'
+            >
               {deleting ? (
                 <>
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />

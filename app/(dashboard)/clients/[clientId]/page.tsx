@@ -11,10 +11,12 @@ import {
   Globe,
   MapPin,
   FolderKanban,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { InviteClientDialog } from "@/components/clients/invite-client-dialog";
+import { ClientFilesSection } from "@/components/clients/client-files-section";
 
 export default async function ClientDetailPage({
   params,
@@ -57,15 +59,13 @@ export default async function ClientDetailPage({
     <div className='space-y-6'>
       {/* Client Header */}
       <div className='flex items-start gap-4'>
-        <div className='h-20 w-20 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0'>
+        <div className='h-20 w-20 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
           <Building2 className='h-10 w-10 text-white' />
         </div>
         <div className='flex-1'>
           <div className='flex items-start justify-between'>
             <div>
-              <h1 className='text-3xl font-bold tracking-tight'>
-                {client.name}
-              </h1>
+              <h1 className='text-3xl font-bold tracking-tight'>{client.name}</h1>
               {client.companyName && (
                 <p className='text-xl text-neutral-600 dark:text-neutral-400 mt-1'>
                   {client.companyName}
@@ -73,10 +73,7 @@ export default async function ClientDetailPage({
               )}
             </div>
             <div className='flex items-center gap-2'>
-              <InviteClientDialog
-                clientEmail={client.email}
-                clientName={client.name}
-              />
+              <InviteClientDialog clientEmail={client.email} clientName={client.name} />
               {client.isActive && <Badge variant='default'>Active</Badge>}
             </div>
           </div>
@@ -97,7 +94,8 @@ export default async function ClientDetailPage({
                 <p className='text-sm text-neutral-500'>Email</p>
                 <a
                   href={`mailto:${client.email}`}
-                  className='font-medium hover:underline'>
+                  className='font-medium hover:underline'
+                >
                   {client.email}
                 </a>
               </div>
@@ -108,9 +106,7 @@ export default async function ClientDetailPage({
                 <Phone className='h-5 w-5 text-neutral-500' />
                 <div>
                   <p className='text-sm text-neutral-500'>Phone</p>
-                  <a
-                    href={`tel:${client.phone}`}
-                    className='font-medium hover:underline'>
+                  <a href={`tel:${client.phone}`} className='font-medium hover:underline'>
                     {client.phone}
                   </a>
                 </div>
@@ -126,7 +122,8 @@ export default async function ClientDetailPage({
                     href={client.website}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='font-medium hover:underline'>
+                    className='font-medium hover:underline'
+                  >
                     {client.website}
                   </a>
                 </div>
@@ -207,10 +204,12 @@ export default async function ClientDetailPage({
                 <Link
                   key={project.id}
                   href={`/projects/${project.slug}`}
-                  className='flex items-center gap-3 p-3 rounded-lg border hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'>
+                  className='flex items-center gap-3 p-3 rounded-lg border hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors'
+                >
                   <div
-                    className='h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0'
-                    style={{ backgroundColor: project.color || "#0070f3" }}>
+                    className='h-10 w-10 rounded-lg flex items-center justify-center shrink-0'
+                    style={{ backgroundColor: project.color || "#0070f3" }}
+                  >
                     <FolderKanban className='h-5 w-5 text-white' />
                   </div>
                   <div className='flex-1 min-w-0'>
@@ -219,7 +218,7 @@ export default async function ClientDetailPage({
                       {project.description || "No description"}
                     </p>
                   </div>
-                  <Badge variant='outline' className='text-xs flex-shrink-0'>
+                  <Badge variant='outline' className='text-xs shrink-0'>
                     {project.status}
                   </Badge>
                 </Link>
@@ -228,6 +227,9 @@ export default async function ClientDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Client Files */}
+      <ClientFilesSection clientId={clientId} />
     </div>
   );
 }

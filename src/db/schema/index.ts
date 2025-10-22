@@ -214,6 +214,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   projects: many(projects),
   contacts: many(clientContacts),
   projectRequests: many(projectRequests),
+  files: many(files),
 }));
 
 /**
@@ -237,4 +238,26 @@ export const projectRequestsRelations = relations(projectRequests, ({ one, many 
     references: [users.id],
   }),
   comments: many(projectRequestComments),
+}));
+
+/**
+ * File Relations
+ */
+export const filesRelations = relations(files, ({ one }) => ({
+  uploadedBy: one(users, {
+    fields: [files.uploadedBy],
+    references: [users.id],
+  }),
+  project: one(projects, {
+    fields: [files.projectId],
+    references: [projects.id],
+  }),
+  task: one(tasks, {
+    fields: [files.taskId],
+    references: [tasks.id],
+  }),
+  client: one(clients, {
+    fields: [files.clientId],
+    references: [clients.id],
+  }),
 }));

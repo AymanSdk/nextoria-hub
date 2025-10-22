@@ -34,26 +34,39 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const workspaceId = searchParams.get("workspaceId");
 
-    if (!workspaceId) {
-      return NextResponse.json(
-        { error: "workspaceId is required" },
-        { status: 400 }
-      );
-    }
+    // If workspaceId is provided, use it; otherwise fetch all clients for the user's workspace
+    let allClients;
 
-    const allClients = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.workspaceId, workspaceId))
-      .orderBy(clients.name);
+    if (workspaceId) {
+      allClients = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.workspaceId, workspaceId))
+        .orderBy(clients.name);
+    } else {
+      // Fetch all clients (for file upload use case)
+      const { workspaces } = await import("@/src/db/schema");
+      const [defaultWorkspace] = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.slug, "nextoria-agency"))
+        .limit(1);
+
+      if (defaultWorkspace) {
+        allClients = await db
+          .select()
+          .from(clients)
+          .where(eq(clients.workspaceId, defaultWorkspace.id))
+          .orderBy(clients.name);
+      } else {
+        allClients = [];
+      }
+    }
 
     return NextResponse.json({ clients: allClients });
   } catch (error) {
     console.error("Error fetching clients:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch clients" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch clients" }, { status: 500 });
   }
 }
 
@@ -82,16 +95,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ client: newClient }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
     }
 
     console.error("Error creating client:", error);
-    return NextResponse.json(
-      { error: "Failed to create client" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create client" }, { status: 500 });
   }
 }

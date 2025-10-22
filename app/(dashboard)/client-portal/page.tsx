@@ -40,6 +40,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DeliverablesList } from "@/components/deliverables/deliverables-list";
+import { DeliverableUpload } from "@/components/deliverables/deliverable-upload";
 
 export default async function ClientPortalPage() {
   const session = await getSession();
@@ -176,19 +178,28 @@ export default async function ClientPortalPage() {
     .select()
     .from(approvals)
     .where(
-      and(
-        eq(approvals.approverId, session.user.id),
-        eq(approvals.status, "PENDING")
-      )
+      and(eq(approvals.approverId, session.user.id), eq(approvals.status, "PENDING"))
     )
     .limit(5);
 
-  // Fetch deliverable files (files from user's projects)
-  const projectIds = userProjects.map((p) => p.id);
-  const deliverables =
-    projectIds.length > 0
-      ? await db.select().from(files).where(eq(files.isPublic, true)).limit(10)
-      : [];
+  // Get client record for deliverables
+  let clientRecord = null;
+  if (isClient) {
+    [clientRecord] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.email, session.user.email || ""))
+      .limit(1);
+  }
+
+  // Fetch deliverables (files linked to this client)
+  let deliverables: any[] = [];
+  if (clientRecord) {
+    deliverables = await db
+      .select()
+      .from(files)
+      .where(and(eq(files.clientId, clientRecord.id), eq(files.isArchived, false)));
+  }
 
   // Calculate totals
   const totalInvoiced = userInvoices.reduce((acc, inv) => acc + inv.total, 0);
@@ -229,26 +240,20 @@ export default async function ClientPortalPage() {
       <div className='grid gap-4 md:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Active Projects
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Active Projects</CardTitle>
             <FolderKanban className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
               {projectStats.filter((p) => p.status === "ACTIVE").length}
             </div>
-            <p className='text-xs text-neutral-500 mt-1'>
-              {projectStats.length} total
-            </p>
+            <p className='text-xs text-neutral-500 mt-1'>{projectStats.length} total</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Invoiced
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Total Invoiced</CardTitle>
             <DollarSign className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
@@ -274,9 +279,7 @@ export default async function ClientPortalPage() {
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Pending Approvals
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Pending Approvals</CardTitle>
             <AlertCircle className='h-4 w-4 text-neutral-500' />
           </CardHeader>
           <CardContent>
@@ -297,14 +300,14 @@ export default async function ClientPortalPage() {
           </CardHeader>
           <CardContent>
             <p className='text-sm mb-4'>
-              You have {pendingApprovals.length} item(s) waiting for your
-              approval
+              You have {pendingApprovals.length} item(s) waiting for your approval
             </p>
             <div className='space-y-2'>
               {pendingApprovals.map((approval) => (
                 <div
                   key={approval.id}
-                  className='flex items-center justify-between p-3 border rounded-lg'>
+                  className='flex items-center justify-between p-3 border rounded-lg'
+                >
                   <div>
                     <p className='font-medium'>{approval.title}</p>
                     <p className='text-sm text-neutral-500'>
@@ -326,23 +329,19 @@ export default async function ClientPortalPage() {
       <Card>
         <CardHeader>
           <CardTitle>My Projects</CardTitle>
-          <CardDescription>
-            Track the progress of your ongoing projects
-          </CardDescription>
+          <CardDescription>Track the progress of your ongoing projects</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
             {projectStats.map((project) => (
-              <Link
-                key={project.id}
-                href={`/projects/${project.slug}`}
-                className='block'>
+              <Link key={project.id} href={`/projects/${project.slug}`} className='block'>
                 <div className='p-4 border rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'>
                   <div className='flex items-start justify-between mb-3'>
                     <div className='flex items-center gap-3'>
                       <div
                         className='h-10 w-10 rounded-lg flex items-center justify-center'
-                        style={{ backgroundColor: project.color || "#0070f3" }}>
+                        style={{ backgroundColor: project.color || "#0070f3" }}
+                      >
                         <FolderKanban className='h-5 w-5 text-white' />
                       </div>
                       <div>
@@ -361,8 +360,7 @@ export default async function ClientPortalPage() {
                     </div>
                     <Progress value={project.progress} />
                     <p className='text-xs text-neutral-500'>
-                      {project.completedTasks} of {project.totalTasks} tasks
-                      completed
+                      {project.completedTasks} of {project.totalTasks} tasks completed
                     </p>
                   </div>
                 </div>
@@ -375,8 +373,7 @@ export default async function ClientPortalPage() {
                 <p className='font-medium mb-2'>No projects assigned yet</p>
                 {isClient && (
                   <p className='text-sm text-neutral-400'>
-                    Projects will appear here once they are assigned to you by
-                    the team
+                    Projects will appear here once they are assigned to you by the team
                   </p>
                 )}
               </div>
@@ -413,9 +410,7 @@ export default async function ClientPortalPage() {
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      ${(invoice.total / 100).toLocaleString()}
-                    </TableCell>
+                    <TableCell>${(invoice.total / 100).toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge className={getInvoiceStatusColor(invoice.status)}>
                         {invoice.status}
@@ -449,37 +444,33 @@ export default async function ClientPortalPage() {
         {/* Deliverables */}
         <Card>
           <CardHeader>
-            <CardTitle>Deliverables</CardTitle>
-            <CardDescription>Download your project files</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-2'>
-              {deliverables.slice(0, 5).map((file) => (
-                <div
-                  key={file.id}
-                  className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center gap-3'>
-                    <FileText className='h-4 w-4 text-neutral-500' />
-                    <div>
-                      <p className='font-medium text-sm'>{file.name}</p>
-                      <p className='text-xs text-neutral-500'>
-                        {(file.size / 1024).toFixed(2)} KB
-                      </p>
-                    </div>
-                  </div>
-                  <Button size='sm' variant='ghost'>
-                    <Download className='h-4 w-4' />
-                  </Button>
-                </div>
-              ))}
-
-              {deliverables.length === 0 && (
-                <div className='text-center py-8 text-neutral-500'>
-                  <FileText className='mx-auto h-8 w-8 mb-2 text-neutral-400' />
-                  <p>No deliverables yet</p>
-                </div>
+            <div className='flex items-center justify-between'>
+              <div>
+                <CardTitle>Deliverables</CardTitle>
+                <CardDescription>Download your project files</CardDescription>
+              </div>
+              {clientRecord && !isClient && (
+                <DeliverableUpload
+                  clientId={clientRecord.id}
+                  triggerButton={
+                    <Button size='sm'>
+                      <Download className='mr-2 h-4 w-4' />
+                      Upload File
+                    </Button>
+                  }
+                />
               )}
             </div>
+          </CardHeader>
+          <CardContent>
+            {clientRecord ? (
+              <DeliverablesList clientId={clientRecord.id} canDelete={!isClient} />
+            ) : (
+              <div className='text-center py-8 text-neutral-500'>
+                <FileText className='mx-auto h-8 w-8 mb-2 text-neutral-400' />
+                <p>No client record found</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -488,9 +479,7 @@ export default async function ClientPortalPage() {
       <Card>
         <CardHeader>
           <CardTitle>Need Help?</CardTitle>
-          <CardDescription>
-            Get in touch with your project manager
-          </CardDescription>
+          <CardDescription>Get in touch with your project manager</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='flex items-center gap-4'>

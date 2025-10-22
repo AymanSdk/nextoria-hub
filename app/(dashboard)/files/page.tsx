@@ -1,41 +1,34 @@
-import { getSession } from "@/src/lib/auth/session";
-import { redirect } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload } from "lucide-react";
+import { Cloud } from "lucide-react";
+import { FilesBrowser } from "@/components/files/files-browser";
 
-export default async function FilesPage() {
-  const session = await getSession();
-
-  if (!session?.user) {
-    redirect("/auth/signin");
-  }
-
+export default function FilesPage() {
   return (
     <div className='space-y-6'>
+      {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>Files</h1>
           <p className='text-neutral-500 dark:text-neutral-400 mt-2'>
-            Manage and share files
+            Centralized file management for all your projects, clients, and team
           </p>
         </div>
-        <Button>
-          <Upload className='mr-2 h-4 w-4' />
-          Upload Files
-        </Button>
+        <div className='flex gap-2'>
+          <Button variant='outline' disabled>
+            <Cloud className='mr-2 h-4 w-4' />
+            Connect Google Drive
+            <Badge variant='secondary' className='ml-2'>
+              Coming Soon
+            </Badge>
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className='flex flex-col items-center justify-center py-16'>
-          <FileText className='h-16 w-16 text-neutral-400 mb-4' />
-          <h3 className='text-lg font-semibold mb-2'>File Management</h3>
-          <p className='text-neutral-500 text-center max-w-md mb-4'>
-            File management system coming soon. Upload, organize, and share
-            files with your team.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Files Browser Component */}
+      <FilesBrowser />
     </div>
   );
 }

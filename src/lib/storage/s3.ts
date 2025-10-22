@@ -7,17 +7,20 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { nanoid } from "nanoid";
 
-// Initialize S3 client
+// Initialize S3-compatible client (works with AWS S3, Cloudflare R2, etc.)
 const s3Client = new S3Client({
-  region: process.env.S3_REGION!,
+  region: process.env.S3_REGION || "auto",
   endpoint: process.env.S3_ENDPOINT,
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID!,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
   },
+  // Force path-style URLs for R2 compatibility
+  forcePathStyle: false,
 });
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME!;
+const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || "s3"; // "s3" or "r2"
 
 /**
  * Upload file to S3
@@ -40,7 +43,11 @@ export async function uploadFile(
 
   await s3Client.send(command);
 
-  const url = `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`;
+  // Generate URL based on provider
+  const url =
+    STORAGE_PROVIDER === "r2"
+      ? `${process.env.R2_PUBLIC_URL || process.env.S3_ENDPOINT}/${key}`
+      : `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`;
 
   return { key, url };
 }
@@ -91,7 +98,12 @@ export async function getPresignedUploadUrl(
   });
 
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn });
-  const finalUrl = `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`;
+
+  // Generate final URL based on provider
+  const finalUrl =
+    STORAGE_PROVIDER === "r2"
+      ? `${process.env.R2_PUBLIC_URL || process.env.S3_ENDPOINT}/${key}`
+      : `${process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`;
 
   return { uploadUrl, key, finalUrl };
 }
@@ -99,10 +111,7 @@ export async function getPresignedUploadUrl(
 /**
  * Validate file type
  */
-export function validateFileType(
-  mimeType: string,
-  allowedTypes: string[]
-): boolean {
+export function validateFileType(mimeType: string, allowedTypes: string[]): boolean {
   return allowedTypes.some((type) => {
     if (type.endsWith("/*")) {
       const prefix = type.slice(0, -2);
@@ -134,4 +143,3 @@ export function formatFileSize(bytes: number): string {
 
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
-

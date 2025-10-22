@@ -39,10 +39,7 @@ export function FileUpload({
   const uploadFile = async (file: File) => {
     try {
       // Add to uploading list
-      setUploadingFiles((prev) => [
-        ...prev,
-        { file, progress: 0, status: "uploading" },
-      ]);
+      setUploadingFiles((prev) => [...prev, { file, progress: 0, status: "uploading" }]);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -55,7 +52,8 @@ export function FileUpload({
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const errorData = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(errorData.error || "Upload failed");
       }
 
       const data = await response.json();
@@ -63,9 +61,7 @@ export function FileUpload({
       // Update status to success
       setUploadingFiles((prev) =>
         prev.map((f) =>
-          f.file === file
-            ? { ...f, progress: 100, status: "success" as const }
-            : f
+          f.file === file ? { ...f, progress: 100, status: "success" as const } : f
         )
       );
 
@@ -81,6 +77,7 @@ export function FileUpload({
       }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Upload failed";
 
       // Update status to error
       setUploadingFiles((prev) =>
@@ -89,13 +86,13 @@ export function FileUpload({
             ? {
                 ...f,
                 status: "error" as const,
-                error: "Upload failed",
+                error: errorMessage,
               }
             : f
         )
       );
 
-      toast.error(`Failed to upload ${file.name}`);
+      toast.error(`Failed to upload ${file.name}: ${errorMessage}`);
     }
   };
 
@@ -119,7 +116,7 @@ export function FileUpload({
   };
 
   return (
-    <div className="space-y-4">
+    <div className='space-y-4'>
       {/* Dropzone */}
       <div
         {...getRootProps()}
@@ -134,17 +131,17 @@ export function FileUpload({
         `}
       >
         <input {...getInputProps()} />
-        <Upload className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
+        <Upload className='mx-auto h-12 w-12 text-neutral-400 mb-4' />
         {isDragActive ? (
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          <p className='text-sm text-neutral-600 dark:text-neutral-400'>
             Drop files here...
           </p>
         ) : (
           <div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
+            <p className='text-sm text-neutral-600 dark:text-neutral-400 mb-2'>
               Drag & drop files here, or click to select
             </p>
-            <p className="text-xs text-neutral-500">
+            <p className='text-xs text-neutral-500'>
               Max file size: {(maxSize / (1024 * 1024)).toFixed(0)}MB
             </p>
           </div>
@@ -153,42 +150,45 @@ export function FileUpload({
 
       {/* Uploading files list */}
       {uploadingFiles.length > 0 && (
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {uploadingFiles.map((uploadingFile, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg"
+              className='flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg'
             >
-              <File className="h-8 w-8 text-neutral-400 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium truncate">
+              <File className='h-8 w-8 text-neutral-400 shrink-0' />
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center justify-between mb-1'>
+                  <p className='text-sm font-medium truncate'>
                     {uploadingFile.file.name}
                   </p>
                   {uploadingFile.status === "success" && (
-                    <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <CheckCircle2 className='h-4 w-4 text-green-500 shrink-0' />
                   )}
-                  {uploadingFile.status === "error" && (
-                    <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                  )}
-                  {uploadingFile.status === "uploading" && (
+                  {(uploadingFile.status === "uploading" ||
+                    uploadingFile.status === "error") && (
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
+                      variant='ghost'
+                      size='sm'
+                      className='h-6 w-6 p-0'
                       onClick={() => removeFile(uploadingFile.file)}
+                      title={
+                        uploadingFile.status === "error"
+                          ? "Remove failed upload"
+                          : "Cancel upload"
+                      }
                     >
-                      <X className="h-4 w-4" />
+                      <X className='h-4 w-4' />
                     </Button>
                   )}
                 </div>
                 {uploadingFile.status === "uploading" && (
-                  <Progress value={uploadingFile.progress} className="h-1" />
+                  <Progress value={uploadingFile.progress} className='h-1' />
                 )}
                 {uploadingFile.status === "error" && (
-                  <p className="text-xs text-red-500">{uploadingFile.error}</p>
+                  <p className='text-xs text-red-500'>{uploadingFile.error}</p>
                 )}
-                <p className="text-xs text-neutral-500 mt-1">
+                <p className='text-xs text-neutral-500 mt-1'>
                   {(uploadingFile.file.size / 1024).toFixed(2)} KB
                 </p>
               </div>
@@ -199,4 +199,3 @@ export function FileUpload({
     </div>
   );
 }
-

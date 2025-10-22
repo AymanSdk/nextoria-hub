@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/src/lib/auth/session";
 import { uploadFile, validateFileType, validateFileSize } from "@/src/lib/storage/s3";
 import { db } from "@/src/db";
 import { files } from "@/src/db/schema";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 const ALLOWED_FILE_TYPES = [
@@ -36,10 +37,7 @@ export async function POST(req: NextRequest) {
 
     // Validate file type
     if (!validateFileType(file.type, ALLOWED_FILE_TYPES)) {
-      return NextResponse.json(
-        { error: "File type not allowed" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
     }
 
     // Validate file size
@@ -48,6 +46,21 @@ export async function POST(req: NextRequest) {
         { error: "File size exceeds 10MB limit" },
         { status: 400 }
       );
+    }
+
+    // Get clientId from project if projectId is provided
+    let clientId = null;
+    if (projectId) {
+      const { projects } = await import("@/src/db/schema");
+      const [project] = await db
+        .select({ clientId: projects.clientId })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .limit(1);
+
+      if (project) {
+        clientId = project.clientId;
+      }
     }
 
     // Convert file to buffer
@@ -75,6 +88,7 @@ export async function POST(req: NextRequest) {
         storageUrl: url,
         projectId: projectId || null,
         taskId: taskId || null,
+        clientId: clientId || null, // Automatically linked if project has a client
         uploadedBy: user.id,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -84,10 +98,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ file: fileRecord }, { status: 201 });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload file" },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-

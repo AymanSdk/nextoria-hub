@@ -18,6 +18,7 @@ import { redirect, notFound } from "next/navigation";
 import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
+import { ProjectFilesSection } from "@/components/projects/project-files-section";
 
 export default async function ProjectDetailPage({
   params,
@@ -45,9 +46,7 @@ export default async function ProjectDetailPage({
 
   // Fetch all workspace team members (for task assignment)
   // Since this is an internal agency tool, show all team members regardless of project membership
-  const { workspaceMembers, workspaces, clients } = await import(
-    "@/src/db/schema"
-  );
+  const { workspaceMembers, workspaces, clients } = await import("@/src/db/schema");
 
   // Get the workspace
   const [workspace] = await db
@@ -108,12 +107,7 @@ export default async function ProjectDetailPage({
     id: task.id,
     title: task.title,
     description: task.description || "",
-    status: task.status as
-      | "TODO"
-      | "IN_PROGRESS"
-      | "IN_REVIEW"
-      | "DONE"
-      | "BACKLOG",
+    status: task.status as "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "BACKLOG",
     priority: task.priority as "LOW" | "MEDIUM" | "HIGH" | "URGENT",
     labels: task.labels || "",
     dueDate: task.dueDate ? task.dueDate : undefined,
@@ -129,12 +123,9 @@ export default async function ProjectDetailPage({
   // Calculate stats
   const totalTasks = projectTasks.length;
   const completedTasks = projectTasks.filter((t) => t.status === "DONE").length;
-  const inProgressTasks = projectTasks.filter(
-    (t) => t.status === "IN_PROGRESS"
-  ).length;
+  const inProgressTasks = projectTasks.filter((t) => t.status === "IN_PROGRESS").length;
   const todoTasks = projectTasks.filter((t) => t.status === "TODO").length;
-  const progress =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const getStatusVariant = (
     status: string
@@ -153,7 +144,8 @@ export default async function ProjectDetailPage({
           <div className='flex items-start gap-4 flex-1 min-w-0 w-full'>
             <div
               className='h-16 w-16 rounded-lg flex items-center justify-center shrink-0'
-              style={{ backgroundColor: project.color || "#0070f3" }}>
+              style={{ backgroundColor: project.color || "#0070f3" }}
+            >
               <Target className='h-8 w-8 text-white' />
             </div>
             <div className='flex-1 min-w-0'>
@@ -172,9 +164,7 @@ export default async function ProjectDetailPage({
 
         {/* Project Meta Info */}
         <div className='flex items-center gap-4 flex-wrap'>
-          <Badge variant={getStatusVariant(project.status)}>
-            {project.status}
-          </Badge>
+          <Badge variant={getStatusVariant(project.status)}>{project.status}</Badge>
           {project.dueDate && (
             <div className='flex items-center gap-2 text-sm text-neutral-500'>
               <Calendar className='h-4 w-4' />
@@ -192,9 +182,7 @@ export default async function ProjectDetailPage({
             <div className='flex items-center gap-2'>
               <div className='flex -space-x-2'>
                 {members.slice(0, 5).map((member) => (
-                  <Avatar
-                    key={member.id}
-                    className='h-8 w-8 border-2 border-background'>
+                  <Avatar key={member.id} className='h-8 w-8 border-2 border-background'>
                     <AvatarFallback className='text-xs'>
                       {member.name?.substring(0, 2).toUpperCase() || "??"}
                     </AvatarFallback>
@@ -202,9 +190,7 @@ export default async function ProjectDetailPage({
                 ))}
               </div>
               {members.length > 5 && (
-                <span className='text-sm text-neutral-500'>
-                  +{members.length - 5}
-                </span>
+                <span className='text-sm text-neutral-500'>+{members.length - 5}</span>
               )}
             </div>
           )}
@@ -246,9 +232,7 @@ export default async function ProjectDetailPage({
               <CheckCircle2 className='h-5 w-5 text-neutral-500' />
               <span className='text-2xl font-bold'>{totalTasks}</span>
             </div>
-            <p className='text-xs text-neutral-500 mt-1'>
-              {completedTasks} completed
-            </p>
+            <p className='text-xs text-neutral-500 mt-1'>{completedTasks} completed</p>
           </CardContent>
         </Card>
 
@@ -263,9 +247,7 @@ export default async function ProjectDetailPage({
               <Clock className='h-5 w-5 text-blue-500' />
               <span className='text-2xl font-bold'>{inProgressTasks}</span>
             </div>
-            <p className='text-xs text-neutral-500 mt-1'>
-              {todoTasks} in backlog
-            </p>
+            <p className='text-xs text-neutral-500 mt-1'>{todoTasks} in backlog</p>
           </CardContent>
         </Card>
 
@@ -309,6 +291,9 @@ export default async function ProjectDetailPage({
           </Card>
         )}
       </div>
+
+      {/* Project Files */}
+      <ProjectFilesSection projectId={project.id} clientId={project.clientId} />
     </div>
   );
 }
