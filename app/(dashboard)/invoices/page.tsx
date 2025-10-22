@@ -1,7 +1,7 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
 import { invoices, users, clients, projects } from "@/src/db/schema";
-import { eq, desc, or, inArray } from "drizzle-orm";
+import { eq, desc, or, inArray, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,16 +15,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, DollarSign, Download, Eye } from "lucide-react";
+import { NewInvoiceDialog } from "@/components/invoices/new-invoice-dialog";
+import { InvoiceFilters } from "@/components/invoices/invoice-filters";
+import Link from "next/link";
 
-export default async function InvoicesPage() {
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await getSession();
+  const params = await searchParams;
 
   if (!session?.user) {
     redirect("/auth/signin");
   }
 
+  // Get user's workspace from workspace_members table
+  const { workspaceMembers } = await import("@/src/db/schema/workspaces");
+  const [membership] = await db
+    .select({ workspaceId: workspaceMembers.workspaceId })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, session.user.id))
+    .limit(1);
+
+  const workspaceId = membership?.workspaceId;
+
+  // Get filter params
+  const statusFilter = params.status as string | undefined;
+  const searchQuery = params.search as string | undefined;
+
   // Fetch invoices based on user role
   let userInvoices: (typeof invoices.$inferSelect)[] = [];
+
+  // Build query conditions
+  const conditions = [];
 
   if (session.user.role === "CLIENT") {
     // Find client record
@@ -44,30 +69,38 @@ export default async function InvoicesPage() {
       const projectIds = clientProjects.map((p) => p.id);
 
       if (projectIds.length > 0) {
-        userInvoices = await db
-          .select()
-          .from(invoices)
-          .where(
-            or(
-              eq(invoices.clientId, clientRecord.id),
-              inArray(invoices.projectId, projectIds)
-            )
+        conditions.push(
+          or(
+            eq(invoices.clientId, clientRecord.id),
+            inArray(invoices.projectId, projectIds)
           )
-          .orderBy(desc(invoices.createdAt))
-          .limit(20);
+        );
       } else {
-        userInvoices = [];
+        conditions.push(eq(invoices.clientId, clientRecord.id));
       }
     } else {
       userInvoices = [];
     }
-  } else {
-    // For non-clients, show all invoices
+  }
+
+  // Apply filters
+  if (statusFilter) {
+    conditions.push(eq(invoices.status, statusFilter as any));
+  }
+
+  if (searchQuery) {
+    const { ilike } = await import("drizzle-orm");
+    conditions.push(ilike(invoices.invoiceNumber, `%${searchQuery}%`));
+  }
+
+  // Fetch invoices
+  if (session.user.role !== "CLIENT" || conditions.length > 0) {
     userInvoices = await db
       .select()
       .from(invoices)
+      .where(conditions.length > 0 ? or(...conditions) : undefined)
       .orderBy(desc(invoices.createdAt))
-      .limit(20);
+      .limit(50);
   }
 
   const totalRevenue = userInvoices
@@ -107,12 +140,17 @@ export default async function InvoicesPage() {
           </p>
         </div>
         {session.user.role !== "CLIENT" && (
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            New Invoice
-          </Button>
+          <NewInvoiceDialog workspaceId={workspaceId}>
+            <Button>
+              <Plus className='mr-2 h-4 w-4' />
+              New Invoice
+            </Button>
+          </NewInvoiceDialog>
         )}
       </div>
+
+      {/* Filters */}
+      <InvoiceFilters />
 
       {/* Stats */}
       <div className='grid gap-4 md:grid-cols-3'>
@@ -168,10 +206,12 @@ export default async function InvoicesPage() {
             <div className='text-center py-12 text-neutral-500'>
               <p>No invoices yet</p>
               {session.user.role !== "CLIENT" && (
-                <Button className='mt-4'>
-                  <Plus className='mr-2 h-4 w-4' />
-                  Create your first invoice
-                </Button>
+                <NewInvoiceDialog workspaceId={workspaceId}>
+                  <Button className='mt-4'>
+                    <Plus className='mr-2 h-4 w-4' />
+                    Create your first invoice
+                  </Button>
+                </NewInvoiceDialog>
               )}
             </div>
           ) : (
@@ -206,12 +246,21 @@ export default async function InvoicesPage() {
                     </TableCell>
                     <TableCell className='text-right'>
                       <div className='flex justify-end gap-2'>
-                        <Button variant='ghost' size='sm'>
-                          <Eye className='h-4 w-4' />
-                        </Button>
-                        <Button variant='ghost' size='sm'>
-                          <Download className='h-4 w-4' />
-                        </Button>
+                        <Link href={`/invoices/${invoice.id}`}>
+                          <Button variant='ghost' size='sm'>
+                            <Eye className='h-4 w-4' />
+                          </Button>
+                        </Link>
+                        <a
+                          href={`/api/invoices/${invoice.id}/download`}
+                          download
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          <Button variant='ghost' size='sm'>
+                            <Download className='h-4 w-4' />
+                          </Button>
+                        </a>
                       </div>
                     </TableCell>
                   </TableRow>
