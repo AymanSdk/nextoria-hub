@@ -328,10 +328,10 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
 
   // Clients View Renderers
   const renderClientsListView = () => (
-    <div className='space-y-2'>
+    <div className='space-y-4'>
       {clients.map((client) => (
         <Link key={client.id} href={`/clients/${client.id}`}>
-          <div className='group flex items-center gap-3 p-3 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer'>
+          <div className='group flex items-center gap-4 p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer'>
             <div className='h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
               <Building2 className='h-5 w-5 text-white' />
             </div>
@@ -384,10 +384,10 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
   );
 
   const renderClientsGridView = () => (
-    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
       {clients.map((client) => (
         <Link key={client.id} href={`/clients/${client.id}`}>
-          <div className='group flex flex-col p-4 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer h-full'>
+          <div className='group flex flex-col p-5 border rounded-lg bg-white dark:bg-neutral-900 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer h-full'>
             <div className='flex items-start gap-3 mb-3'>
               <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
                 <Building2 className='h-6 w-6 text-white' />
@@ -455,7 +455,7 @@ export function TeamBrowser({ initialTeamMembers, currentUserId }: TeamBrowserPr
       <div className='divide-y dark:divide-neutral-800'>
         {clients.map((client) => (
           <Link key={client.id} href={`/clients/${client.id}`}>
-            <div className='group grid grid-cols-12 gap-4 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer'>
+            <div className='group grid grid-cols-12 gap-4 px-4 py-3.5 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer'>
               <div className='col-span-3 flex items-center gap-2 min-w-0'>
                 <div className='h-7 w-7 rounded bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0'>
                   <Building2 className='h-4 w-4 text-white' />

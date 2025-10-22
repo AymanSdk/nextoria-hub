@@ -93,13 +93,15 @@ export function NewInvoiceDialog({
       const usersRes = await fetch("/api/users?role=CLIENT");
       if (usersRes.ok) {
         const usersData = await usersRes.json();
-        // Map users to client format
+        // Filter to ensure only CLIENT role users (double-check)
         const clientUsers =
-          usersData.users?.map((user: any) => ({
-            id: user.id,
-            name: user.name || user.email,
-            email: user.email,
-          })) || [];
+          usersData.users
+            ?.filter((user: any) => user.role === "CLIENT")
+            ?.map((user: any) => ({
+              id: user.id,
+              name: user.name || user.email,
+              email: user.email,
+            })) || [];
         setClients(clientUsers);
       }
 
