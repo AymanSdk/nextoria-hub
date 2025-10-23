@@ -31,6 +31,9 @@ export * from "./invoices";
 // Notifications
 export * from "./notifications";
 
+// Activity Logs
+export * from "./activity-logs";
+
 // Integrations
 export * from "./integrations";
 
@@ -78,6 +81,7 @@ import { approvals, approvalFiles, approvalComments } from "./approvals";
 import { recurringTasks } from "./recurring-tasks";
 import { clients, clientContacts } from "./clients";
 import { projectRequests, projectRequestComments } from "./project-requests";
+import { activityLogs } from "./activity-logs";
 
 /**
  * User Relations

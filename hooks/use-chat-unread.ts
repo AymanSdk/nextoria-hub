@@ -16,16 +16,26 @@ export function useChatUnread(workspaceId?: string) {
     const fetchUnreadCount = async () => {
       try {
         const response = await fetch(`/api/chat/channels?workspaceId=${workspaceId}`);
-        if (!response.ok) return;
+        if (!response.ok) {
+          // Silently handle errors (e.g., 404, 500)
+          return;
+        }
 
         const channels = await response.json();
+
+        // Ensure channels is an array before reducing
+        if (!Array.isArray(channels)) {
+          return;
+        }
+
         const total = channels.reduce((sum: number, channel: any) => {
           return sum + (channel.unreadCount || 0);
         }, 0);
 
         setUnreadCount(total);
       } catch (error) {
-        console.error("Error fetching unread count:", error);
+        // Silently handle fetch errors to prevent console spam
+        // The hook will retry on the next poll interval
       }
     };
 

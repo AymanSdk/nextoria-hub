@@ -1,6 +1,14 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { projects, tasks, users, invoices, campaigns, expenses } from "@/src/db/schema";
+import {
+  projects,
+  tasks,
+  users,
+  invoices,
+  campaigns,
+  expenses,
+  workspaceMembers,
+} from "@/src/db/schema";
 import { eq, count, and, sql, gte, desc } from "drizzle-orm";
 import {
   Card,
@@ -35,6 +43,8 @@ import { Progress } from "@/components/ui/progress";
 import { TaskDistributionChart } from "@/components/dashboard/task-distribution-chart";
 import { ProjectStatusChart } from "@/components/dashboard/project-status-chart";
 import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { getRecentActivities } from "@/src/lib/notifications/activity-logger";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -163,6 +173,22 @@ export default async function DashboardPage() {
     .from(projects)
     .limit(5)
     .orderBy(desc(projects.createdAt));
+
+  // Get user's workspace for activity feed
+  const [membership] = await db
+    .select()
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, session.user.id))
+    .limit(1);
+
+  // Fetch recent activities
+  const recentActivities = membership
+    ? await getRecentActivities({
+        workspaceId: membership.workspaceId,
+        userId: userIsAdmin ? undefined : session.user.id,
+        limit: 10,
+      })
+    : [];
 
   const avgUtilization =
     teamUtilization.length > 0
@@ -486,70 +512,93 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* Recent Projects */}
-      <Card>
-        <CardHeader>
-          <div className='flex items-center justify-between'>
-            <div>
-              <CardTitle>Recent Projects</CardTitle>
-              <CardDescription>Your latest project updates</CardDescription>
-            </div>
-            <Link href='/projects'>
-              <Button variant='ghost' size='sm'>
-                View All
-                <ArrowUpRight className='h-4 w-4 ml-1' />
-              </Button>
-            </Link>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {recentProjects.length > 0 ? (
-            <div className='space-y-3'>
-              {recentProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/projects/${project.slug}`}
-                  className='flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors group'
-                >
-                  <div className='flex items-center gap-3'>
-                    <div
-                      className='h-10 w-10 rounded-lg flex items-center justify-center shadow-sm'
-                      style={{ backgroundColor: project.color || "hsl(var(--primary))" }}
-                    >
-                      <FolderKanban className='h-5 w-5 text-white' />
-                    </div>
-                    <div>
-                      <p className='font-semibold group-hover:text-primary transition-colors'>
-                        {project.name}
-                      </p>
-                      <p className='text-sm text-muted-foreground'>
-                        {project.description?.substring(0, 50)}
-                        {project.description && project.description.length > 50
-                          ? "..."
-                          : ""}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={project.status === "ACTIVE" ? "default" : "secondary"}>
-                    {project.status}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className='text-center py-8'>
-              <FolderKanban className='h-12 w-12 mx-auto text-muted-foreground mb-3' />
-              <p className='text-muted-foreground mb-4'>No projects yet</p>
-              <Link href='/projects/new'>
-                <Button>
-                  <Plus className='h-4 w-4 mr-2' />
-                  Create Your First Project
+      {/* Recent Projects and Activity */}
+      <div className='grid gap-6 md:grid-cols-2'>
+        <Card>
+          <CardHeader>
+            <div className='flex items-center justify-between'>
+              <div>
+                <CardTitle>Recent Projects</CardTitle>
+                <CardDescription>Your latest project updates</CardDescription>
+              </div>
+              <Link href='/projects'>
+                <Button variant='ghost' size='sm'>
+                  View All
+                  <ArrowUpRight className='h-4 w-4 ml-1' />
                 </Button>
               </Link>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {recentProjects.length > 0 ? (
+              <div className='space-y-3'>
+                {recentProjects.slice(0, 3).map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.slug}`}
+                    className='flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors group'
+                  >
+                    <div className='flex items-center gap-3'>
+                      <div
+                        className='h-10 w-10 rounded-lg flex items-center justify-center shadow-sm'
+                        style={{
+                          backgroundColor: project.color || "hsl(var(--primary))",
+                        }}
+                      >
+                        <FolderKanban className='h-5 w-5 text-white' />
+                      </div>
+                      <div>
+                        <p className='font-semibold group-hover:text-primary transition-colors'>
+                          {project.name}
+                        </p>
+                        <p className='text-sm text-muted-foreground'>
+                          {project.description?.substring(0, 50)}
+                          {project.description && project.description.length > 50
+                            ? "..."
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant={project.status === "ACTIVE" ? "default" : "secondary"}
+                    >
+                      {project.status}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className='text-center py-8'>
+                <FolderKanban className='h-12 w-12 mx-auto text-muted-foreground mb-3' />
+                <p className='text-muted-foreground mb-4'>No projects yet</p>
+                <Link href='/projects/new'>
+                  <Button>
+                    <Plus className='h-4 w-4 mr-2' />
+                    Create Your First Project
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className='flex items-center justify-between'>
+              <div>
+                <CardTitle className='flex items-center gap-2'>
+                  <Activity className='h-5 w-5' />
+                  Recent Activity
+                </CardTitle>
+                <CardDescription>Latest updates across your workspace</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ActivityFeed activities={recentActivities} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

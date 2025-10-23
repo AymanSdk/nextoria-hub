@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -14,14 +13,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -85,22 +78,7 @@ export function AppHeader() {
       {/* Right: Notifications & Theme Toggle */}
       <div className='flex items-center gap-2'>
         {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon' className='relative'>
-              <Bell className='h-4 w-4' />
-              <span className='absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500' />
-              <span className='sr-only'>Notifications</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end' className='w-80'>
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className='p-4 text-center text-sm text-muted-foreground'>
-              No new notifications
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NotificationBell />
 
         {/* Theme Toggle */}
         <ThemeToggle />
