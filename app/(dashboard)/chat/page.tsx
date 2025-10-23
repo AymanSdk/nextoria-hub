@@ -143,7 +143,7 @@ export default function ChatPage() {
     }
   };
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, attachments?: any[]) => {
     if (!currentChannel || !session?.user) return;
 
     try {
@@ -154,6 +154,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           channelId: currentChannel.id,
           content,
+          attachments: attachments ? JSON.stringify(attachments) : undefined,
         }),
       });
 
@@ -221,7 +222,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className='flex flex-1 gap-0 -m-4 md:-m-6 lg:-m-8 overflow-hidden'>
+    <div className='flex flex-1 gap-0 -m-4 md:-m-6 lg:-m-8 h-full overflow-hidden'>
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
@@ -256,7 +257,7 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Area */}
-      <div className='flex-1 flex flex-col min-w-0 bg-background'>
+      <div className='flex-1 flex flex-col min-w-0 bg-background h-full overflow-hidden'>
         {currentChannel && workspaceId ? (
           <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
             {/* Real-time message sync */}
@@ -317,8 +318,10 @@ export default function ChatPage() {
                     senderId: msg.senderId,
                     senderName: msg.senderName || msg.senderEmail,
                     senderAvatar: msg.senderImage,
+                    senderRole: msg.senderRole,
                     content: msg.content,
                     createdAt: new Date(msg.createdAt).getTime(),
+                    attachments: msg.attachments,
                   }))}
                 />
               )}
@@ -326,7 +329,11 @@ export default function ChatPage() {
 
             {/* Message Input - Fixed at bottom */}
             <div className='border-t bg-background/95 backdrop-blur-sm shrink-0'>
-              <ChatInput onSendMessage={handleSendMessage} />
+              <ChatInput
+                onSendMessage={handleSendMessage}
+                channelId={currentChannel.id}
+                workspaceId={workspaceId}
+              />
             </div>
           </ChatRoomProvider>
         ) : (

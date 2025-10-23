@@ -6,6 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2, MessageSquare } from "lucide-react";
+import { RichTextRenderer } from "./rich-text-renderer";
+import { UserRoleBadge } from "./user-role-badge";
+import { MessageAttachmentsList } from "./message-attachment";
+import { FileAttachment } from "@/types/chat";
+import type { Role } from "@/src/lib/constants/roles";
 
 /**
  * Safely parse date from various formats
@@ -26,8 +31,10 @@ interface Message {
   senderId: string;
   senderName: string;
   senderAvatar?: string;
+  senderRole?: Role;
   content: string;
   createdAt: number;
+  attachments?: FileAttachment[];
 }
 
 interface ChatMessageListProps {
@@ -37,15 +44,16 @@ interface ChatMessageListProps {
 
 export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const currentUser = useSelf();
   const others = useOthers();
   const updatePresence = useUpdateMyPresence();
+  const [visibleCount, setVisibleCount] = useState(20); // Show only 20 messages initially
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Update last seen timestamp
@@ -58,11 +66,47 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
     .filter((other) => other.presence?.isTyping)
     .map((other) => other.info?.name || "Someone");
 
+  // Get visible messages (most recent ones)
+  const visibleMessages = messages.slice(-visibleCount);
+  const hasOlderMessages = messages.length > visibleCount;
+
+  // Load more messages
+  const loadOlderMessages = () => {
+    setIsLoadingMore(true);
+    // Increase visible count by 20
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + 20);
+      setIsLoadingMore(false);
+    }, 300); // Small delay for better UX
+  };
+
   return (
-    <div className='flex flex-col h-full'>
-      <ScrollArea className='flex-1'>
+    <div className='flex flex-col h-full overflow-hidden'>
+      <ScrollArea className='flex-1 overflow-y-auto'>
         <div className='px-4 sm:px-6 lg:px-8 py-6' ref={scrollRef}>
           <div className='space-y-4'>
+            {/* Load Older Messages Button */}
+            {hasOlderMessages && (
+              <div className='flex justify-center pb-4'>
+                <button
+                  onClick={loadOlderMessages}
+                  disabled={isLoadingMore}
+                  className='px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      ↑ Load {Math.min(20, messages.length - visibleCount)} older messages
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             {messages.length === 0 ? (
               <div className='flex flex-col items-center justify-center h-96 text-muted-foreground'>
                 <div className='h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4'>
@@ -72,7 +116,7 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                 <p className='text-sm'>Be the first to say something!</p>
               </div>
             ) : (
-              messages.map((message) => {
+              visibleMessages.map((message) => {
                 const isCurrentUser = message.senderId === currentUser?.id;
 
                 return (
@@ -97,13 +141,16 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                       }`}
                     >
                       <div
-                        className={`flex items-baseline gap-2 mb-1 ${
+                        className={`flex items-center gap-2 mb-1 flex-wrap ${
                           isCurrentUser ? "flex-row-reverse" : ""
                         }`}
                       >
                         <span className='text-sm font-semibold text-foreground'>
                           {isCurrentUser ? "You" : message.senderName}
                         </span>
+                        {message.senderRole && (
+                          <UserRoleBadge role={message.senderRole} size='sm' />
+                        )}
                         <span className='text-xs text-muted-foreground whitespace-nowrap'>
                           {formatDistanceToNow(parseMessageDate(message.createdAt), {
                             addSuffix: true,
@@ -118,9 +165,15 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                             : "bg-muted text-foreground rounded-bl-sm"
                         }`}
                       >
-                        <p className='text-sm whitespace-pre-wrap break-words leading-relaxed'>
-                          {message.content}
-                        </p>
+                        <RichTextRenderer
+                          content={message.content}
+                          className={`text-sm leading-relaxed ${
+                            isCurrentUser ? "prose-invert" : ""
+                          }`}
+                        />
+                        {message.attachments && message.attachments.length > 0 && (
+                          <MessageAttachmentsList attachments={message.attachments} />
+                        )}
                       </div>
                     </div>
 
@@ -136,6 +189,8 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                 );
               })
             )}
+            {/* Auto-scroll anchor */}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </ScrollArea>

@@ -36,6 +36,9 @@ export const chatChannels = pgTable("chat_channels", {
   isPrivate: boolean("is_private").default(false).notNull(),
   isArchived: boolean("is_archived").default(false).notNull(),
 
+  // Channel type
+  channelType: varchar("channel_type", { length: 50 }).default("general").notNull(),
+
   // Created by
   createdBy: text("created_by")
     .notNull()
@@ -104,7 +107,53 @@ export const chatChannelMembers = pgTable("chat_channel_members", {
   joinedAt: timestamp("joined_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+/**
+ * Chat Mentions Table
+ * Track @mentions in messages
+ */
+export const chatMentions = pgTable("chat_mentions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+
+  messageId: text("message_id")
+    .notNull()
+    .references(() => chatMessages.id, { onDelete: "cascade" }),
+
+  mentionedUserId: text("mentioned_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+/**
+ * Message Reactions Table
+ * Emoji reactions to messages
+ */
+export const messageReactions = pgTable("message_reactions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+
+  messageId: text("message_id")
+    .notNull()
+    .references(() => chatMessages.id, { onDelete: "cascade" }),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  emoji: varchar("emoji", { length: 10 }).notNull(),
+
+  // Timestamps
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
 // Export types
 export type ChatChannel = typeof chatChannels.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type ChatChannelMember = typeof chatChannelMembers.$inferSelect;
+export type ChatMention = typeof chatMentions.$inferSelect;
+export type MessageReaction = typeof messageReactions.$inferSelect;

@@ -63,7 +63,13 @@ import { files, fileAccessLog } from "./files";
 import { invoices, invoiceLineItems, payments } from "./invoices";
 import { notifications, notificationPreferences } from "./notifications";
 import { integrations, webhooks, webhookDeliveries } from "./integrations";
-import { chatChannels, chatMessages, chatChannelMembers } from "./chat";
+import { 
+  chatChannels, 
+  chatMessages, 
+  chatChannelMembers,
+  chatMentions,
+  messageReactions 
+} from "./chat";
 import { auditLogs } from "./audit-logs";
 import { campaigns, campaignUpdates } from "./campaigns";
 import { contentCalendar } from "./content-calendar";

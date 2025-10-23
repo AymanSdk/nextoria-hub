@@ -52,12 +52,19 @@ A modern, production-ready agency operations platform built with Next.js, TypeSc
   - Team utilization rates
   - Interactive charts with Recharts
 
-- **💬 Team Communication**
+- **💬 Team Communication** (Enhanced!)
 
-  - Real-time chat channels
-  - Direct messages
-  - File sharing in chat
-  - Notification system with email and in-app alerts
+  - **Real-time chat** with WebSocket (Liveblocks)
+  - **Rich text formatting** (bold, italic, code, links, lists)
+  - **File attachments** - Share images, documents, and files
+  - **@Mentions** - Notify specific team members or clients
+  - **Unread tracking** - Never miss important messages
+  - **Role badges** - Visual distinction between team/client users
+  - **Typing indicators** - See who's actively typing
+  - **Presence indicators** - See who's online
+  - **Channel organization** - Multiple channel types (general, project, client, internal)
+  - **Message search** (coming soon)
+  - **Thread support** (coming soon)
 
 - **🔌 Integrations**
 
@@ -80,9 +87,12 @@ A modern, production-ready agency operations platform built with Next.js, TypeSc
 - **TypeScript** - Type safety and developer experience
 - **Tailwind CSS v4** - Utility-first styling
 - **ShadCN UI** - High-quality component library (New York style)
+- **Tiptap** - Rich text editor for chat messages
+- **Liveblocks** - Real-time collaboration and presence
 - **Recharts** - Data visualization
 - **@dnd-kit** - Drag and drop for Kanban boards
 - **React Hook Form + Zod** - Form handling and validation
+- **Uploadthing** - File upload handling
 
 ### Backend
 

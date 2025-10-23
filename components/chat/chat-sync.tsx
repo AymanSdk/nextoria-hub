@@ -56,9 +56,9 @@ export function ChatSync({ channelId, onNewMessage, onBroadcastReady }: ChatSync
   }, [broadcastMessage, onBroadcastReady]);
 
   // Listen for new messages from other users
-  useEventListener(({ event, connectionId }) => {
+  useEventListener(({ event }) => {
     if (event.type === "MESSAGE_SENT") {
-      const data = event.data as any;
+      const data = event.data as unknown as ChatMessage & { channelId: string };
 
       // Only add messages for the current channel
       if (data && data.channelId === channelId) {
@@ -69,8 +69,10 @@ export function ChatSync({ channelId, onNewMessage, onBroadcastReady }: ChatSync
           senderName: data.senderName,
           senderEmail: data.senderEmail,
           senderImage: data.senderImage,
+          senderRole: data.senderRole,
           content: data.content,
           createdAt: data.createdAt,
+          attachments: data.attachments || [],
         };
         onNewMessage(message);
       }

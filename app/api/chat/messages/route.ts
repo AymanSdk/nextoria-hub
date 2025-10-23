@@ -10,7 +10,7 @@ import { isTeamMember } from "@/src/lib/constants/roles";
 /**
  * GET /api/chat/messages?channelId={channelId}
  * Get all messages for a channel
- * 
+ *
  * Access Control:
  * - Team members: Can access all channel messages
  * - Clients: Can only access messages from channels they're members of
@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
         senderName: users.name,
         senderEmail: users.email,
         senderImage: users.image,
+        senderRole: users.role,
       })
       .from(chatMessages)
       .innerJoin(users, eq(chatMessages.senderId, users.id))
@@ -85,8 +86,14 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
 
+    // Parse attachments JSON if present
+    const messagesWithAttachments = messages.map((msg) => ({
+      ...msg,
+      attachments: msg.attachments ? JSON.parse(msg.attachments) : [],
+    }));
+
     // Reverse to show oldest first
-    return NextResponse.json(messages.reverse());
+    return NextResponse.json(messagesWithAttachments.reverse());
   } catch (error) {
     console.error("Error fetching messages:", error);
     return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
@@ -96,7 +103,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/chat/messages
  * Save a new message to the database
- * 
+ *
  * Access Control:
  * - Team members: Can send messages to all channels
  * - Clients: Can only send messages to channels they're members of
@@ -106,7 +113,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
     const body = await request.json();
 
-    const { channelId, content, parentMessageId } = body;
+    const { channelId, content, parentMessageId, attachments } = body;
 
     if (!channelId || !content) {
       return NextResponse.json(
@@ -158,6 +165,7 @@ export async function POST(request: NextRequest) {
         senderId: user.id,
         content,
         parentMessageId: parentMessageId || null,
+        attachments: attachments || null,
         isEdited: false,
         isDeleted: false,
       })
@@ -170,17 +178,27 @@ export async function POST(request: NextRequest) {
         channelId: chatMessages.channelId,
         senderId: chatMessages.senderId,
         content: chatMessages.content,
+        attachments: chatMessages.attachments,
         createdAt: chatMessages.createdAt,
         senderName: users.name,
         senderEmail: users.email,
         senderImage: users.image,
+        senderRole: users.role,
       })
       .from(chatMessages)
       .innerJoin(users, eq(chatMessages.senderId, users.id))
       .where(eq(chatMessages.id, message.id))
       .limit(1);
 
-    return NextResponse.json(messageWithSender, { status: 201 });
+    return NextResponse.json(
+      {
+        ...messageWithSender,
+        attachments: messageWithSender.attachments
+          ? JSON.parse(messageWithSender.attachments)
+          : [],
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating message:", error);
     return NextResponse.json({ error: "Failed to create message" }, { status: 500 });

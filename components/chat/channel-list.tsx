@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Hash, Plus, Lock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UnreadBadge } from "./unread-badge";
 
 interface Channel {
   id: string;
@@ -26,6 +27,8 @@ interface Channel {
   isPrivate: boolean;
   isArchived: boolean;
   projectId: string | null;
+  channelType?: string;
+  unreadCount?: number;
 }
 
 interface ChannelListProps {
@@ -191,33 +194,46 @@ export function ChannelList({
               <p className='text-xs'>Create one to get started!</p>
             </div>
           ) : (
-            channels.map((channel) => (
-              <button
-                key={channel.id}
-                onClick={() => onChannelSelect(channel.id)}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
-                  "hover:bg-muted/80",
-                  currentChannelId === channel.id
-                    ? "bg-primary/10 text-primary font-medium shadow-sm ring-1 ring-primary/20"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <div
+            channels
+              .sort((a, b) => {
+                // Sort by unread count (descending), then by name
+                const aUnread = a.unreadCount || 0;
+                const bUnread = b.unreadCount || 0;
+                if (aUnread !== bUnread) return bUnread - aUnread;
+                return a.name.localeCompare(b.name);
+              })
+              .map((channel) => (
+                <button
+                  key={channel.id}
+                  onClick={() => onChannelSelect(channel.id)}
                   className={cn(
-                    "h-5 w-5 rounded flex items-center justify-center shrink-0",
-                    currentChannelId === channel.id ? "bg-primary/20" : "bg-muted"
+                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
+                    "hover:bg-muted/80",
+                    currentChannelId === channel.id
+                      ? "bg-primary/10 text-primary font-medium shadow-sm ring-1 ring-primary/20"
+                      : channel.unreadCount && channel.unreadCount > 0
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {channel.isPrivate ? (
-                    <Lock className='h-3 w-3' />
-                  ) : (
-                    <Hash className='h-3 w-3' />
+                  <div
+                    className={cn(
+                      "h-5 w-5 rounded flex items-center justify-center shrink-0",
+                      currentChannelId === channel.id ? "bg-primary/20" : "bg-muted"
+                    )}
+                  >
+                    {channel.isPrivate ? (
+                      <Lock className='h-3 w-3' />
+                    ) : (
+                      <Hash className='h-3 w-3' />
+                    )}
+                  </div>
+                  <span className='truncate flex-1 text-left'>{channel.name}</span>
+                  {channel.unreadCount && channel.unreadCount > 0 && (
+                    <UnreadBadge count={channel.unreadCount} />
                   )}
-                </div>
-                <span className='truncate'>{channel.name}</span>
-              </button>
-            ))
+                </button>
+              ))
           )}
         </div>
       </ScrollArea>
