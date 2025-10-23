@@ -79,10 +79,7 @@ export async function getRecentActivities(params: GetRecentActivitiesParams) {
         .from(activityLogs)
         .leftJoin(users, eq(activityLogs.userId, users.id))
         .where(
-          and(
-            eq(activityLogs.workspaceId, workspaceId),
-            eq(activityLogs.userId, userId)
-          )
+          and(eq(activityLogs.workspaceId, workspaceId), eq(activityLogs.userId, userId))
         )
         .orderBy(desc(activityLogs.createdAt))
         .limit(limit);
@@ -165,7 +162,11 @@ export async function logTaskStatusChanged(params: {
     entityId: params.taskId,
     title: `moved "${params.taskTitle}" to ${params.newStatus}`,
     description: `from ${params.oldStatus}`,
-    metadata: { taskId: params.taskId, oldStatus: params.oldStatus, newStatus: params.newStatus },
+    metadata: {
+      taskId: params.taskId,
+      oldStatus: params.oldStatus,
+      newStatus: params.newStatus,
+    },
   });
 }
 
@@ -243,3 +244,119 @@ export async function logMemberJoined(params: {
   });
 }
 
+export async function logExpenseCreated(params: {
+  workspaceId: string;
+  userId: string;
+  expenseId: string;
+  expenseDescription: string;
+  amount: number;
+  currency?: string;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "EXPENSE_CREATED",
+    entityType: "expense",
+    entityId: params.expenseId,
+    title: `submitted expense for ${params.currency || "USD"} ${params.amount}`,
+    description: params.expenseDescription,
+    metadata: { expenseId: params.expenseId, amount: params.amount },
+  });
+}
+
+export async function logExpenseApproved(params: {
+  workspaceId: string;
+  userId: string;
+  expenseId: string;
+  expenseDescription: string;
+  amount: number;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "EXPENSE_APPROVED",
+    entityType: "expense",
+    entityId: params.expenseId,
+    title: `approved expense`,
+    description: params.expenseDescription,
+    metadata: { expenseId: params.expenseId, amount: params.amount },
+  });
+}
+
+export async function logCampaignCreated(params: {
+  workspaceId: string;
+  userId: string;
+  campaignId: string;
+  campaignName: string;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "CAMPAIGN_CREATED",
+    entityType: "campaign",
+    entityId: params.campaignId,
+    title: `created campaign "${params.campaignName}"`,
+    metadata: { campaignId: params.campaignId, campaignName: params.campaignName },
+  });
+}
+
+export async function logCampaignLaunched(params: {
+  workspaceId: string;
+  userId: string;
+  campaignId: string;
+  campaignName: string;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "CAMPAIGN_LAUNCHED",
+    entityType: "campaign",
+    entityId: params.campaignId,
+    title: `launched campaign "${params.campaignName}"`,
+    metadata: { campaignId: params.campaignId, campaignName: params.campaignName },
+  });
+}
+
+export async function logInvoiceStatusChanged(params: {
+  workspaceId: string;
+  userId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  oldStatus: string;
+  newStatus: string;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "INVOICE_STATUS_CHANGED",
+    entityType: "invoice",
+    entityId: params.invoiceId,
+    title: `marked invoice ${params.invoiceNumber} as ${params.newStatus}`,
+    description: `from ${params.oldStatus}`,
+    metadata: {
+      invoiceId: params.invoiceId,
+      oldStatus: params.oldStatus,
+      newStatus: params.newStatus,
+    },
+  });
+}
+
+export async function logCommentAdded(params: {
+  workspaceId: string;
+  userId: string;
+  entityType: string;
+  entityId: string;
+  entityName: string;
+  commentPreview: string;
+}) {
+  return logActivity({
+    workspaceId: params.workspaceId,
+    userId: params.userId,
+    activityType: "COMMENT_ADDED",
+    entityType: params.entityType,
+    entityId: params.entityId,
+    title: `commented on "${params.entityName}"`,
+    description: params.commentPreview,
+    metadata: { commentPreview: params.commentPreview },
+  });
+}

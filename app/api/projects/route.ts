@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { createProject, getProjects } from "@/src/lib/api/projects";
+import { logProjectCreated } from "@/src/lib/notifications/activity-logger";
 import { z } from "zod";
 
 const createProjectSchema = z.object({
@@ -69,6 +70,14 @@ export async function POST(req: NextRequest) {
       ownerId: user.id,
       startDate: validated.startDate ? new Date(validated.startDate) : undefined,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : undefined,
+    });
+
+    // Log activity
+    await logProjectCreated({
+      workspaceId: validated.workspaceId,
+      userId: user.id,
+      projectId: project.id,
+      projectName: project.name,
     });
 
     return NextResponse.json({ project }, { status: 201 });

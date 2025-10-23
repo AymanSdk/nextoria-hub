@@ -582,31 +582,33 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className='border-border/50 shadow-sm'>
+          <CardHeader className='pb-4'>
             <div className='flex items-center justify-between'>
-              <div>
-                <CardTitle className='flex items-center gap-2'>
-                  <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center'>
-                    <Activity className='h-4 w-4 text-primary' />
-                  </div>
-                  <div>
-                    <h3 className='font-semibold'>Recent Activity</h3>
-                    <p className='text-xs text-muted-foreground font-normal'>
-                      Latest updates across your workspace
-                    </p>
-                  </div>
-                </CardTitle>
+              <div className='flex items-center gap-3'>
+                <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center ring-4 ring-primary/5'>
+                  <Activity className='h-5 w-5 text-primary' />
+                </div>
+                <div>
+                  <h3 className='font-semibold text-lg'>Recent Activity</h3>
+                  <p className='text-xs text-muted-foreground font-normal mt-0.5'>
+                    Latest updates across your workspace
+                  </p>
+                </div>
               </div>
               <Link href='/notifications'>
-                <Button variant='ghost' size='sm'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='hover:bg-primary/10 hover:text-primary transition-colors'
+                >
                   View All
                   <ArrowUpRight className='h-4 w-4 ml-1' />
                 </Button>
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='pt-2'>
+          <CardContent className='pt-0'>
             <ActivityFeed activities={recentActivities} />
           </CardContent>
         </Card>

@@ -3,6 +3,7 @@ import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
 import { invoices, invoiceLineItems, users, projects, clients } from "@/src/db/schema";
 import { eq, desc, and, or, ilike, inArray } from "drizzle-orm";
+import { logActivity } from "@/src/lib/notifications/activity-logger";
 import { nanoid } from "nanoid";
 
 /**
@@ -206,6 +207,22 @@ export async function POST(request: NextRequest) {
         order: idx,
       }))
     );
+
+    // Get client details for activity log
+    const client = await db.query.clients.findFirst({
+      where: eq(clients.id, clientId),
+    });
+
+    // Log activity
+    await logActivity({
+      workspaceId: workspaceId,
+      userId: session.user.id,
+      activityType: status === "SENT" ? "INVOICE_SENT" : "INVOICE_CREATED",
+      entityType: "invoice",
+      entityId: invoice.id,
+      title: `${status === "SENT" ? "sent" : "created"} invoice ${invoiceNumber}`,
+      description: client?.name ? `to ${client.name}` : undefined,
+    });
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error: any) {

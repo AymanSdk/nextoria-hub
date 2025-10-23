@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { tasks } from "@/src/db/schema";
+import { tasks, workspaceMembers, projects } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
+import {
+  logTaskStatusChanged,
+  logActivity,
+} from "@/src/lib/notifications/activity-logger";
 import { z } from "zod";
 
 const updateTaskSchema = z.object({
@@ -39,6 +43,18 @@ export async function PATCH(
 
     const validated = updateTaskSchema.parse(body);
 
+    // Get original task for comparison
+    const originalTask = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId),
+      with: {
+        project: true,
+      },
+    });
+
+    if (!originalTask) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
     // Build update object
     const updateData: any = {
       ...validated,
@@ -62,6 +78,57 @@ export async function PATCH(
 
     if (!updatedTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    // Get user's workspace
+    const membership = await db.query.workspaceMembers.findFirst({
+      where: eq(workspaceMembers.userId, user.id),
+    });
+
+    // Log activity based on what changed
+    if (membership) {
+      // Log status change
+      if (validated.status && validated.status !== originalTask.status) {
+        await logTaskStatusChanged({
+          workspaceId: membership.workspaceId,
+          userId: user.id,
+          taskId: updatedTask.id,
+          taskTitle: updatedTask.title,
+          oldStatus: originalTask.status,
+          newStatus: validated.status,
+        });
+      }
+      // Log assignee change
+      else if (
+        validated.assigneeId !== undefined &&
+        validated.assigneeId !== originalTask.assigneeId
+      ) {
+        await logActivity({
+          workspaceId: membership.workspaceId,
+          userId: user.id,
+          activityType: "TASK_ASSIGNED",
+          entityType: "task",
+          entityId: updatedTask.id,
+          title: `assigned "${updatedTask.title}"`,
+          description: originalTask.project?.name
+            ? `in ${originalTask.project.name}`
+            : undefined,
+        });
+      }
+      // Log general update
+      else if (validated.title || validated.description || validated.priority) {
+        await logActivity({
+          workspaceId: membership.workspaceId,
+          userId: user.id,
+          activityType: "TASK_UPDATED",
+          entityType: "task",
+          entityId: updatedTask.id,
+          title: `updated task "${updatedTask.title}"`,
+          description: originalTask.project?.name
+            ? `in ${originalTask.project.name}`
+            : undefined,
+        });
+      }
     }
 
     return NextResponse.json({ success: true, task: updatedTask });

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { tasks } from "@/src/db/schema";
-import { desc } from "drizzle-orm";
+import { tasks, projects, workspaceMembers } from "@/src/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { createTask } from "@/src/lib/api/tasks";
+import { logTaskCreated } from "@/src/lib/notifications/activity-logger";
 import { z } from "zod";
 
 const createTaskSchema = z.object({
@@ -12,15 +13,7 @@ const createTaskSchema = z.object({
   projectId: z.string().min(1, "Project ID is required"),
   assigneeId: z.string().optional(),
   status: z
-    .enum([
-      "BACKLOG",
-      "TODO",
-      "IN_PROGRESS",
-      "IN_REVIEW",
-      "BLOCKED",
-      "DONE",
-      "CANCELLED",
-    ])
+    .enum(["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "BLOCKED", "DONE", "CANCELLED"])
     .optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   labels: z.string().optional(),
@@ -54,10 +47,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ tasks: allTasks });
   } catch (error) {
     console.error("Get tasks error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch tasks" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
   }
 }
 
@@ -75,25 +65,38 @@ export async function POST(req: NextRequest) {
     const task = await createTask({
       ...validated,
       reporterId: user.id,
-      startDate: validated.startDate
-        ? new Date(validated.startDate)
-        : undefined,
+      startDate: validated.startDate ? new Date(validated.startDate) : undefined,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : undefined,
     });
+
+    // Get project details for activity log
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, validated.projectId),
+    });
+
+    // Get user's workspace
+    const membership = await db.query.workspaceMembers.findFirst({
+      where: eq(workspaceMembers.userId, user.id),
+    });
+
+    // Log activity
+    if (membership && project) {
+      await logTaskCreated({
+        workspaceId: membership.workspaceId,
+        userId: user.id,
+        taskId: task.id,
+        taskTitle: task.title,
+        projectName: project.name,
+      });
+    }
 
     return NextResponse.json({ task }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
 
     console.error("Error creating task:", error);
-    return NextResponse.json(
-      { error: "Failed to create task" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
 }
