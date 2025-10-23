@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Cloud, Loader2, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import { Loader2, Link2Off, MoreVertical } from "lucide-react";
+import { FaGoogleDrive } from "react-icons/fa6";
 import { FilesBrowser } from "@/components/files/files-browser";
 import { GoogleDriveBrowser } from "@/components/files/google-drive-browser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +20,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function FilesPage() {
   const searchParams = useSearchParams();
@@ -56,6 +64,7 @@ export default function FilesPage() {
       toast.error(errorMessages[error] || "Failed to connect Google Drive");
       router.replace("/files");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const checkDriveStatus = async () => {
@@ -119,24 +128,57 @@ export default function FilesPage() {
             </Button>
           ) : driveStatus.connected ? (
             <div className='flex items-center gap-2'>
-              <div className='flex items-center gap-2 px-3 py-2 rounded-md bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'>
-                <CheckCircle2 className='h-4 w-4' />
-                <span className='text-sm font-medium'>
-                  Connected: {driveStatus.email}
-                </span>
+              <div className='flex items-center gap-2.5 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shadow-sm'>
+                <FaGoogleDrive className='h-4 w-4' style={{ color: "#4285F4" }} />
+                <div className='flex flex-col'>
+                  <span className='text-xs text-blue-600 dark:text-blue-400 font-medium'>
+                    Google Drive
+                  </span>
+                  <span className='text-xs text-blue-700 dark:text-blue-300'>
+                    {driveStatus.email}
+                  </span>
+                </div>
               </div>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setShowDisconnectDialog(true)}
-              >
-                <XCircle className='mr-2 h-4 w-4' />
-                Disconnect
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='h-8 w-8 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                  >
+                    <MoreVertical className='h-4 w-4 text-neutral-500' />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end' className='w-48'>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      window.open(
+                        driveStatus.email ? `https://drive.google.com` : "#",
+                        "_blank"
+                      )
+                    }
+                    className='cursor-pointer'
+                  >
+                    <FaGoogleDrive
+                      className='mr-2 h-4 w-4'
+                      style={{ color: "#4285F4" }}
+                    />
+                    Open Google Drive
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDisconnectDialog(true)}
+                    className='cursor-pointer text-destructive focus:text-destructive'
+                  >
+                    <Link2Off className='mr-2 h-4 w-4 text-destructive' />
+                    Disconnect
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Button variant='outline' onClick={handleConnectDrive}>
-              <Cloud className='mr-2 h-4 w-4' />
+              <FaGoogleDrive className='mr-2 h-4 w-4' style={{ color: "#4285F4" }} />
               Connect Google Drive
             </Button>
           )}
@@ -166,7 +208,10 @@ export default function FilesPage() {
             <GoogleDriveBrowser />
           ) : (
             <div className='flex flex-col items-center justify-center py-12 text-center space-y-4'>
-              <AlertCircle className='h-12 w-12 text-neutral-400' />
+              <FaGoogleDrive
+                className='h-16 w-16'
+                style={{ color: "#4285F4", opacity: 0.5 }}
+              />
               <div>
                 <h3 className='text-lg font-semibold'>Google Drive Not Connected</h3>
                 <p className='text-sm text-neutral-500 mt-1'>
@@ -174,7 +219,7 @@ export default function FilesPage() {
                 </p>
               </div>
               <Button onClick={handleConnectDrive}>
-                <Cloud className='mr-2 h-4 w-4' />
+                <FaGoogleDrive className='mr-2 h-4 w-4' style={{ color: "#4285F4" }} />
                 Connect Google Drive
               </Button>
             </div>
@@ -186,15 +231,33 @@ export default function FilesPage() {
       <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect Google Drive?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove access to your Google Drive files from Nextoria Hub. You
-              can reconnect at any time.
+            <div className='flex items-center gap-3 mb-2'>
+              <div className='p-2 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800'>
+                <FaGoogleDrive className='h-5 w-5' style={{ color: "#4285F4" }} />
+              </div>
+              <AlertDialogTitle className='m-0'>
+                Disconnect Google Drive?
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className='space-y-2'>
+              <p>This will remove access to your Google Drive files from Nextoria Hub.</p>
+              {driveStatus.email && (
+                <div className='flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'>
+                  <span className='text-sm text-neutral-700 dark:text-neutral-300'>
+                    {driveStatus.email}
+                  </span>
+                </div>
+              )}
+              <p className='text-xs text-neutral-500'>You can reconnect at any time.</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDisconnectDrive}>
+            <AlertDialogAction
+              onClick={handleDisconnectDrive}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              <Link2Off className='mr-2 h-4 w-4' />
               Disconnect
             </AlertDialogAction>
           </AlertDialogFooter>
