@@ -1,25 +1,17 @@
-import { getSession } from "@/src/lib/auth/session";
-import { db } from "@/src/db";
-import { projects, tasks, users } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  MoreHorizontal,
-  Calendar,
-  Target,
-  Users as UsersIcon,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
-import { redirect, notFound } from "next/navigation";
-import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
-import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { ProjectFilesSection } from "@/components/projects/project-files-section";
+import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
+import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/src/db";
+import { projects, tasks, users } from "@/src/db/schema";
+import { getSession } from "@/src/lib/auth/session";
 import { getCurrentWorkspace } from "@/src/lib/workspace/context";
+import { eq } from "drizzle-orm";
+import { Calendar, CheckCircle2, Clock, Target, Users as UsersIcon } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 
 export default async function ProjectDetailPage({
   params,
@@ -133,27 +125,27 @@ export default async function ProjectDetailPage({
   };
 
   return (
-    <div className='space-y-6 max-w-[1600px]'>
+    <div className='space-y-6 w-full'>
       {/* Project Header */}
       <div className='space-y-4'>
-        <div className='flex flex-col sm:flex-row items-start justify-between gap-4'>
-          <div className='flex items-start gap-4 flex-1 min-w-0 w-full'>
+        <div className='flex flex-col lg:flex-row items-start justify-between gap-4'>
+          <div className='flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full'>
             <div
-              className='h-16 w-16 rounded-lg flex items-center justify-center shrink-0'
+              className='h-12 w-12 sm:h-16 sm:w-16 rounded-lg flex items-center justify-center shrink-0'
               style={{ backgroundColor: project.color || "#0070f3" }}
             >
-              <Target className='h-8 w-8 text-white' />
+              <Target className='h-6 w-6 sm:h-8 sm:w-8 text-white' />
             </div>
             <div className='flex-1 min-w-0'>
-              <h1 className='text-3xl font-bold tracking-tight wrap-break-word'>
+              <h1 className='text-2xl sm:text-3xl font-bold tracking-tight wrap-break-word'>
                 {project.name}
               </h1>
-              <p className='text-neutral-500 dark:text-neutral-400 mt-1 wrap-break-word'>
+              <p className='text-sm sm:text-base text-neutral-500 dark:text-neutral-400 mt-1 wrap-break-word'>
                 {project.description || "No description"}
               </p>
             </div>
           </div>
-          <div className='flex items-center gap-2 shrink-0'>
+          <div className='flex items-center gap-2 shrink-0 w-full lg:w-auto'>
             <EditProjectDialog project={project} clients={allClients} />
           </div>
         </div>
@@ -194,7 +186,7 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Project Stats */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium text-neutral-600 dark:text-neutral-400'>
@@ -264,9 +256,9 @@ export default async function ProjectDetailPage({
       </div>
 
       {/* Tasks */}
-      <div className='w-full overflow-hidden'>
-        <div className='flex items-center justify-between mb-4'>
-          <h2 className='text-xl font-semibold'>Tasks</h2>
+      <div className='w-full'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4'>
+          <h2 className='text-lg sm:text-xl font-semibold'>Tasks</h2>
           <CreateTaskDialog projectId={project.id} members={members} />
         </div>
 

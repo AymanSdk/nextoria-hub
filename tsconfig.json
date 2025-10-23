@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@kanban/*": ["./src/components/kibo-ui/kanban/*"]
     }
   },
   "include": [
