@@ -22,6 +22,9 @@ export * from "./clients";
 // Files
 export * from "./files";
 
+// Drive Files
+export * from "./drive-files";
+
 // Billing
 export * from "./invoices";
 
