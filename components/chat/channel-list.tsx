@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Hash, Plus, Lock, X } from "lucide-react";
+import { Hash, Plus, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnreadBadge } from "./unread-badge";
 
@@ -41,7 +41,6 @@ interface ChannelListProps {
     isPrivate: boolean;
   }) => Promise<void>;
   workspaceId: string;
-  onClose?: () => void;
 }
 
 export function ChannelList({
@@ -49,7 +48,6 @@ export function ChannelList({
   currentChannelId,
   onChannelSelect,
   onCreateChannel,
-  onClose,
 }: ChannelListProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -168,17 +166,6 @@ export function ChannelList({
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          {onClose && (
-            <Button
-              variant='ghost'
-              size='icon'
-              className='h-8 w-8 lg:hidden hover:bg-muted'
-              onClick={onClose}
-            >
-              <X className='h-4 w-4' />
-            </Button>
-          )}
         </div>
       </div>
 

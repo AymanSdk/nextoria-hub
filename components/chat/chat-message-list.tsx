@@ -2,13 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSelf, useOthers, useUpdateMyPresence } from "@/liveblocks.config";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
-import { Loader2, MessageSquare } from "lucide-react";
-import { RichTextRenderer } from "./rich-text-renderer";
-import { UserRoleBadge } from "./user-role-badge";
-import { MessageAttachmentsList } from "./message-attachment";
+import { Loader2, MessageSquare, ArrowDown } from "lucide-react";
+import { MessageGroup } from "./message-group";
 import { FileAttachment } from "@/types/chat";
 import type { Role } from "@/src/lib/constants/roles";
 
@@ -50,16 +47,33 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
   const updatePresence = useUpdateMyPresence();
   const [visibleCount, setVisibleCount] = useState(20); // Show only 20 messages initially
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!showJumpToBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, showJumpToBottom]);
 
   // Update last seen timestamp
   useEffect(() => {
     updatePresence({ lastSeenAt: Date.now() });
   }, [messages, updatePresence]);
+
+  // Handle scroll to detect if user scrolled up
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    const isNearBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setShowJumpToBottom(!isNearBottom);
+  };
+
+  // Jump to bottom function
+  const jumpToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setShowJumpToBottom(false);
+  };
 
   // Show typing indicators
   const typingUsers = others
@@ -80,11 +94,43 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
     }, 300); // Small delay for better UX
   };
 
+  // Group consecutive messages from the same sender
+  const groupMessages = (msgs: Message[]) => {
+    const groups: Message[][] = [];
+    let currentGroup: Message[] = [];
+
+    msgs.forEach((msg, index) => {
+      if (index === 0) {
+        currentGroup = [msg];
+      } else {
+        const prevMsg = msgs[index - 1];
+        const timeDiff = msg.createdAt - prevMsg.createdAt;
+        const isSameSender = msg.senderId === prevMsg.senderId;
+        const isWithinFiveMinutes = timeDiff < 5 * 60 * 1000; // 5 minutes
+
+        if (isSameSender && isWithinFiveMinutes) {
+          currentGroup.push(msg);
+        } else {
+          groups.push(currentGroup);
+          currentGroup = [msg];
+        }
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+
+    return groups;
+  };
+
+  const messageGroups = groupMessages(visibleMessages);
+
   return (
-    <div className='flex flex-col h-full'>
-      <ScrollArea className='flex-1'>
+    <div className='flex flex-col h-full relative'>
+      <ScrollArea className='flex-1' onScrollCapture={handleScroll}>
         <div className='px-4 sm:px-6 py-6' ref={scrollRef}>
-          <div className='space-y-1'>
+          <div className='space-y-0'>
             {/* Load Older Messages Button */}
             {hasOlderMessages && (
               <div className='flex justify-center pb-4'>
@@ -116,76 +162,14 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                 <p className='text-sm'>Be the first to say something!</p>
               </div>
             ) : (
-              visibleMessages.map((message) => {
-                const isCurrentUser = message.senderId === currentUser?.id;
-
+              messageGroups.map((group, index) => {
+                const isCurrentUser = group[0].senderId === currentUser?.id;
                 return (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 group hover:bg-muted/40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 rounded-lg transition-colors ${
-                      isCurrentUser ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {!isCurrentUser && (
-                      <Avatar className='h-10 w-10 mt-1 shrink-0'>
-                        <AvatarImage src={message.senderImage || undefined} />
-                        <AvatarFallback className='bg-primary/10 text-primary font-medium'>
-                          {message.senderName?.charAt(0).toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-
-                    <div
-                      className={`flex flex-col max-w-[80%] sm:max-w-[75%] ${
-                        isCurrentUser ? "items-end" : "items-start"
-                      }`}
-                    >
-                      <div
-                        className={`flex items-center gap-2 mb-1.5 flex-wrap ${
-                          isCurrentUser ? "flex-row-reverse" : ""
-                        }`}
-                      >
-                        <span className='text-sm font-semibold text-foreground'>
-                          {isCurrentUser ? "You" : message.senderName}
-                        </span>
-                        {message.senderRole && (
-                          <UserRoleBadge role={message.senderRole} size='sm' />
-                        )}
-                        <span className='text-xs text-muted-foreground whitespace-nowrap'>
-                          {formatDistanceToNow(parseMessageDate(message.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </div>
-
-                      <div
-                        className={`px-4 py-3 rounded-2xl shadow-sm ${
-                          isCurrentUser
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted text-foreground rounded-bl-md"
-                        }`}
-                      >
-                        <RichTextRenderer
-                          content={message.content}
-                          className={`text-sm leading-relaxed ${
-                            isCurrentUser ? "prose-invert" : ""
-                          }`}
-                        />
-                        {message.attachments && message.attachments.length > 0 && (
-                          <MessageAttachmentsList attachments={message.attachments} />
-                        )}
-                      </div>
-                    </div>
-
-                    {isCurrentUser && (
-                      <Avatar className='h-10 w-10 mt-1 shrink-0'>
-                        <AvatarImage src={message.senderAvatar} />
-                        <AvatarFallback className='bg-primary text-primary-foreground font-medium'>
-                          {message.senderName?.charAt(0).toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
+                  <MessageGroup
+                    key={group[0].id}
+                    messages={group}
+                    isCurrentUser={isCurrentUser}
+                  />
                 );
               })
             )}
@@ -194,6 +178,18 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
           </div>
         </div>
       </ScrollArea>
+
+      {/* Jump to Bottom Button */}
+      {showJumpToBottom && (
+        <Button
+          onClick={jumpToBottom}
+          size='icon'
+          className='absolute bottom-20 right-6 rounded-full shadow-lg z-10'
+          title='Jump to latest'
+        >
+          <ArrowDown className='h-4 w-4' />
+        </Button>
+      )}
 
       {/* Typing Indicator */}
       {typingUsers.length > 0 && (

@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Card } from "@/components/ui/card";
 import { ChatRoomProvider } from "@/components/chat/chat-room-provider";
-import { ChannelList } from "@/components/chat/channel-list";
+import { ChatHeader } from "@/components/chat/chat-header";
+import { ChannelPanel } from "@/components/chat/channel-panel";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ChatInput } from "@/components/chat/chat-input";
-import { ChatPresence } from "@/components/chat/chat-presence";
 import { ChatSync } from "@/components/chat/chat-sync";
-import { Separator } from "@/components/ui/separator";
+import { MobileChatTabs } from "@/components/chat/mobile-chat-tabs";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Loader2, Menu, X } from "lucide-react";
+import { MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ChatMessage, ChatChannel } from "@/types/chat";
@@ -27,10 +26,25 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [broadcastMessage, setBroadcastMessage] = useState<
     ((message: ChatMessage) => void) | null
   >(null);
+
+  // Load panel state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem("chat-panel-open");
+    if (savedState !== null) {
+      setIsPanelOpen(savedState === "true");
+    }
+  }, []);
+
+  // Save panel state to localStorage
+  const togglePanel = () => {
+    const newState = !isPanelOpen;
+    setIsPanelOpen(newState);
+    localStorage.setItem("chat-panel-open", String(newState));
+  };
 
   // Fetch user's workspace on mount
   useEffect(() => {
@@ -227,9 +241,15 @@ export default function ChatPage() {
     });
   };
 
+  // Calculate total unread count for mobile tabs
+  const totalUnreadCount = channels.reduce(
+    (sum, channel) => sum + (channel.unreadCount || 0),
+    0
+  );
+
   if (!session?.user) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)]'>
+      <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>Loading...</p>
@@ -240,7 +260,7 @@ export default function ChatPage() {
 
   if (isLoading || !workspaceId) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)]'>
+      <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>
@@ -251,159 +271,119 @@ export default function ChatPage() {
     );
   }
 
-  return (
-    <div className='flex gap-0 h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)] -m-4 md:-m-6 lg:-m-8 rounded-lg overflow-hidden border bg-background shadow-sm'>
-      {/* Mobile Overlay */}
-      {isSidebarOpen && (
-        <div
-          className='fixed inset-0 bg-black/50 z-40 lg:hidden'
-          onClick={() => setIsSidebarOpen(false)}
+  // Chat content component (used in both desktop and mobile)
+  const chatContent =
+    currentChannel && workspaceId ? (
+      <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
+        {/* Real-time message sync */}
+        <ChatSync
+          channelId={currentChannel.id}
+          onNewMessage={handleNewMessage}
+          onBroadcastReady={setBroadcastMessage}
         />
-      )}
 
-      {/* Channel List Sidebar */}
-      <div
-        className={cn(
-          "w-64 border-r bg-card shrink-0 flex flex-col h-full",
-          "fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto",
-          "transition-transform duration-300 ease-in-out lg:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        )}
-      >
-        <ChannelList
+        <div className='flex flex-col h-full'>
+          {/* Sticky Header */}
+          <ChatHeader
+            channelName={currentChannel.name}
+            channelDescription={currentChannel.description}
+            isPrivate={currentChannel.isPrivate}
+            memberCount={0}
+            onTogglePanel={togglePanel}
+            isPanelOpen={isPanelOpen}
+          />
+
+          {/* Messages Area - Scrollable */}
+          <div className='flex-1 overflow-hidden'>
+            {isLoadingMessages ? (
+              <div className='flex items-center justify-center h-full'>
+                <div className='text-center'>
+                  <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2' />
+                  <p className='text-sm text-muted-foreground'>Loading messages...</p>
+                </div>
+              </div>
+            ) : (
+              <ChatMessageList
+                channelId={currentChannel.id}
+                messages={messages.map((msg) => ({
+                  id: msg.id,
+                  senderId: msg.senderId,
+                  senderName: msg.senderName || msg.senderEmail,
+                  senderImage: msg.senderImage,
+                  senderRole: msg.senderRole,
+                  content: msg.content,
+                  createdAt: new Date(msg.createdAt).getTime(),
+                  attachments: msg.attachments,
+                }))}
+              />
+            )}
+          </div>
+
+          {/* Message Input - Sticky Bottom */}
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            channelId={currentChannel.id}
+            workspaceId={workspaceId}
+          />
+        </div>
+      </ChatRoomProvider>
+    ) : (
+      <div className='flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/20'>
+        <div className='text-center max-w-md px-4'>
+          <div className='h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6'>
+            <MessageSquare className='h-12 w-12 text-primary' />
+          </div>
+          <h3 className='text-2xl font-semibold mb-3 text-foreground'>Welcome to Chat</h3>
+          <p className='text-sm text-muted-foreground mb-6 leading-relaxed'>
+            Select a channel to start chatting with your team, or create a new channel to
+            get started.
+          </p>
+        </div>
+      </div>
+    );
+
+  return (
+    <>
+      {/* Desktop Layout */}
+      <div className='hidden md:flex gap-0 h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background'>
+        {/* Channel Panel - Toggleable */}
+        <ChannelPanel
           channels={channels}
           currentChannelId={currentChannel?.id}
           onChannelSelect={(id) => {
             const channel = channels.find((c) => c.id === id);
             if (channel) {
               setCurrentChannel(channel);
-              setIsSidebarOpen(false); // Close sidebar on mobile after selection
             }
           }}
           onCreateChannel={handleCreateChannel}
-          onClose={() => setIsSidebarOpen(false)}
           workspaceId={workspaceId || ""}
+          isOpen={isPanelOpen}
+        />
+
+        {/* Chat Area */}
+        <div className='flex-1 flex flex-col min-w-0 bg-background overflow-hidden border-l'>
+          {chatContent}
+        </div>
+      </div>
+
+      {/* Mobile Layout - Bottom Tabs */}
+      <div className='md:hidden h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background'>
+        <MobileChatTabs
+          channels={channels}
+          currentChannelId={currentChannel?.id}
+          onChannelSelect={(id) => {
+            const channel = channels.find((c) => c.id === id);
+            if (channel) {
+              setCurrentChannel(channel);
+            }
+          }}
+          onCreateChannel={handleCreateChannel}
+          workspaceId={workspaceId || ""}
+          chatContent={chatContent}
+          totalUnreadCount={totalUnreadCount}
         />
       </div>
-
-      {/* Chat Area */}
-      <div className='flex-1 flex flex-col min-w-0 bg-background overflow-hidden'>
-        {currentChannel && workspaceId ? (
-          <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
-            {/* Real-time message sync */}
-            <ChatSync
-              channelId={currentChannel.id}
-              onNewMessage={handleNewMessage}
-              onBroadcastReady={setBroadcastMessage}
-            />
-
-            {/* Channel Header */}
-            <div className='h-16 px-4 sm:px-6 border-b bg-background flex items-center justify-between shrink-0'>
-              <div className='flex items-center gap-3 min-w-0 flex-1'>
-                {/* Mobile Menu Button */}
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='lg:hidden h-9 w-9 shrink-0'
-                  onClick={() => setIsSidebarOpen(true)}
-                >
-                  <Menu className='h-5 w-5' />
-                </Button>
-
-                <div className='h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0'>
-                  <MessageSquare className='h-5 w-5 text-primary' />
-                </div>
-                <div className='min-w-0 flex-1'>
-                  <h2 className='font-semibold text-base truncate'>
-                    #{currentChannel.name}
-                  </h2>
-                  {currentChannel.description && (
-                    <p className='text-xs text-muted-foreground truncate'>
-                      {currentChannel.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Presence Indicator - Right side of header */}
-              <div className='shrink-0 ml-4'>
-                <ChatPresence />
-              </div>
-            </div>
-
-            {/* Messages Area */}
-            <div className='flex-1 overflow-hidden relative'>
-              {isLoadingMessages ? (
-                <div className='absolute inset-0 flex items-center justify-center'>
-                  <div className='text-center'>
-                    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2' />
-                    <p className='text-sm text-muted-foreground'>Loading messages...</p>
-                  </div>
-                </div>
-              ) : (
-                <ChatMessageList
-                  channelId={currentChannel.id}
-                  messages={messages.map((msg) => ({
-                    id: msg.id,
-                    senderId: msg.senderId,
-                    senderName: msg.senderName || msg.senderEmail,
-                    senderAvatar: msg.senderImage,
-                    senderRole: msg.senderRole,
-                    content: msg.content,
-                    createdAt: new Date(msg.createdAt).getTime(),
-                    attachments: msg.attachments,
-                  }))}
-                />
-              )}
-            </div>
-
-            {/* Message Input - Fixed at bottom */}
-            <div className='border-t bg-background shrink-0'>
-              <ChatInput
-                onSendMessage={handleSendMessage}
-                channelId={currentChannel.id}
-                workspaceId={workspaceId}
-              />
-            </div>
-          </ChatRoomProvider>
-        ) : (
-          <div className='flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/20'>
-            {/* Mobile Menu Button for Empty State */}
-            <div className='absolute top-6 left-6 lg:hidden'>
-              <Button
-                variant='outline'
-                size='icon'
-                className='h-10 w-10'
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu className='h-5 w-5' />
-              </Button>
-            </div>
-
-            <div className='text-center max-w-md px-4'>
-              <div className='h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6'>
-                <MessageSquare className='h-12 w-12 text-primary' />
-              </div>
-              <h3 className='text-2xl font-semibold mb-3 text-foreground'>
-                Welcome to Chat
-              </h3>
-              <p className='text-sm text-muted-foreground mb-6 leading-relaxed'>
-                Select a channel from the sidebar to start chatting with your team, or
-                create a new channel to get started.
-              </p>
-              <Button
-                variant='default'
-                size='lg'
-                className='lg:hidden'
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu className='h-4 w-4 mr-2' />
-                Open Channels
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }

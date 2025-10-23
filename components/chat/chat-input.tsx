@@ -63,7 +63,7 @@ export function ChatInput({
   const isEmpty = isMessageEmpty(message) && attachments.length === 0;
 
   return (
-    <div className='p-4 bg-background'>
+    <div className='sticky bottom-0 p-4 bg-background border-t z-10'>
       {/* Show attached files */}
       {attachments.length > 0 && (
         <div className='mb-3 p-3 bg-muted/50 rounded-lg border'>
