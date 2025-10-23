@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useProjectRequestStats } from "@/hooks/use-project-request-stats";
@@ -307,10 +308,15 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton size='lg' asChild>
               <Link href='/'>
-                <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-neutral-900 to-neutral-700 dark:from-neutral-100 dark:to-neutral-300'>
-                  <span className='text-sm font-bold text-white dark:text-neutral-900'>
-                    N
-                  </span>
+                <div className='flex aspect-square size-8 items-center justify-center'>
+                  <Image
+                    src='/logo.svg'
+                    alt='Nextoria Hub Logo'
+                    width={32}
+                    height={32}
+                    className='w-full h-full object-contain'
+                    priority
+                  />
                 </div>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
                   <span className='truncate font-semibold'>Nextoria</span>
