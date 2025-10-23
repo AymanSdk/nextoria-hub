@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { User, Mail, Phone, Globe, FileText, Camera, Save, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,8 +114,11 @@ export function ProfileSection({ user }: ProfileSectionProps) {
     }
   };
 
-  const handleAvatarUploadSuccess = (newImageUrl: string) => {
+  const handleAvatarUploadSuccess = async (newImageUrl: string) => {
     setAvatarUrl(newImageUrl);
+    // Update session to propagate changes
+    // Force trigger by passing an empty object
+    await updateSession({});
   };
 
   const bioLength = formData.bio.length;
@@ -131,12 +134,13 @@ export function ProfileSection({ user }: ProfileSectionProps) {
       >
         <div className='flex flex-col sm:flex-row items-center gap-6'>
           <div className='relative group'>
-            <Avatar className='h-32 w-32 border-4 border-border shadow-lg'>
-              <AvatarImage src={avatarUrl || undefined} alt={formData.name} />
-              <AvatarFallback className='text-4xl font-semibold'>
-                {formData.name.substring(0, 2).toUpperCase() || "US"}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              src={avatarUrl}
+              alt={formData.name}
+              fallback={formData.name.substring(0, 2).toUpperCase() || "US"}
+              size={128}
+              className='border-4 border-border shadow-lg'
+            />
             <button
               type='button'
               onClick={() => setShowAvatarDialog(true)}

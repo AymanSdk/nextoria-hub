@@ -109,6 +109,10 @@ export const {
     async jwt({ token, user, trigger, session }) {
       // Initial sign in
       if (user) {
+        console.log("JWT Callback: Initial sign in", {
+          userId: user.id,
+          image: user.image,
+        });
         token.id = user.id;
         token.role = user.role;
         token.name = user.name;
@@ -116,7 +120,8 @@ export const {
       }
 
       // Handle session updates (e.g., when profile is updated)
-      if (trigger === "update" && session) {
+      if (trigger === "update") {
+        console.log("JWT Callback: Session update triggered", { userId: token.id });
         // Fetch fresh user data from database
         const [freshUser] = await db
           .select()
@@ -125,9 +130,16 @@ export const {
           .limit(1);
 
         if (freshUser) {
+          console.log("JWT Callback: Fetched fresh user data", {
+            userId: freshUser.id,
+            name: freshUser.name,
+            image: freshUser.image,
+          });
           token.name = freshUser.name;
           token.image = freshUser.image;
           token.role = freshUser.role;
+        } else {
+          console.error("JWT Callback: No user found in database for ID:", token.id);
         }
       }
 
@@ -135,11 +147,43 @@ export const {
     },
 
     async session({ session, token }) {
+      console.log("Session Callback: Token received", {
+        tokenId: token.id,
+        tokenName: token.name,
+        tokenImage: token.image,
+        tokenRole: token.role,
+      });
+
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
         session.user.name = token.name as string;
         session.user.image = token.image as string | null;
+
+        // FALLBACK: If token doesn't have image (old JWT), fetch from database
+        if (!token.image && token.id) {
+          console.log("Session Callback: Token missing image, fetching from database...");
+          try {
+            const [freshUser] = await db
+              .select({ image: users.image })
+              .from(users)
+              .where(eq(users.id, token.id as string))
+              .limit(1);
+
+            if (freshUser?.image) {
+              console.log("Session Callback: Found image in database:", freshUser.image);
+              session.user.image = freshUser.image;
+            }
+          } catch (error) {
+            console.error("Session Callback: Error fetching image:", error);
+          }
+        }
+
+        console.log("Session Callback: Building session", {
+          userId: session.user.id,
+          name: session.user.name,
+          image: session.user.image,
+        });
       }
 
       return session;

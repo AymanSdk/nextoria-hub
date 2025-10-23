@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -125,19 +125,21 @@ export function AvatarUploadDialog({
       }
 
       const data = await response.json();
+      console.log("Avatar upload response:", data);
 
-      // Update session
-      await updateSession();
-
-      toast.success("Profile picture updated successfully");
-
-      // Call success callback
+      // Call success callback first
       if (onUploadSuccess) {
+        console.log("Calling onUploadSuccess with imageUrl:", data.imageUrl);
         onUploadSuccess(data.imageUrl);
       }
 
-      // Refresh router
-      router.refresh();
+      // Update session - this triggers JWT callback to fetch fresh user data
+      console.log("Calling updateSession...");
+      // Force trigger by passing an empty object
+      const updatedSession = await updateSession({});
+      console.log("Session updated:", updatedSession);
+
+      toast.success("Profile picture updated successfully");
 
       // Close dialog
       onOpenChange(false);
@@ -146,6 +148,18 @@ export function AvatarUploadDialog({
       setSelectedFile(null);
       setPreview(null);
       setUploadProgress(0);
+
+      // Force a hard refresh to ensure all components re-render with new avatar
+      // This is necessary because NextAuth session updates don't always trigger re-renders
+      setTimeout(() => {
+        console.log("Refreshing router...");
+        router.refresh();
+        // Reload after a longer delay to ensure session update completes
+        setTimeout(() => {
+          console.log("Reloading page...");
+          window.location.reload();
+        }, 300);
+      }, 700);
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast.error(
@@ -175,12 +189,13 @@ export function AvatarUploadDialog({
         <div className='space-y-6 py-4'>
           {/* Preview */}
           <div className='flex justify-center'>
-            <Avatar className='h-32 w-32 border-4 border-border'>
-              <AvatarImage src={preview || undefined} alt={userName} />
-              <AvatarFallback className='text-4xl'>
-                {userName.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              src={preview}
+              alt={userName}
+              fallback={userName.substring(0, 2).toUpperCase()}
+              size={128}
+              className='border-4 border-border'
+            />
           </div>
 
           {/* Drop Zone */}

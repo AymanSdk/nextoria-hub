@@ -52,7 +52,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { signOut } from "next-auth/react";
 
 interface NavItem {
@@ -197,7 +197,7 @@ export function AppSidebar({
   currentUserId,
 }: AppSidebarProps = {}) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { pendingCount } = useProjectRequestStats();
   const chatUnreadCount = useChatUnread(currentWorkspace?.id);
   const { state } = useSidebar();
@@ -208,6 +208,15 @@ export function AppSidebar({
   const userEmail = session?.user?.email || "";
   const userImage = session?.user?.image;
   const isClient = userRole === "CLIENT";
+
+  // Log session changes for debugging
+  React.useEffect(() => {
+    console.log("AppSidebar: Session updated", {
+      userImage,
+      userName,
+      status,
+    });
+  }, [userImage, userName, status]);
 
   // Customize navigation items based on role
   const customMainNavItems = mainNavItems.map((item) => {
@@ -360,12 +369,13 @@ export function AppSidebar({
                   size='lg'
                   className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                 >
-                  <Avatar key={userImage || "no-image"} className='h-8 w-8 rounded-lg'>
-                    <AvatarImage src={userImage || undefined} alt={userName} />
-                    <AvatarFallback className='rounded-lg'>
-                      {userName.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    src={userImage}
+                    alt={userName}
+                    fallback={userName.substring(0, 2).toUpperCase()}
+                    size={32}
+                    className='rounded-lg'
+                  />
                   <div className='grid flex-1 text-left text-sm leading-tight'>
                     <span className='truncate font-semibold'>{userName}</span>
                     <span className='truncate text-xs text-muted-foreground'>
@@ -383,12 +393,13 @@ export function AppSidebar({
               >
                 <DropdownMenuLabel className='p-0 font-normal'>
                   <div className='flex items-center gap-2 px-1 py-1.5 text-left text-sm'>
-                    <Avatar key={userImage || "no-image"} className='h-8 w-8 rounded-lg'>
-                      <AvatarImage src={userImage || undefined} alt={userName} />
-                      <AvatarFallback className='rounded-lg'>
-                        {userName.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      src={userImage}
+                      alt={userName}
+                      fallback={userName.substring(0, 2).toUpperCase()}
+                      size={32}
+                      className='rounded-lg'
+                    />
                     <div className='grid flex-1 text-left text-sm leading-tight'>
                       <span className='truncate font-semibold'>{userName}</span>
                       <span className='truncate text-xs text-muted-foreground'>

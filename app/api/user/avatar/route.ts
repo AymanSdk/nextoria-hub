@@ -118,9 +118,16 @@ export async function POST(request: NextRequest) {
       updatedUser.image
     );
 
+    // Add cache-busting query parameter to force browsers to reload the new image
+    const imageUrlWithCacheBust = updatedUser.image
+      ? `${updatedUser.image}${
+          updatedUser.image.includes("?") ? "&" : "?"
+        }t=${Date.now()}`
+      : updatedUser.image;
+
     return NextResponse.json({
       success: true,
-      imageUrl: updatedUser.image,
+      imageUrl: imageUrlWithCacheBust,
       user: {
         id: updatedUser.id,
         name: updatedUser.name,
