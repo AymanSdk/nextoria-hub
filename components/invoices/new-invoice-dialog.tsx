@@ -304,16 +304,16 @@ export function NewInvoiceDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className='max-w-5xl max-h-[90vh] overflow-y-auto'>
-        <DialogHeader className='pb-4 border-b'>
-          <DialogTitle className='text-2xl font-bold flex items-center gap-2'>
-            <Receipt className='h-6 w-6 text-primary' />
-            Create New Invoice
+      <DialogContent className='max-w-[98vw] sm:max-w-[95vw] lg:max-w-7xl max-h-[96vh] overflow-y-auto'>
+        <DialogHeader className='pb-3 sm:pb-4 border-b'>
+          <DialogTitle className='text-xl sm:text-2xl font-bold flex items-center gap-2'>
+            <Receipt className='h-5 w-5 sm:h-6 sm:w-6 text-primary' />
+            <span className='truncate'>Create New Invoice</span>
             {loadingData && (
-              <Loader2 className='h-4 w-4 animate-spin text-muted-foreground ml-2' />
+              <Loader2 className='h-4 w-4 animate-spin text-muted-foreground ml-auto shrink-0' />
             )}
           </DialogTitle>
-          <DialogDescription className='text-base'>
+          <DialogDescription className='text-sm sm:text-base'>
             {loadingData
               ? "Loading clients and projects..."
               : "Fill in the details below to generate a professional invoice"}
@@ -327,18 +327,21 @@ export function NewInvoiceDialog({
           )}
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-8 py-4'>
+        <form onSubmit={handleSubmit} className='space-y-4 sm:space-y-6 py-2 sm:py-3'>
           {/* Basic Information Section */}
-          <div className='space-y-4'>
-            <div className='flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wide'>
-              <FileText className='h-4 w-4' />
+          <div className='space-y-2 sm:space-y-3'>
+            <div className='flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-foreground/70 uppercase tracking-wide'>
+              <FileText className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
               Basic Information
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/30 rounded-lg border'>
               {/* Client Selection */}
-              <div className='space-y-2'>
-                <Label htmlFor='client' className='flex items-center gap-2 font-medium'>
-                  <User className='h-4 w-4 text-muted-foreground' />
+              <div className='space-y-1.5 sm:space-y-2 sm:col-span-2 lg:col-span-1 xl:col-span-2'>
+                <Label
+                  htmlFor='client'
+                  className='flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm'
+                >
+                  <User className='h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground' />
                   Client *
                 </Label>
                 <Select
@@ -346,9 +349,9 @@ export function NewInvoiceDialog({
                   onValueChange={setClientId}
                   disabled={loadingData}
                 >
-                  <SelectTrigger className='bg-background'>
+                  <SelectTrigger className='bg-background h-9 text-sm'>
                     <SelectValue
-                      placeholder={loadingData ? "Loading clients..." : "Select client"}
+                      placeholder={loadingData ? "Loading..." : "Select client"}
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -360,38 +363,35 @@ export function NewInvoiceDialog({
                       ))
                     ) : (
                       <div className='px-2 py-6 text-center text-sm text-muted-foreground'>
-                        No clients found. Add clients in Team page.
+                        No clients found
                       </div>
                     )}
                   </SelectContent>
                 </Select>
-                {!loadingData && clients.length === 0 && (
-                  <p className='text-xs text-muted-foreground'>
-                    No clients available. Please add clients with CLIENT role in the Team
-                    page.
-                  </p>
-                )}
               </div>
 
               {/* Project Selection (Optional) */}
-              <div className='space-y-2'>
-                <Label htmlFor='project' className='flex items-center gap-2 font-medium'>
-                  <FolderKanban className='h-4 w-4 text-muted-foreground' />
-                  Project (Optional)
+              <div className='space-y-1.5 sm:space-y-2 sm:col-span-2 lg:col-span-1 xl:col-span-2'>
+                <Label
+                  htmlFor='project'
+                  className='flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm'
+                >
+                  <FolderKanban className='h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground' />
+                  Project
                 </Label>
                 <Select
                   value={projectId}
                   onValueChange={setProjectId}
                   disabled={loadingData || !workspaceId}
                 >
-                  <SelectTrigger className='bg-background'>
+                  <SelectTrigger className='bg-background h-9 text-sm'>
                     <SelectValue
                       placeholder={
                         !workspaceId
-                          ? "Workspace not found"
+                          ? "No workspace"
                           : loadingData
-                          ? "Loading projects..."
-                          : "Select project (optional)"
+                          ? "Loading..."
+                          : "Optional"
                       }
                     />
                   </SelectTrigger>
@@ -404,27 +404,20 @@ export function NewInvoiceDialog({
                       ))
                     ) : (
                       <div className='px-2 py-6 text-center text-sm text-muted-foreground'>
-                        {!workspaceId ? "Workspace not found" : "No projects found"}
+                        No projects
                       </div>
                     )}
                   </SelectContent>
                 </Select>
-                {!loadingData && workspaceId && projects.length === 0 && (
-                  <p className='text-xs text-muted-foreground'>
-                    No projects available in this workspace. Create a project first.
-                  </p>
-                )}
-                {!workspaceId && (
-                  <p className='text-xs text-destructive'>
-                    Workspace not found. Please refresh the page.
-                  </p>
-                )}
               </div>
 
               {/* Due Date */}
-              <div className='space-y-2'>
-                <Label htmlFor='dueDate' className='flex items-center gap-2 font-medium'>
-                  <Calendar className='h-4 w-4 text-muted-foreground' />
+              <div className='space-y-1.5 sm:space-y-2'>
+                <Label
+                  htmlFor='dueDate'
+                  className='flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm'
+                >
+                  <Calendar className='h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground' />
                   Due Date
                 </Label>
                 <Input
@@ -432,15 +425,18 @@ export function NewInvoiceDialog({
                   type='date'
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className='bg-background'
+                  className='bg-background h-9 text-sm'
                 />
               </div>
 
               {/* Tax Rate */}
-              <div className='space-y-2'>
-                <Label htmlFor='taxRate' className='flex items-center gap-2 font-medium'>
-                  <Percent className='h-4 w-4 text-muted-foreground' />
-                  Tax Rate (%)
+              <div className='space-y-1.5 sm:space-y-2'>
+                <Label
+                  htmlFor='taxRate'
+                  className='flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm'
+                >
+                  <Percent className='h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground' />
+                  Tax (%)
                 </Label>
                 <Input
                   id='taxRate'
@@ -450,22 +446,25 @@ export function NewInvoiceDialog({
                   step='0.01'
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  placeholder='0.00'
-                  className='bg-background'
+                  placeholder='0'
+                  className='bg-background h-9 text-sm'
                 />
               </div>
 
               {/* Status */}
-              <div className='space-y-2 md:col-span-2'>
-                <Label htmlFor='status' className='flex items-center gap-2 font-medium'>
-                  <Receipt className='h-4 w-4 text-muted-foreground' />
-                  Invoice Status
+              <div className='space-y-1.5 sm:space-y-2'>
+                <Label
+                  htmlFor='status'
+                  className='flex items-center gap-1.5 sm:gap-2 font-medium text-xs sm:text-sm'
+                >
+                  <Receipt className='h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground' />
+                  Status
                 </Label>
                 <Select
                   value={status}
                   onValueChange={(v) => setStatus(v as "DRAFT" | "SENT")}
                 >
-                  <SelectTrigger className='bg-background'>
+                  <SelectTrigger className='bg-background h-9 text-sm'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -480,21 +479,28 @@ export function NewInvoiceDialog({
           <Separator />
 
           {/* Line Items Section */}
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wide'>
-                <Receipt className='h-4 w-4' />
+          <div className='space-y-2 sm:space-y-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-foreground/70 uppercase tracking-wide'>
+                <Receipt className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
                 Line Items *
               </div>
-              <Button type='button' variant='outline' size='sm' onClick={addLineItem}>
-                <Plus className='mr-2 h-4 w-4' />
-                Add Item
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={addLineItem}
+                className='h-7 sm:h-8 text-xs'
+              >
+                <Plus className='mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5' />
+                <span className='hidden sm:inline'>Add Item</span>
+                <span className='sm:hidden'>Add</span>
               </Button>
             </div>
 
             <div className='rounded-lg border bg-muted/20 overflow-hidden'>
-              {/* Table Header */}
-              <div className='grid grid-cols-12 gap-2 px-4 py-3 bg-muted/50 border-b text-xs font-semibold text-muted-foreground uppercase'>
+              {/* Table Header - Hidden on mobile */}
+              <div className='hidden sm:grid grid-cols-12 gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-muted/50 border-b text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase'>
                 <div className='col-span-5'>Description</div>
                 <div className='col-span-2 text-center'>Quantity</div>
                 <div className='col-span-2 text-right'>Unit Price</div>
@@ -507,89 +513,176 @@ export function NewInvoiceDialog({
                 {lineItems.map((item, index) => (
                   <div
                     key={index}
-                    className='grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-muted/20 transition-colors'
+                    className='grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-2 px-3 sm:px-4 py-3 items-start sm:items-center hover:bg-muted/20 transition-colors'
                   >
-                    <div className='col-span-5'>
-                      <Input
-                        placeholder='Item description'
-                        value={item.description}
-                        onChange={(e) =>
-                          updateLineItem(index, "description", e.target.value)
-                        }
-                        className='h-9 border-0 bg-transparent focus-visible:ring-1'
-                      />
+                    {/* Mobile Layout */}
+                    <div className='sm:hidden space-y-2'>
+                      <div className='flex items-start justify-between gap-2'>
+                        <Input
+                          placeholder='Item description'
+                          value={item.description}
+                          onChange={(e) =>
+                            updateLineItem(index, "description", e.target.value)
+                          }
+                          className='h-9 text-sm flex-1'
+                        />
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          className='h-9 w-9 text-muted-foreground hover:text-destructive shrink-0'
+                          onClick={() => removeLineItem(index)}
+                          disabled={lineItems.length === 1}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </div>
+                      <div className='grid grid-cols-3 gap-2'>
+                        <div>
+                          <label className='text-xs text-muted-foreground mb-1 block'>
+                            Qty
+                          </label>
+                          <Input
+                            type='number'
+                            placeholder='1'
+                            min='1'
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "quantity",
+                                parseInt(e.target.value) || 1
+                              )
+                            }
+                            className='h-9 text-center text-sm'
+                          />
+                        </div>
+                        <div>
+                          <label className='text-xs text-muted-foreground mb-1 block'>
+                            Price
+                          </label>
+                          <div className='relative'>
+                            <span className='absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs'>
+                              $
+                            </span>
+                            <Input
+                              type='number'
+                              placeholder='0.00'
+                              min='0'
+                              step='0.01'
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                updateLineItem(
+                                  index,
+                                  "unitPrice",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              className='h-9 pl-5 text-right text-sm'
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className='text-xs text-muted-foreground mb-1 block'>
+                            Total
+                          </label>
+                          <div className='h-9 flex items-center justify-end px-2 bg-muted/50 rounded-md'>
+                            <span className='text-sm font-semibold'>
+                              ${(item.quantity * item.unitPrice).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className='col-span-2'>
-                      <Input
-                        type='number'
-                        placeholder='1'
-                        min='1'
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateLineItem(index, "quantity", parseInt(e.target.value) || 1)
-                        }
-                        className='h-9 text-center border-0 bg-transparent focus-visible:ring-1'
-                      />
-                    </div>
-                    <div className='col-span-2'>
-                      <div className='relative'>
-                        <span className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm'>
-                          $
-                        </span>
+
+                    {/* Desktop Layout */}
+                    <>
+                      <div className='hidden sm:block col-span-5'>
+                        <Input
+                          placeholder='Item description'
+                          value={item.description}
+                          onChange={(e) =>
+                            updateLineItem(index, "description", e.target.value)
+                          }
+                          className='h-9 border-0 bg-transparent focus-visible:ring-1 text-sm'
+                        />
+                      </div>
+                      <div className='hidden sm:block col-span-2'>
                         <Input
                           type='number'
-                          placeholder='0.00'
-                          min='0'
-                          step='0.01'
-                          value={item.unitPrice}
+                          placeholder='1'
+                          min='1'
+                          value={item.quantity}
                           onChange={(e) =>
                             updateLineItem(
                               index,
-                              "unitPrice",
-                              parseFloat(e.target.value) || 0
+                              "quantity",
+                              parseInt(e.target.value) || 1
                             )
                           }
-                          className='h-9 pl-6 text-right border-0 bg-transparent focus-visible:ring-1'
+                          className='h-9 text-center border-0 bg-transparent focus-visible:ring-1 text-sm'
                         />
                       </div>
-                    </div>
-                    <div className='col-span-2 text-right'>
-                      <span className='text-sm font-semibold'>
-                        ${(item.quantity * item.unitPrice).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className='col-span-1 flex justify-end'>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        className='h-8 w-8 text-muted-foreground hover:text-destructive'
-                        onClick={() => removeLineItem(index)}
-                        disabled={lineItems.length === 1}
-                      >
-                        <Trash2 className='h-4 w-4' />
-                      </Button>
-                    </div>
+                      <div className='hidden sm:block col-span-2'>
+                        <div className='relative'>
+                          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm'>
+                            $
+                          </span>
+                          <Input
+                            type='number'
+                            placeholder='0.00'
+                            min='0'
+                            step='0.01'
+                            value={item.unitPrice}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "unitPrice",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            className='h-9 pl-6 text-right border-0 bg-transparent focus-visible:ring-1 text-sm'
+                          />
+                        </div>
+                      </div>
+                      <div className='hidden sm:block col-span-2 text-right'>
+                        <span className='text-sm font-semibold'>
+                          ${(item.quantity * item.unitPrice).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className='hidden sm:flex col-span-1 justify-end'>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8 text-muted-foreground hover:text-destructive'
+                          onClick={() => removeLineItem(index)}
+                          disabled={lineItems.length === 1}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    </>
                   </div>
                 ))}
               </div>
 
               {/* Totals */}
-              <div className='px-4 py-4 bg-muted/30 border-t space-y-2'>
-                <div className='flex justify-between text-sm text-muted-foreground'>
+              <div className='px-3 sm:px-4 py-3 sm:py-4 bg-muted/30 border-t space-y-1.5 sm:space-y-2'>
+                <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
                   <span>Subtotal</span>
                   <span className='font-medium text-foreground'>
                     ${calculateSubtotal().toFixed(2)}
                   </span>
                 </div>
-                <div className='flex justify-between text-sm text-muted-foreground'>
+                <div className='flex justify-between text-xs sm:text-sm text-muted-foreground'>
                   <span>Tax ({taxRate}%)</span>
                   <span className='font-medium text-foreground'>
                     ${calculateTax().toFixed(2)}
                   </span>
                 </div>
                 <Separator />
-                <div className='flex justify-between text-lg font-bold pt-1'>
+                <div className='flex justify-between text-base sm:text-lg font-bold pt-1'>
                   <span>Total</span>
                   <span className='text-primary'>${calculateTotal().toFixed(2)}</span>
                 </div>
@@ -600,64 +693,68 @@ export function NewInvoiceDialog({
           <Separator />
 
           {/* Additional Information Section */}
-          <div className='space-y-4'>
-            <div className='flex items-center gap-2 text-sm font-semibold text-foreground/80 uppercase tracking-wide'>
-              <FileText className='h-4 w-4' />
+          <div className='space-y-2 sm:space-y-3'>
+            <div className='flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-semibold text-foreground/70 uppercase tracking-wide'>
+              <FileText className='h-3 w-3 sm:h-3.5 sm:w-3.5' />
               Additional Information
             </div>
 
-            <div className='space-y-4 p-4 bg-muted/30 rounded-lg border'>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/30 rounded-lg border'>
               {/* Notes */}
-              <div className='space-y-2'>
-                <Label htmlFor='notes' className='font-medium'>
+              <div className='space-y-1.5 sm:space-y-2'>
+                <Label htmlFor='notes' className='font-medium text-xs sm:text-sm'>
                   Notes
                 </Label>
                 <Textarea
                   id='notes'
-                  placeholder='Additional notes or special instructions for the client...'
+                  placeholder='Additional notes...'
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className='bg-background resize-none'
+                  className='bg-background resize-none text-xs sm:text-sm'
                 />
               </div>
 
               {/* Terms */}
-              <div className='space-y-2'>
-                <Label htmlFor='terms' className='font-medium'>
+              <div className='space-y-1.5 sm:space-y-2'>
+                <Label htmlFor='terms' className='font-medium text-xs sm:text-sm'>
                   Terms & Conditions
                 </Label>
                 <Textarea
                   id='terms'
-                  placeholder='Payment terms, due dates, late fees, etc...'
+                  placeholder='Payment terms...'
                   rows={3}
                   value={terms}
                   onChange={(e) => setTerms(e.target.value)}
-                  className='bg-background resize-none'
+                  className='bg-background resize-none text-xs sm:text-sm'
                 />
               </div>
             </div>
           </div>
 
-          <DialogFooter className='pt-6 border-t gap-2'>
+          <DialogFooter className='pt-3 sm:pt-4 border-t gap-2 flex-col sm:flex-row'>
             <Button
               type='button'
               variant='outline'
               onClick={() => setOpen(false)}
               disabled={loading}
-              className='min-w-[100px]'
+              className='w-full sm:w-auto sm:min-w-[100px] h-9 text-sm'
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={loading} className='min-w-[140px]'>
+            <Button
+              type='submit'
+              disabled={loading}
+              className='w-full sm:w-auto sm:min-w-[140px] h-9 text-sm'
+            >
               {loading ? (
                 <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  <Loader2 className='mr-2 h-3.5 w-3.5 animate-spin' />
                   Creating...
                 </>
               ) : (
                 <>
-                  <Receipt className='mr-2 h-4 w-4' />
+                  <Receipt className='mr-2 h-3.5 w-3.5' />
                   Create Invoice
                 </>
               )}

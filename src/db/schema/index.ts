@@ -171,9 +171,9 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
     fields: [invoices.projectId],
     references: [projects.id],
   }),
-  client: one(users, {
+  client: one(clients, {
     fields: [invoices.clientId],
-    references: [users.id],
+    references: [clients.id],
   }),
   createdBy: one(users, {
     fields: [invoices.createdBy],
@@ -215,6 +215,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   contacts: many(clientContacts),
   projectRequests: many(projectRequests),
   files: many(files),
+  invoices: many(invoices),
 }));
 
 /**
