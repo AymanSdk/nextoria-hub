@@ -18,6 +18,9 @@ import {
   Grid3x3,
   List,
   Eye,
+  FileType,
+  Sheet,
+  Presentation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +36,15 @@ import {
 } from "@/components/ui/empty";
 import { LinkDriveFileDialog } from "./link-drive-file-dialog";
 import { FilePreviewDialog } from "./file-preview-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface DriveFile {
   id: string;
@@ -52,27 +64,33 @@ type ViewMode = "list" | "grid";
 
 export function GoogleDriveBrowser() {
   const [files, setFiles] = useState<DriveFile[]>([]);
+  const [allFiles, setAllFiles] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
-  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [previewFile, setPreviewFile] = useState<DriveFile | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     fetchFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchFiles = async (pageToken?: string) => {
+  useEffect(() => {
+    // Update displayed files when page changes
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setFiles(allFiles.slice(startIndex, endIndex));
+  }, [currentPage, allFiles, itemsPerPage]);
+
+  const fetchFiles = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        pageSize: "50",
+        pageSize: "100",
       });
-
-      if (pageToken) {
-        params.set("pageToken", pageToken);
-      }
 
       if (searchQuery) {
         params.set("query", searchQuery);
@@ -87,14 +105,8 @@ export function GoogleDriveBrowser() {
       }
 
       const data = await response.json();
-
-      if (pageToken) {
-        setFiles((prev) => [...prev, ...(data.files || [])]);
-      } else {
-        setFiles(data.files || []);
-      }
-
-      setNextPageToken(data.nextPageToken || null);
+      setAllFiles(data.files || []);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error fetching Google Drive files:", error);
       toast.error("Failed to load Google Drive files");
@@ -107,20 +119,29 @@ export function GoogleDriveBrowser() {
     fetchFiles();
   };
 
-  const getFileIcon = (mimeType: string) => {
+  const getFileIcon = (mimeType: string, large = false) => {
+    const sizeClass = large ? "h-12 w-12" : "h-5 w-5";
+
     if (mimeType === "application/vnd.google-apps.folder") {
-      return <FolderKanban className='h-5 w-5 text-yellow-500' />;
+      return <FolderKanban className={`${sizeClass} text-yellow-500`} />;
     } else if (mimeType.startsWith("image/")) {
-      return <FileImage className='h-5 w-5 text-blue-500' />;
+      return <FileImage className={`${sizeClass} text-blue-500`} />;
     } else if (mimeType.startsWith("video/")) {
-      return <FileVideo className='h-5 w-5 text-purple-500' />;
-    } else if (
-      mimeType === "application/pdf" ||
-      mimeType === "application/vnd.google-apps.document"
-    ) {
-      return <FileText className='h-5 w-5 text-red-500' />;
+      return <FileVideo className={`${sizeClass} text-purple-500`} />;
+    } else if (mimeType === "application/pdf") {
+      return <FileType className={`${sizeClass} text-red-500`} />;
+    } else if (mimeType === "application/vnd.google-apps.document") {
+      return <FileText className={`${sizeClass} text-blue-600`} />;
+    } else if (mimeType === "application/vnd.google-apps.spreadsheet") {
+      return <Sheet className={`${sizeClass} text-green-600`} />;
+    } else if (mimeType === "application/vnd.google-apps.presentation") {
+      return <Presentation className={`${sizeClass} text-orange-500`} />;
+    } else if (mimeType.startsWith("audio/")) {
+      return <FileIcon className={`${sizeClass} text-pink-500`} />;
+    } else if (mimeType.startsWith("text/")) {
+      return <FileText className={`${sizeClass} text-neutral-600`} />;
     } else {
-      return <FileIcon className='h-5 w-5 text-neutral-500' />;
+      return <FileIcon className={`${sizeClass} text-neutral-500`} />;
     }
   };
 
@@ -232,17 +253,9 @@ export function GoogleDriveBrowser() {
                   <CardContent className='p-4'>
                     <div className='flex items-center gap-4'>
                       <div className='shrink-0'>
-                        {file.thumbnailLink ? (
-                          <img
-                            src={file.thumbnailLink}
-                            alt={file.name}
-                            className='h-10 w-10 rounded object-cover'
-                          />
-                        ) : (
-                          <div className='h-10 w-10 rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center'>
-                            {getFileIcon(file.mimeType)}
-                          </div>
-                        )}
+                        <div className='h-10 w-10 rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center'>
+                          {getFileIcon(file.mimeType)}
+                        </div>
                       </div>
 
                       <div className='flex-1 min-w-0'>
@@ -324,18 +337,10 @@ export function GoogleDriveBrowser() {
                 >
                   <CardContent className='p-4'>
                     <div className='space-y-3'>
-                      <div className='aspect-square rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden relative'>
-                        {file.thumbnailLink ? (
-                          <img
-                            src={file.thumbnailLink}
-                            alt={file.name}
-                            className='w-full h-full object-cover'
-                          />
-                        ) : (
-                          <div className='text-neutral-400'>
-                            {getFileIcon(file.mimeType)}
-                          </div>
-                        )}
+                      <div className='aspect-square rounded bg-linear-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 flex items-center justify-center overflow-hidden relative border border-neutral-200 dark:border-neutral-700'>
+                        <div className='text-neutral-400'>
+                          {getFileIcon(file.mimeType, true)}
+                        </div>
                         <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100'>
                           <Eye className='h-8 w-8 text-white' />
                         </div>
@@ -362,23 +367,103 @@ export function GoogleDriveBrowser() {
             </div>
           )}
 
-          {/* Load more */}
-          {nextPageToken && (
-            <div className='flex justify-center pt-4'>
-              <Button
-                variant='outline'
-                onClick={() => fetchFiles(nextPageToken)}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                    Loading...
-                  </>
-                ) : (
-                  "Load More"
-                )}
-              </Button>
+          {/* Pagination */}
+          {allFiles.length > itemsPerPage && (
+            <div className='flex justify-center pt-6'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+
+                  {(() => {
+                    const totalPages = Math.ceil(allFiles.length / itemsPerPage);
+                    const pages = [];
+                    const showEllipsisStart = currentPage > 3;
+                    const showEllipsisEnd = currentPage < totalPages - 2;
+
+                    // Always show first page
+                    if (totalPages > 0) {
+                      pages.push(
+                        <PaginationItem key={1}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(1)}
+                            isActive={currentPage === 1}
+                            className='cursor-pointer'
+                          >
+                            1
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    // Show ellipsis or pages around current
+                    if (showEllipsisStart) {
+                      pages.push(<PaginationEllipsis key='ellipsis-start' />);
+                    }
+
+                    // Show pages around current page
+                    const start = Math.max(2, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+                    for (let i = start; i <= end; i++) {
+                      pages.push(
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(i)}
+                            isActive={currentPage === i}
+                            className='cursor-pointer'
+                          >
+                            {i}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    if (showEllipsisEnd) {
+                      pages.push(<PaginationEllipsis key='ellipsis-end' />);
+                    }
+
+                    // Always show last page if more than 1 page
+                    if (totalPages > 1) {
+                      pages.push(
+                        <PaginationItem key={totalPages}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(totalPages)}
+                            isActive={currentPage === totalPages}
+                            className='cursor-pointer'
+                          >
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((p) =>
+                          Math.min(Math.ceil(allFiles.length / itemsPerPage), p + 1)
+                        )
+                      }
+                      className={
+                        currentPage === Math.ceil(allFiles.length / itemsPerPage)
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </>
