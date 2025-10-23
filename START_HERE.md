@@ -4,12 +4,12 @@ Your agency operations platform is **ready to use**!
 
 ## ✅ What's Been Set Up
 
-1. ✅ **Database cleared** - No demo data
-2. ✅ **Admin account created** - You can sign in now
-3. ✅ **Nextoria Agency workspace** - Ready for your team
-4. ✅ **Auto team member joining** - Team members automatically join the workspace
-5. ✅ **Project creation page** - Create new projects easily
-6. ✅ **Fixed layouts** - Clean, professional UI
+1. ✅ **Multi-workspace architecture** - Each user gets their own workspace
+2. ✅ **User registration** - Anyone can create an account
+3. ✅ **Invitation system** - Invite team members and clients
+4. ✅ **Project management** - Create and manage projects
+5. ✅ **Team collaboration** - Tasks, chat, and more
+6. ✅ **Clean, professional UI** - Modern design
 
 ---
 
@@ -21,16 +21,14 @@ Your agency operations platform is **ready to use**!
 bun run dev
 ```
 
-### 2. Sign In as Admin
+### 2. Create Your Account
 
-Visit: **http://localhost:3000/auth/signin**
+Visit: **http://localhost:3000/auth/signup**
 
-```
-Email:    aymane-sadiki@nextoria.studio
-Password: Bingo1998@
-```
-
-After signing in, you'll be redirected to the dashboard at: **http://localhost:3000/**
+1. Fill in your name, email, and password
+2. Click "Create Account"
+3. You'll automatically become the admin of your own workspace
+4. You'll be redirected to the dashboard at: **http://localhost:3000/**
 
 ### 3. Start Creating
 
@@ -45,16 +43,18 @@ After signing in, you'll be redirected to the dashboard at: **http://localhost:3
 
 ### For You (Admin):
 
-1. Share signup link with team: `http://localhost:3000/auth/signup`
-2. They create their accounts
-3. They're **automatically added** to Nextoria Agency workspace
-4. You can promote them to proper roles later (Settings → Team)
+1. Go to Team Management page
+2. Click "Invite Team Member"
+3. Enter their email and select a role
+4. They'll receive an invitation link
+5. They sign up using the link and are automatically added to your workspace
 
 ### For Team Members:
 
-1. Visit signup page
-2. Create account with work email
-3. Sign in and start working!
+1. Receive invitation link from admin
+2. Click the link to go to signup page
+3. Create account with the invited email
+4. Sign in and start working in the workspace!
 
 ---
 
@@ -120,29 +120,24 @@ If you need to start over:
 # Clear all data
 bun run db:seed
 
-# Re-create your workspace
-bun run src/db/setup-agency.ts
-
 # Start fresh!
 bun run dev
 ```
+
+Then create a new account via the signup page.
 
 ---
 
 ## 🎉 You're All Set!
 
-Your agency platform is ready. Sign in and start managing your projects!
-
-**Your Admin Login:**
-
-- Email: `aymane-sadiki@nextoria.studio`
-- Password: `Bingo1998@`
+Your agency platform is ready. Create an account and start managing your projects!
 
 **Remember to**:
 
-1. ✅ Update your profile
-2. ✅ Invite your team
-3. ✅ Create your first project
+1. ✅ Create your account
+2. ✅ Update your profile
+3. ✅ Invite your team
+4. ✅ Create your first project
 
 ---
 

@@ -81,12 +81,7 @@ All protected routes (`/`, `/projects`, `/analytics`, etc.) share:
 
 ## 🔑 Quick Access
 
-After logging in with your credentials:
-
-```
-Email:    aymane-sadiki@nextoria.studio
-Password: Bingo1998@
-```
+After creating your account and logging in:
 
 You'll land at: **`http://localhost:3000/`** (Dashboard)
 

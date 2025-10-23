@@ -18,6 +18,7 @@ import { Plus, DollarSign, Download, Eye } from "lucide-react";
 import { NewInvoiceDialog } from "@/components/invoices/new-invoice-dialog";
 import { InvoiceFilters } from "@/components/invoices/invoice-filters";
 import Link from "next/link";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 
 export default async function InvoicesPage({
   searchParams,
@@ -31,15 +32,9 @@ export default async function InvoicesPage({
     redirect("/auth/signin");
   }
 
-  // Get user's workspace from workspace_members table
-  const { workspaceMembers } = await import("@/src/db/schema/workspaces");
-  const [membership] = await db
-    .select({ workspaceId: workspaceMembers.workspaceId })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.userId, session.user.id))
-    .limit(1);
-
-  const workspaceId = membership?.workspaceId;
+  // Get user's current workspace
+  const workspace = await getCurrentWorkspace(session.user.id);
+  const workspaceId = workspace?.id;
 
   // Get filter params
   const statusFilter = params.status as string | undefined;

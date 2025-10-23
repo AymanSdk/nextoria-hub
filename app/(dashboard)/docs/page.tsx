@@ -38,8 +38,8 @@ export default function DocsPage() {
             </h1>
           </div>
           <p className='mt-2 text-xl text-muted-foreground'>
-            Complete technical documentation for your production-ready agency
-            operations platform
+            Complete technical documentation for your production-ready agency operations
+            platform
           </p>
           <div className='flex flex-wrap gap-2 mt-4'>
             <Badge variant='default' className='text-sm'>
@@ -92,9 +92,7 @@ export default function DocsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-sm text-muted-foreground'>
-                Explore all API endpoints
-              </p>
+              <p className='text-sm text-muted-foreground'>Explore all API endpoints</p>
             </CardContent>
           </Card>
           <Card className='cursor-pointer hover:bg-accent transition-colors'>
@@ -105,9 +103,7 @@ export default function DocsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-sm text-muted-foreground'>
-                Authentication & RBAC guide
-              </p>
+              <p className='text-sm text-muted-foreground'>Authentication & RBAC guide</p>
             </CardContent>
           </Card>
           <Card className='cursor-pointer hover:bg-accent transition-colors'>
@@ -118,9 +114,7 @@ export default function DocsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className='text-sm text-muted-foreground'>
-                Tips & recommendations
-              </p>
+              <p className='text-sm text-muted-foreground'>Tips & recommendations</p>
             </CardContent>
           </Card>
         </div>
@@ -138,12 +132,11 @@ export default function DocsPage() {
             <Lightbulb className='h-4 w-4' />
             <AlertTitle>Pro Tip</AlertTitle>
             <AlertDescription>
-              This project uses <strong>Bun</strong> for faster package
-              management and execution. All commands below use{" "}
-              <code className='px-1.5 py-0.5 rounded bg-muted'>bun</code> but
-              you can substitute with{" "}
-              <code className='px-1.5 py-0.5 rounded bg-muted'>npm</code> or{" "}
-              <code className='px-1.5 py-0.5 rounded bg-muted'>pnpm</code> if
+              This project uses <strong>Bun</strong> for faster package management and
+              execution. All commands below use{" "}
+              <code className='px-1.5 py-0.5 rounded bg-muted'>bun</code> but you can
+              substitute with <code className='px-1.5 py-0.5 rounded bg-muted'>npm</code>{" "}
+              or <code className='px-1.5 py-0.5 rounded bg-muted'>pnpm</code> if
               preferred.
             </AlertDescription>
           </Alert>
@@ -163,8 +156,7 @@ export default function DocsPage() {
                     <li className='flex items-center gap-2'>
                       <CheckCircle2 className='h-4 w-4 text-green-600' />
                       <span>
-                        <strong>Node.js 20+</strong> or{" "}
-                        <strong>Bun 1.0+</strong>
+                        <strong>Node.js 20+</strong> or <strong>Bun 1.0+</strong>
                       </span>
                     </li>
                     <li className='flex items-center gap-2'>
@@ -176,8 +168,7 @@ export default function DocsPage() {
                     <li className='flex items-center gap-2'>
                       <CheckCircle2 className='h-4 w-4 text-green-600' />
                       <span>
-                        <strong>S3-compatible storage</strong> (AWS S3,
-                        Cloudflare R2)
+                        <strong>S3-compatible storage</strong> (AWS S3, Cloudflare R2)
                       </span>
                     </li>
                     <li className='flex items-center gap-2'>
@@ -214,7 +205,8 @@ export default function DocsPage() {
                       Sign up at{" "}
                       <a
                         href='https://neon.tech'
-                        className='text-primary hover:underline'>
+                        className='text-primary hover:underline'
+                      >
                         neon.tech
                       </a>
                     </li>
@@ -235,9 +227,7 @@ export default function DocsPage() {
                 </div>
 
                 <div>
-                  <h4 className='font-semibold mb-2'>
-                    OAuth Providers (Optional)
-                  </h4>
+                  <h4 className='font-semibold mb-2'>OAuth Providers (Optional)</h4>
                   <ul className='list-disc list-inside space-y-1 text-sm text-muted-foreground'>
                     <li>Google Cloud Console for Google OAuth</li>
                     <li>GitHub Settings for GitHub OAuth</li>
@@ -279,9 +269,8 @@ cd nextoria-hub`}
                 <Flame className='h-4 w-4' />
                 <AlertTitle>Performance Tip</AlertTitle>
                 <AlertDescription>
-                  Bun installs packages <strong>10-25x faster</strong> than npm.
-                  If you&rsquo;re using npm, expect installation to take 2-3
-                  minutes.
+                  Bun installs packages <strong>10-25x faster</strong> than npm. If
+                  you&rsquo;re using npm, expect installation to take 2-3 minutes.
                 </AlertDescription>
               </Alert>
             </div>
@@ -291,20 +280,16 @@ cd nextoria-hub`}
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold'>
                   3
                 </div>
-                <h4 className='text-xl font-semibold'>
-                  Configure Environment Variables
-                </h4>
+                <h4 className='text-xl font-semibold'>Configure Environment Variables</h4>
               </div>
               <p className='text-sm text-muted-foreground mb-3'>
-                Create a{" "}
-                <code className='px-1.5 py-0.5 rounded bg-muted'>.env</code>{" "}
-                file in the root directory:
+                Create a <code className='px-1.5 py-0.5 rounded bg-muted'>.env</code> file
+                in the root directory:
               </p>
               <CodeBlock code='cp .env.example .env' language='bash' />
               <p className='text-sm text-muted-foreground mt-3 mb-3'>
-                Edit{" "}
-                <code className='px-1.5 py-0.5 rounded bg-muted'>.env</code>{" "}
-                with your configuration:
+                Edit <code className='px-1.5 py-0.5 rounded bg-muted'>.env</code> with
+                your configuration:
               </p>
               <CodeBlock
                 filename='.env'
@@ -373,10 +358,8 @@ FIGMA_ACCESS_TOKEN="..."`}
                   </code>
                   <br />
                   Never commit your{" "}
-                  <code className='px-1.5 py-0.5 rounded bg-muted'>
-                    .env
-                  </code>{" "}
-                  file to version control!
+                  <code className='px-1.5 py-0.5 rounded bg-muted'>.env</code> file to
+                  version control!
                 </AlertDescription>
               </Alert>
             </div>
@@ -401,18 +384,11 @@ FIGMA_ACCESS_TOKEN="..."`}
                 <AlertTitle>Production Warning</AlertTitle>
                 <AlertDescription>
                   For production, use{" "}
-                  <code className='px-1.5 py-0.5 rounded bg-muted'>
-                    db:generate
-                  </code>{" "}
-                  and{" "}
-                  <code className='px-1.5 py-0.5 rounded bg-muted'>
-                    db:migrate
-                  </code>{" "}
+                  <code className='px-1.5 py-0.5 rounded bg-muted'>db:generate</code> and{" "}
+                  <code className='px-1.5 py-0.5 rounded bg-muted'>db:migrate</code>{" "}
                   instead of{" "}
-                  <code className='px-1.5 py-0.5 rounded bg-muted'>
-                    db:push
-                  </code>{" "}
-                  to maintain migration history.
+                  <code className='px-1.5 py-0.5 rounded bg-muted'>db:push</code> to
+                  maintain migration history.
                 </AlertDescription>
               </Alert>
             </div>
@@ -422,16 +398,12 @@ FIGMA_ACCESS_TOKEN="..."`}
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold'>
                   5
                 </div>
-                <h4 className='text-xl font-semibold'>
-                  Start Development Server
-                </h4>
+                <h4 className='text-xl font-semibold'>Start Development Server</h4>
               </div>
               <CodeBlock code='bun run dev' language='bash' />
               <p className='text-sm text-muted-foreground mt-3'>
                 Open{" "}
-                <a
-                  href='http://localhost:3000'
-                  className='text-primary hover:underline'>
+                <a href='http://localhost:3000' className='text-primary hover:underline'>
                   http://localhost:3000
                 </a>{" "}
                 in your browser 🎉
@@ -506,9 +478,10 @@ echo ""
 echo "To start the development server:"
 echo "  bun run dev"
 echo ""
-echo "Default admin credentials (if seeded):"
-echo "  Email: admin@nextoria.com"
-echo "  Password: password123"
+echo "Next steps:"
+echo "  1. Visit http://localhost:3000/auth/signup"
+echo "  2. Create your account (you'll be the admin)"
+echo "  3. Start building your workspace!"
 echo ""
 echo "🎉 Happy coding!"
 `}
@@ -565,8 +538,7 @@ echo "🎉 Happy coding!"
                     <strong>content_calendar</strong> - Content planning
                   </li>
                   <li className='font-mono text-xs'>
-                    <strong>chat_channels</strong> &{" "}
-                    <strong>chat_messages</strong>
+                    <strong>chat_channels</strong> & <strong>chat_messages</strong>
                   </li>
                   <li className='font-mono text-xs'>
                     <strong>notifications</strong> - In-app alerts
@@ -614,9 +586,7 @@ echo "🎉 Happy coding!"
                   </ul>
                 </div>
                 <div>
-                  <h4 className='font-semibold text-sm mb-2'>
-                    Data Protection
-                  </h4>
+                  <h4 className='font-semibold text-sm mb-2'>Data Protection</h4>
                   <ul className='space-y-1 text-sm text-muted-foreground'>
                     <li>• Presigned S3 URLs (time-limited)</li>
                     <li>• SQL injection prevention (Drizzle ORM)</li>
@@ -791,9 +761,7 @@ export async function POST(req: Request) {
 }`}
                 />
 
-                <h4 className='font-semibold mt-6 mb-2'>
-                  Component-Level Protection
-                </h4>
+                <h4 className='font-semibold mt-6 mb-2'>Component-Level Protection</h4>
                 <CodeBlock
                   filename='components/project-actions.tsx'
                   language='typescript'
@@ -896,18 +864,14 @@ export function ProjectActions() {
                   <div className='flex items-center gap-3'>
                     <Badge className='bg-green-500 font-mono'>PUT</Badge>
                     <code>/api/projects/[id]</code>
-                    <span className='text-muted-foreground ml-auto'>
-                      Update project
-                    </span>
+                    <span className='text-muted-foreground ml-auto'>Update project</span>
                   </div>
                   <div className='flex items-center gap-3'>
                     <Badge variant='destructive' className='font-mono'>
                       DELETE
                     </Badge>
                     <code>/api/projects/[id]</code>
-                    <span className='text-muted-foreground ml-auto'>
-                      Delete project
-                    </span>
+                    <span className='text-muted-foreground ml-auto'>Delete project</span>
                   </div>
                   <div className='flex items-center gap-3'>
                     <Badge className='bg-blue-500 font-mono'>GET</Badge>
@@ -921,9 +885,7 @@ export function ProjectActions() {
                       POST
                     </Badge>
                     <code>/api/tasks</code>
-                    <span className='text-muted-foreground ml-auto'>
-                      Create new task
-                    </span>
+                    <span className='text-muted-foreground ml-auto'>Create new task</span>
                   </div>
                 </div>
               </CardContent>
@@ -950,9 +912,9 @@ export function ProjectActions() {
                   <Lightbulb className='h-4 w-4' />
                   <AlertTitle>Pro Tip: Direct S3 Uploads</AlertTitle>
                   <AlertDescription>
-                    Files are uploaded <strong>directly to S3</strong> using
-                    presigned URLs, bypassing your server for better performance
-                    and reduced bandwidth costs.
+                    Files are uploaded <strong>directly to S3</strong> using presigned
+                    URLs, bypassing your server for better performance and reduced
+                    bandwidth costs.
                   </AlertDescription>
                 </Alert>
 
@@ -1025,39 +987,28 @@ await fetch("/api/files", {
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    2. Database Query Optimization
-                  </h4>
+                  <h4 className='font-semibold mb-1'>2. Database Query Optimization</h4>
                   <p className='text-muted-foreground'>
-                    Use{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      .with()
-                    </code>{" "}
-                    for eager loading relations and avoid N+1 queries.
+                    Use <code className='px-1 py-0.5 rounded bg-muted'>.with()</code> for
+                    eager loading relations and avoid N+1 queries.
                   </p>
                 </div>
                 <div>
                   <h4 className='font-semibold mb-1'>3. Image Optimization</h4>
                   <p className='text-muted-foreground'>
                     Always use Next.js{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>Image</code>{" "}
-                    component for automatic optimization.
+                    <code className='px-1 py-0.5 rounded bg-muted'>Image</code> component
+                    for automatic optimization.
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    4. API Response Caching
-                  </h4>
+                  <h4 className='font-semibold mb-1'>4. API Response Caching</h4>
                   <p className='text-muted-foreground'>
                     Use React{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      cache()
-                    </code>{" "}
-                    and Next.js{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      revalidate
-                    </code>{" "}
-                    for data fetching.
+                    <code className='px-1 py-0.5 rounded bg-muted'>cache()</code> and
+                    Next.js{" "}
+                    <code className='px-1 py-0.5 rounded bg-muted'>revalidate</code> for
+                    data fetching.
                   </p>
                 </div>
               </CardContent>
@@ -1072,42 +1023,32 @@ await fetch("/api/files", {
               </CardHeader>
               <CardContent className='space-y-3 text-sm'>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    1. Always Validate Input
-                  </h4>
+                  <h4 className='font-semibold mb-1'>1. Always Validate Input</h4>
                   <p className='text-muted-foreground'>
-                    Use Zod schemas for all user input validation, both client
-                    and server-side.
+                    Use Zod schemas for all user input validation, both client and
+                    server-side.
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    2. Check Permissions Early
-                  </h4>
+                  <h4 className='font-semibold mb-1'>2. Check Permissions Early</h4>
                   <p className='text-muted-foreground'>
-                    Verify user permissions at the start of API routes before
-                    any database queries.
+                    Verify user permissions at the start of API routes before any database
+                    queries.
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    3. Use Environment Variables
-                  </h4>
+                  <h4 className='font-semibold mb-1'>3. Use Environment Variables</h4>
                   <p className='text-muted-foreground'>
                     Never hardcode secrets. Use{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      process.env
-                    </code>{" "}
-                    for all sensitive data.
+                    <code className='px-1 py-0.5 rounded bg-muted'>process.env</code> for
+                    all sensitive data.
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    4. Sanitize Database Queries
-                  </h4>
+                  <h4 className='font-semibold mb-1'>4. Sanitize Database Queries</h4>
                   <p className='text-muted-foreground'>
-                    Drizzle ORM prevents SQL injection, but always validate user
-                    IDs and filters.
+                    Drizzle ORM prevents SQL injection, but always validate user IDs and
+                    filters.
                   </p>
                 </div>
               </CardContent>
@@ -1122,31 +1063,24 @@ await fetch("/api/files", {
               </CardHeader>
               <CardContent className='space-y-3 text-sm'>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    1. TypeScript Strict Mode
-                  </h4>
+                  <h4 className='font-semibold mb-1'>1. TypeScript Strict Mode</h4>
                   <p className='text-muted-foreground'>
                     Keep{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      strict: true
-                    </code>{" "}
-                    in tsconfig.json for maximum type safety.
+                    <code className='px-1 py-0.5 rounded bg-muted'>strict: true</code> in
+                    tsconfig.json for maximum type safety.
                   </p>
                 </div>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    2. Component Composition
-                  </h4>
+                  <h4 className='font-semibold mb-1'>2. Component Composition</h4>
                   <p className='text-muted-foreground'>
-                    Break large components into smaller, reusable pieces. Use
-                    ShadCN patterns.
+                    Break large components into smaller, reusable pieces. Use ShadCN
+                    patterns.
                   </p>
                 </div>
                 <div>
                   <h4 className='font-semibold mb-1'>3. Error Boundaries</h4>
                   <p className='text-muted-foreground'>
-                    Implement error boundaries for graceful error handling in
-                    production.
+                    Implement error boundaries for graceful error handling in production.
                   </p>
                 </div>
                 <div>
@@ -1167,18 +1101,10 @@ await fetch("/api/files", {
               </CardHeader>
               <CardContent className='space-y-3 text-sm'>
                 <div>
-                  <h4 className='font-semibold mb-1'>
-                    1. Use Migrations in Production
-                  </h4>
+                  <h4 className='font-semibold mb-1'>1. Use Migrations in Production</h4>
                   <p className='text-muted-foreground'>
-                    Run{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      db:generate
-                    </code>{" "}
-                    and{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      db:migrate
-                    </code>{" "}
+                    Run <code className='px-1 py-0.5 rounded bg-muted'>db:generate</code>{" "}
+                    and <code className='px-1 py-0.5 rounded bg-muted'>db:migrate</code>{" "}
                     to track schema changes.
                   </p>
                 </div>
@@ -1192,17 +1118,14 @@ await fetch("/api/files", {
                   <h4 className='font-semibold mb-1'>3. Connection Pooling</h4>
                   <p className='text-muted-foreground'>
                     Neon handles connection pooling automatically. Use{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>
-                      ?sslmode=require
-                    </code>
+                    <code className='px-1 py-0.5 rounded bg-muted'>?sslmode=require</code>
                     .
                   </p>
                 </div>
                 <div>
                   <h4 className='font-semibold mb-1'>4. Backup Strategy</h4>
                   <p className='text-muted-foreground'>
-                    Set up automated backups in your database provider&rsquo;s
-                    dashboard.
+                    Set up automated backups in your database provider&rsquo;s dashboard.
                   </p>
                 </div>
               </CardContent>
@@ -1223,8 +1146,7 @@ await fetch("/api/files", {
             <Rocket className='h-4 w-4' />
             <AlertTitle>What&rsquo;s Next?</AlertTitle>
             <AlertDescription>
-              Here are recommended enhancements to take your platform to the
-              next level.
+              Here are recommended enhancements to take your platform to the next level.
             </AlertDescription>
           </Alert>
 
@@ -1240,8 +1162,8 @@ await fetch("/api/files", {
                     <div>
                       <strong>Real-time WebSocket Integration</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Replace polling with WebSockets for chat and live task
-                        updates. Consider Pusher or Socket.io.
+                        Replace polling with WebSockets for chat and live task updates.
+                        Consider Pusher or Socket.io.
                       </p>
                     </div>
                   </li>
@@ -1250,8 +1172,8 @@ await fetch("/api/files", {
                     <div>
                       <strong>Advanced Search with Algolia/Meilisearch</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Implement full-text search across projects, tasks, and
-                        files for instant results.
+                        Implement full-text search across projects, tasks, and files for
+                        instant results.
                       </p>
                     </div>
                   </li>
@@ -1260,8 +1182,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>Email Template System</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Use React Email for beautiful, responsive email
-                        templates.
+                        Use React Email for beautiful, responsive email templates.
                       </p>
                     </div>
                   </li>
@@ -1270,8 +1191,8 @@ await fetch("/api/files", {
                     <div>
                       <strong>Time Tracking Integration</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Add time tracking to tasks with start/stop timers and
-                        automatic calculations.
+                        Add time tracking to tasks with start/stop timers and automatic
+                        calculations.
                       </p>
                     </div>
                   </li>
@@ -1300,8 +1221,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>Advanced Analytics Dashboard</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Add Gantt charts, burndown charts, and velocity
-                        tracking.
+                        Add Gantt charts, burndown charts, and velocity tracking.
                       </p>
                     </div>
                   </li>
@@ -1310,8 +1230,8 @@ await fetch("/api/files", {
                     <div>
                       <strong>AI-Powered Features</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Use OpenAI API for task suggestions, automated
-                        descriptions, and smart scheduling.
+                        Use OpenAI API for task suggestions, automated descriptions, and
+                        smart scheduling.
                       </p>
                     </div>
                   </li>
@@ -1339,8 +1259,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>Multi-language Support (i18n)</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Add internationalization with next-intl for global
-                        teams.
+                        Add internationalization with next-intl for global teams.
                       </p>
                     </div>
                   </li>
@@ -1349,8 +1268,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>White-label / Custom Branding</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Allow workspace-level branding with custom logos and
-                        colors.
+                        Allow workspace-level branding with custom logos and colors.
                       </p>
                     </div>
                   </li>
@@ -1378,9 +1296,7 @@ await fetch("/api/files", {
 
             <Card>
               <CardHeader>
-                <CardTitle className='text-lg'>
-                  🔧 Technical Improvements
-                </CardTitle>
+                <CardTitle className='text-lg'>🔧 Technical Improvements</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className='space-y-3 text-sm'>
@@ -1389,8 +1305,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>End-to-End Test Coverage</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Expand Playwright tests to cover all critical user
-                        flows.
+                        Expand Playwright tests to cover all critical user flows.
                       </p>
                     </div>
                   </li>
@@ -1399,8 +1314,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>Redis Caching Layer</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Add Redis for session storage and frequently accessed
-                        data.
+                        Add Redis for session storage and frequently accessed data.
                       </p>
                     </div>
                   </li>
@@ -1409,8 +1323,8 @@ await fetch("/api/files", {
                     <div>
                       <strong>Error Tracking (Sentry)</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Sentry is already installed! Configure it in production
-                        for error monitoring.
+                        Sentry is already installed! Configure it in production for error
+                        monitoring.
                       </p>
                     </div>
                   </li>
@@ -1419,8 +1333,7 @@ await fetch("/api/files", {
                     <div>
                       <strong>Rate Limiting</strong>
                       <p className='text-muted-foreground mt-1'>
-                        Implement rate limiting on API routes with Upstash
-                        Redis.
+                        Implement rate limiting on API routes with Upstash Redis.
                       </p>
                     </div>
                   </li>
@@ -1533,8 +1446,8 @@ vercel --prod`}
                   <h4 className='font-semibold mb-2'>Environment Variables</h4>
                   <p className='text-sm text-muted-foreground mb-2'>
                     Add all variables from your{" "}
-                    <code className='px-1 py-0.5 rounded bg-muted'>.env</code>{" "}
-                    file to Vercel:
+                    <code className='px-1 py-0.5 rounded bg-muted'>.env</code> file to
+                    Vercel:
                   </p>
                   <CodeBlock
                     code={`# Via Vercel CLI
@@ -1563,9 +1476,7 @@ vercel env add NEXTAUTH_SECRET
           <div className='space-y-4'>
             <Card>
               <CardHeader>
-                <CardTitle className='text-lg'>
-                  Database Connection Errors
-                </CardTitle>
+                <CardTitle className='text-lg'>Database Connection Errors</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3'>
                 <Alert>
@@ -1577,13 +1488,9 @@ vercel env add NEXTAUTH_SECRET
                     <ul className='list-disc list-inside mt-2 space-y-1'>
                       <li>
                         Check that{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          DATABASE_URL
-                        </code>{" "}
+                        <code className='px-1 py-0.5 rounded bg-muted'>DATABASE_URL</code>{" "}
                         is correct in{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          .env
-                        </code>
+                        <code className='px-1 py-0.5 rounded bg-muted'>.env</code>
                       </li>
                       <li>
                         Ensure{" "}
@@ -1593,9 +1500,7 @@ vercel env add NEXTAUTH_SECRET
                         is appended to the connection string
                       </li>
                       <li>Verify your database is running and accessible</li>
-                      <li>
-                        Check firewall rules allow connections from your IP
-                      </li>
+                      <li>Check firewall rules allow connections from your IP</li>
                     </ul>
                   </AlertDescription>
                 </Alert>
@@ -1616,26 +1521,20 @@ vercel env add NEXTAUTH_SECRET
                     <ul className='list-disc list-inside mt-2 space-y-1'>
                       <li>
                         Verify S3 credentials are correct in{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          .env
-                        </code>
+                        <code className='px-1 py-0.5 rounded bg-muted'>.env</code>
                       </li>
                       <li>Check bucket CORS configuration allows uploads</li>
                       <li>Ensure bucket exists and is accessible</li>
                       <li>
                         Verify IAM permissions include{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          s3:PutObject
-                        </code>
+                        <code className='px-1 py-0.5 rounded bg-muted'>s3:PutObject</code>
                       </li>
                     </ul>
                   </AlertDescription>
                 </Alert>
 
                 <div>
-                  <h4 className='font-semibold mb-2'>
-                    CORS Configuration for S3/R2:
-                  </h4>
+                  <h4 className='font-semibold mb-2'>CORS Configuration for S3/R2:</h4>
                   <CodeBlock
                     filename='cors.json'
                     language='json'
@@ -1661,8 +1560,8 @@ vercel env add NEXTAUTH_SECRET
                 <Alert>
                   <AlertTriangle className='h-4 w-4' />
                   <AlertTitle>
-                    Issue: &ldquo;Session not persisting&rdquo; or
-                    &ldquo;Redirecting to login&rdquo;
+                    Issue: &ldquo;Session not persisting&rdquo; or &ldquo;Redirecting to
+                    login&rdquo;
                   </AlertTitle>
                   <AlertDescription>
                     <ul className='list-disc list-inside mt-2 space-y-1'>
@@ -1678,14 +1577,10 @@ vercel env add NEXTAUTH_SECRET
                       </li>
                       <li>
                         Ensure{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          NEXTAUTH_URL
-                        </code>{" "}
+                        <code className='px-1 py-0.5 rounded bg-muted'>NEXTAUTH_URL</code>{" "}
                         matches your current domain
                       </li>
-                      <li>
-                        Check browser allows cookies (required for sessions)
-                      </li>
+                      <li>Check browser allows cookies (required for sessions)</li>
                       <li>Clear browser cookies and try again</li>
                     </ul>
                   </AlertDescription>
@@ -1701,16 +1596,12 @@ vercel env add NEXTAUTH_SECRET
                 <Alert>
                   <AlertTriangle className='h-4 w-4' />
                   <AlertTitle>
-                    Issue: &ldquo;Type error&rdquo; or &ldquo;Module not
-                    found&rdquo;
+                    Issue: &ldquo;Type error&rdquo; or &ldquo;Module not found&rdquo;
                   </AlertTitle>
                   <AlertDescription>
                     <ul className='list-disc list-inside mt-2 space-y-1'>
                       <li>
-                        Delete{" "}
-                        <code className='px-1 py-0.5 rounded bg-muted'>
-                          .next
-                        </code>{" "}
+                        Delete <code className='px-1 py-0.5 rounded bg-muted'>.next</code>{" "}
                         folder and rebuild
                       </li>
                       <li>
@@ -1740,8 +1631,8 @@ vercel env add NEXTAUTH_SECRET
         <div className='rounded-lg border bg-linear-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 p-8 text-center'>
           <h3 className='text-2xl font-bold mb-2'>🎉 You&rsquo;re All Set!</h3>
           <p className='text-muted-foreground mb-4'>
-            You now have a complete understanding of Nextoria Hub&rsquo;s
-            architecture and capabilities.
+            You now have a complete understanding of Nextoria Hub&rsquo;s architecture and
+            capabilities.
           </p>
           <div className='flex flex-wrap justify-center gap-3 mt-6'>
             <Link href='/projects'>
@@ -1764,8 +1655,7 @@ vercel env add NEXTAUTH_SECRET
             </Link>
           </div>
           <p className='text-sm text-muted-foreground mt-6'>
-            Last updated: October 22, 2025 • Built with ❤️ by the Nextoria Hub
-            team
+            Last updated: October 22, 2025 • Built with ❤️ by the Nextoria Hub team
           </p>
         </div>
       </div>

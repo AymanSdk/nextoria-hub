@@ -1,10 +1,11 @@
 import NextAuth, { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/src/db";
-import { users } from "@/src/db/schema";
+import { users, workspaceMembers } from "@/src/db/schema";
 import { compare } from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { Role } from "@/src/lib/constants/roles";
+import { setCurrentWorkspaceId } from "@/src/lib/workspace/context";
 
 /**
  * Extend NextAuth types to include our custom fields
@@ -129,7 +130,27 @@ export const {
 
     async signIn({ user }) {
       // Check if user is active
-      return user.id ? true : false;
+      if (!user.id) return false;
+
+      // Set the user's workspace cookie on sign in
+      try {
+        const [membership] = await db
+          .select({
+            workspaceId: workspaceMembers.workspaceId,
+          })
+          .from(workspaceMembers)
+          .where(eq(workspaceMembers.userId, user.id))
+          .limit(1);
+
+        if (membership) {
+          await setCurrentWorkspaceId(membership.workspaceId);
+        }
+      } catch (error) {
+        console.error("Error setting workspace cookie on sign in:", error);
+        // Continue with sign in even if cookie setting fails
+      }
+
+      return true;
     },
   },
 

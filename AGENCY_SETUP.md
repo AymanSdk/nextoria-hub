@@ -1,61 +1,46 @@
-# Nextoria Agency Setup Guide
+# Nextoria Hub Setup Guide
 
-This app is configured for **internal use** at Nextoria Agency.
+This app supports **multi-workspace** architecture where anyone can create an account and become the admin of their own workspace.
 
 ## 🚀 Quick Setup (First Time)
 
-### Step 1: Set Your Admin Credentials (Optional)
+### Step 1: Clear the Database (Optional)
 
-You can customize your admin credentials by setting environment variables:
-
-```bash
-export ADMIN_EMAIL="your.email@nextoria.com"
-export ADMIN_NAME="Your Name"
-export ADMIN_PASSWORD="YourSecurePassword123!"
-```
-
-Or just use the defaults:
-
-- Email: `aymane-sadiki@nextoria.studio`
-- Password: `Bingo1998@`
-
-### Step 2: Run Agency Setup
+If you want to start fresh, clear any existing data:
 
 ```bash
-bun run src/db/setup-agency.ts
+bun run db:seed
 ```
 
-This will create:
-
-- ✅ Your admin user account
-- ✅ "Nextoria Agency" workspace
-- ✅ You as the workspace owner
-
-### Step 3: Start the App
+### Step 2: Start the App
 
 ```bash
 bun run dev
 ```
 
-### Step 4: Sign In
+### Step 3: Create Your Account
 
-Visit `http://localhost:3000/auth/signin` and use your admin credentials.
+1. Visit `http://localhost:3000/auth/signup`
+2. Create your account with your email and password
+3. You'll automatically become the admin of your own workspace
+4. Start inviting team members and clients!
 
 ---
 
 ## 👥 Adding Team Members
 
-Once you're set up:
+Once you've created your account:
 
-1. **Share the signup link** with team members: `http://localhost:3000/auth/signup`
-2. They create their accounts (will be assigned CLIENT role by default)
-3. **You promote them** to appropriate roles (DEVELOPER, DESIGNER, MARKETER) via settings
+1. **Invite team members** via the Team Management page
+2. They'll receive an invitation link
+3. They sign up using the invitation link
+4. They're automatically added to your workspace with the role you specified
 
 ### Workspace Structure
 
-- **One Workspace**: Nextoria Agency (shared by all team members)
-- **All Projects**: Visible to everyone in the workspace
-- **Role Permissions**: Controlled by their assigned role
+- **Your Workspace**: Each user gets their own workspace when they sign up
+- **Invitations**: Admin can invite others to join their workspace
+- **Role Permissions**: Controlled by their assigned role (ADMIN, DEVELOPER, DESIGNER, MARKETER, CLIENT)
 
 ---
 
@@ -67,28 +52,19 @@ To start fresh:
 # Clear all data
 bun run db:seed
 
-# Re-run agency setup
-bun run src/db/setup-agency.ts
+# Then create a new account via signup
 ```
-
----
-
-## 📝 Admin Credentials
-
-Your admin account:
-
-- **Email**: aymane-sadiki@nextoria.studio
-- **Password**: Bingo1998@
 
 ---
 
 ## 🏗️ Architecture
 
-- **Single Workspace**: All team members belong to "Nextoria Agency"
-- **Projects**: Shared across the team
-- **Tasks**: Assigned to team members
+- **Multi-Workspace**: Each admin has their own workspace
+- **Projects**: Shared across workspace members
+- **Tasks**: Assigned to workspace members
 - **Invoices**: Client billing managed by admins
-- **Chat**: Team communication channels
+- **Chat**: Workspace communication channels
+- **Invitations**: Invite team members and clients to join your workspace
 
 ---
 

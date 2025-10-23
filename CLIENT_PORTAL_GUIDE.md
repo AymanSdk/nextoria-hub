@@ -200,4 +200,4 @@ The client portal logic is in:
 
 ---
 
-Need help? Contact the admin at `aymane-sadiki@nextoria.studio`
+Need help? Contact your workspace admin or check the documentation.

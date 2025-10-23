@@ -46,13 +46,13 @@ NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="paste-generated-secret-here"
 ```
 
-### ✅ Step 4: Setup Database & Seed Data (30 sec)
+### ✅ Step 4: Setup Database (30 sec)
 
 ```bash
 # Create all tables
 npm run db:push
 
-# Add demo data
+# Optional: Clear any existing data
 npm run db:seed
 ```
 
@@ -64,12 +64,12 @@ npm run dev
 
 **Open:** [http://localhost:3000](http://localhost:3000)
 
-### ✅ Step 6: Sign In
+### ✅ Step 6: Create Your Account
 
-Use any demo account:
-
-- **Email:** `admin@nextoria.com`
-- **Password:** `password123`
+1. Visit [http://localhost:3000/auth/signup](http://localhost:3000/auth/signup)
+2. Fill in your name, email, and password
+3. Click "Create Account"
+4. You'll automatically become the admin of your own workspace
 
 ---
 
@@ -77,24 +77,12 @@ Use any demo account:
 
 You should now see:
 
-- ✅ Dashboard with stats
-- ✅ Projects page with sample projects
-- ✅ Kanban board with tasks
-- ✅ Analytics with charts
-- ✅ Team chat
-- ✅ Invoices
-
----
-
-## 📝 All Demo Accounts
-
-| Email                  | Password    | Role      |
-| ---------------------- | ----------- | --------- |
-| admin@nextoria.com     | password123 | Admin     |
-| developer@nextoria.com | password123 | Developer |
-| designer@nextoria.com  | password123 | Designer  |
-| marketer@nextoria.com  | password123 | Marketer  |
-| client@example.com     | password123 | Client    |
+- ✅ Your personal workspace dashboard
+- ✅ Empty projects page (ready for your first project)
+- ✅ Team management to invite members
+- ✅ Analytics dashboard
+- ✅ Chat channels
+- ✅ Invoice management
 
 ---
 
@@ -119,7 +107,6 @@ PORT=3001 npm run dev
 
 ```bash
 npm run db:push
-npm run db:seed
 ```
 
 ### NextAuth error?
@@ -142,9 +129,10 @@ With this minimal setup you get:
 
 ✅ **Authentication**
 
-- Email/password sign in
+- Email/password sign up and sign in
 - User sessions
 - Role-based access
+- Multi-workspace support
 
 ✅ **Project Management**
 
@@ -152,6 +140,13 @@ With this minimal setup you get:
 - Kanban boards
 - Task management
 - Comments
+- File uploads (with S3)
+
+✅ **Team Management**
+
+- Invite team members
+- Manage roles
+- Team collaboration
 
 ✅ **Analytics**
 
@@ -163,11 +158,13 @@ With this minimal setup you get:
 
 - Team chat
 - Notifications
+- Real-time updates
 
 ✅ **Billing**
 
 - Invoice management
 - Client portal
+- Payment tracking
 
 **Not working yet (optional):**
 

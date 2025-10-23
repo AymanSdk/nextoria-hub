@@ -98,8 +98,8 @@ export default function SignUpPage() {
           </CardTitle>
           <CardDescription className='text-base'>
             {invitationToken
-              ? "Complete your invitation to join Nextoria"
-              : "Sign up to get started"}
+              ? "Complete your invitation to join the workspace"
+              : "Create your account and start managing your workspace"}
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>

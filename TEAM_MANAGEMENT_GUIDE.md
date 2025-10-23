@@ -136,11 +136,11 @@ If you want a client to log in and view their projects:
 - ✅ Invitations expire after 7 days
 - ✅ Email must match the invitation
 
-### Current Admin Access
+### Admin Access
 
-- Email: `aymane-sadiki@nextoria.studio`
-- Password: `Bingo1998@`
-- Role: ADMIN
+- Create your account via signup to become an admin
+- Each user gets their own workspace with full admin rights
+- Role: ADMIN (for your own workspace)
 
 ### Roles & Permissions
 
@@ -158,16 +158,16 @@ If you want a client to log in and view their projects:
 
 ### Adding Your First Team Member:
 
-1. Log in as admin (`aymane-sadiki@nextoria.studio`)
+1. Log in to your workspace as admin
 2. Go to "Team" in the sidebar
 3. Click "Invite Team Member"
-4. Enter: `developer@nextoria.studio`
+4. Enter their email (e.g., `developer@example.com`)
 5. Select role: "Developer"
 6. Click "Send Invitation"
-7. Copy the link (e.g., `http://localhost:3000/auth/signup?token=abc123xyz`)
+7. Copy the invitation link (e.g., `http://localhost:3000/auth/signup?token=abc123xyz`)
 8. Send the link to your colleague via Slack, email, etc.
 9. They click the link, fill in their details, and sign up
-10. They can now log in and access the system!
+10. They can now log in and access your workspace!
 
 ### Adding Your First Client:
 
@@ -199,4 +199,4 @@ If you want a client to log in and view their projects:
 
 ## Need Help?
 
-For issues or questions, contact the admin at `aymane-sadiki@nextoria.studio`.
+For issues or questions, contact your workspace admin or check the documentation in the `/docs` folder.

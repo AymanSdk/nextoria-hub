@@ -4,6 +4,7 @@ import { users, workspaces, workspaceMembers, invitations } from "@/src/db/schem
 import { hashPassword, validatePassword } from "@/src/lib/auth/password";
 import { eq, and, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { setCurrentWorkspaceId } from "@/src/lib/workspace/context";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,12 +16,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if this is the first user (will be admin)
-    const existingUsers = await db.select().from(users).limit(1);
-    const isFirstUser = existingUsers.length === 0;
-
     let invitation = null;
-    let userRole = "DEVELOPER"; // Default role for new signups
+    let userRole = "ADMIN"; // Default role for new signups (admin of their own workspace)
     let workspaceId = null;
 
     // If invitation token provided, validate it
@@ -81,8 +78,8 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Determine user role (first user is ADMIN, or use invitation role, or default)
-    const finalRole = isFirstUser ? "ADMIN" : invitation?.role || userRole;
+    // Determine user role (use invitation role if exists, otherwise default to ADMIN)
+    const finalRole = invitation?.role || userRole;
 
     // Create user
     const [newUser] = await db
@@ -96,32 +93,30 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // If first user, create default workspace and add user as owner
-    if (isFirstUser) {
+    // Create a new workspace for this user if they don't have an invitation
+    if (!workspaceId) {
+      // Generate a unique workspace slug based on user name or email
+      const baseSlug = (newUser.name || newUser.email)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .substring(0, 30);
+
+      const workspaceSlug = `${baseSlug}-${nanoid(6)}`;
+
       const [workspace] = await db
         .insert(workspaces)
         .values({
           id: nanoid(),
-          name: "Nextoria Agency",
-          slug: "nextoria-agency",
-          description: "Your digital agency operations hub",
+          name: `${newUser.name}'s Workspace`,
+          slug: workspaceSlug,
+          description: "Your workspace",
           ownerId: newUser.id,
           isActive: true,
         })
         .returning();
 
       workspaceId = workspace.id;
-    } else if (!workspaceId) {
-      // If no invitation, add to default workspace
-      const [defaultWorkspace] = await db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.slug, "nextoria-agency"))
-        .limit(1);
-
-      if (defaultWorkspace) {
-        workspaceId = defaultWorkspace.id;
-      }
     }
 
     // Add user to workspace if we have one
@@ -147,11 +142,12 @@ export async function POST(req: NextRequest) {
         .where(eq(invitations.id, invitation.id));
     }
 
-    console.log(
-      `✓ User ${email} created with role ${finalRole}${
-        isFirstUser ? " (FIRST USER - ADMIN)" : ""
-      } and added to workspace`
-    );
+    console.log(`✓ User ${email} created with role ${finalRole} and added to workspace`);
+
+    // Set the workspace cookie for the user
+    if (workspaceId) {
+      await setCurrentWorkspaceId(workspaceId);
+    }
 
     // Return success (without password)
     return NextResponse.json({

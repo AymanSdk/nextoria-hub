@@ -154,12 +154,12 @@ export default function SignInPage() {
         </CardContent>
         <CardFooter className='flex flex-col space-y-4 border-t pt-6'>
           <div className='text-sm text-center text-muted-foreground'>
-            Need access?{" "}
+            Don't have an account?{" "}
             <Link
               href='/auth/signup'
               className='font-medium text-primary hover:underline'
             >
-              Request an invitation
+              Create one
             </Link>
           </div>
         </CardFooter>

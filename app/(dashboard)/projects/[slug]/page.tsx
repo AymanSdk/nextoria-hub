@@ -19,6 +19,7 @@ import { TaskViewSwitcher } from "@/components/tasks/task-view-switcher";
 import { CreateTaskDialog } from "@/components/tasks/create-task-dialog";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { ProjectFilesSection } from "@/components/projects/project-files-section";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 
 export default async function ProjectDetailPage({
   params,
@@ -45,15 +46,10 @@ export default async function ProjectDetailPage({
   }
 
   // Fetch all workspace team members (for task assignment)
-  // Since this is an internal agency tool, show all team members regardless of project membership
   const { workspaceMembers, workspaces, clients } = await import("@/src/db/schema");
 
-  // Get the workspace
-  const [workspace] = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.slug, "nextoria-agency"))
-    .limit(1);
+  // Get user's current workspace
+  const workspace = await getCurrentWorkspace(session.user.id);
 
   // Fetch all team members from the workspace (excluding clients)
   const members = workspace

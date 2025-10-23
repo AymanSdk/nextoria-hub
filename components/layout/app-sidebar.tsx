@@ -27,6 +27,7 @@ import {
   BookOpen,
   type LucideIcon,
 } from "lucide-react";
+import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -172,7 +173,27 @@ const settingsItems: NavItem[] = [
   },
 ];
 
-export function AppSidebar() {
+interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  ownerId: string;
+  isActive: boolean;
+  role: string;
+}
+
+interface AppSidebarProps {
+  currentWorkspace?: Workspace | null;
+  allWorkspaces?: Workspace[];
+  currentUserId?: string;
+}
+
+export function AppSidebar({
+  currentWorkspace,
+  allWorkspaces,
+  currentUserId,
+}: AppSidebarProps = {}) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { pendingCount } = useProjectRequestStats();
@@ -272,6 +293,24 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+
+        <SidebarSeparator className='mx-0 mt-0' />
+
+        {/* Workspace Switcher */}
+        {currentWorkspace &&
+          allWorkspaces &&
+          allWorkspaces.length > 0 &&
+          currentUserId && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <WorkspaceSwitcher
+                  currentWorkspace={currentWorkspace}
+                  workspaces={allWorkspaces}
+                  currentUserId={currentUserId}
+                />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
       </SidebarHeader>
 
       <SidebarContent className='overflow-hidden'>

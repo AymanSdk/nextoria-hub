@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { invitations, workspaces } from "@/src/db/schema";
+import { invitations, workspaces, workspaceMembers } from "@/src/db/schema";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
@@ -23,14 +23,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get workspace
-    const [workspace] = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.slug, "nextoria-agency"))
+    // Get user's workspace
+    const [membership] = await db
+      .select({
+        workspaceId: workspaceMembers.workspaceId,
+      })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, user.id))
       .limit(1);
 
-    if (!workspace) {
+    if (!membership) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
@@ -40,7 +42,7 @@ export async function GET(req: NextRequest) {
       .from(invitations)
       .where(
         and(
-          eq(invitations.workspaceId, workspace.id),
+          eq(invitations.workspaceId, membership.workspaceId),
           eq(invitations.acceptedAt, null as any)
         )
       );
@@ -66,14 +68,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validated = createInvitationSchema.parse(body);
 
-    // Get workspace
-    const [workspace] = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.slug, "nextoria-agency"))
+    // Get user's workspace
+    const [membership] = await db
+      .select({
+        workspaceId: workspaceMembers.workspaceId,
+      })
+      .from(workspaceMembers)
+      .where(eq(workspaceMembers.userId, user.id))
       .limit(1);
 
-    if (!workspace) {
+    if (!membership) {
       return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
     }
 
@@ -90,7 +94,7 @@ export async function POST(req: NextRequest) {
         id: nanoid(),
         email: validated.email,
         role: validated.role,
-        workspaceId: workspace.id,
+        workspaceId: membership.workspaceId,
         invitedBy: user.id,
         token,
         expires: expiresAt,

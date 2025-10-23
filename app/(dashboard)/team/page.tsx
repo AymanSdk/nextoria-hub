@@ -5,6 +5,7 @@ import { eq, and, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/src/lib/auth/rbac";
 import { TeamBrowser } from "@/components/team/team-browser";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 
 export default async function TeamManagementPage() {
   const session = await getSession();
@@ -18,12 +19,8 @@ export default async function TeamManagementPage() {
     redirect("/");
   }
 
-  // Get the Nextoria Agency workspace
-  const [workspace] = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.slug, "nextoria-agency"))
-    .limit(1);
+  // Get user's current workspace
+  const workspace = await getCurrentWorkspace(session.user.id);
 
   if (!workspace) {
     return <div>Workspace not found</div>;
@@ -44,7 +41,12 @@ export default async function TeamManagementPage() {
     })
     .from(workspaceMembers)
     .innerJoin(users, eq(workspaceMembers.userId, users.id))
-    .where(and(eq(workspaceMembers.workspaceId, workspace.id), ne(users.role, "CLIENT")));
+    .where(
+      and(
+        eq(workspaceMembers.workspaceId, workspace.id),
+        ne(users.role, "CLIENT")
+      )
+    );
 
   return (
     <div className='space-y-6'>

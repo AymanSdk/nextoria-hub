@@ -4,7 +4,13 @@ import { users, workspaceMembers, workspaces } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/src/lib/auth/rbac";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Mail, Shield, UserPlus } from "lucide-react";
@@ -24,14 +30,16 @@ export default async function TeamManagementPage() {
     redirect("/");
   }
 
-  // Get the Nextoria Agency workspace
-  const [workspace] = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.slug, "nextoria-agency"))
+  // Get user's workspace
+  const [membership] = await db
+    .select({
+      workspaceId: workspaceMembers.workspaceId,
+    })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, session.user.id))
     .limit(1);
 
-  if (!workspace) {
+  if (!membership) {
     return <div>Workspace not found</div>;
   }
 
@@ -50,7 +58,7 @@ export default async function TeamManagementPage() {
     })
     .from(workspaceMembers)
     .innerJoin(users, eq(workspaceMembers.userId, users.id))
-    .where(eq(workspaceMembers.workspaceId, workspace.id));
+    .where(eq(workspaceMembers.workspaceId, membership.workspaceId));
 
   const getRoleBadgeVariant = (role: string) => {
     if (role === "ADMIN") return "default";
@@ -129,16 +137,15 @@ export default async function TeamManagementPage() {
       <Card>
         <CardHeader>
           <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            All members of the Nextoria Agency workspace
-          </CardDescription>
+          <CardDescription>All members of the Nextoria Agency workspace</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
             {teamMembers.map((member) => (
               <div
                 key={member.id}
-                className='flex items-center justify-between p-4 rounded-lg border bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'>
+                className='flex items-center justify-between p-4 rounded-lg border bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors'
+              >
                 <div className='flex items-center gap-4 flex-1'>
                   <Avatar className='h-12 w-12'>
                     <AvatarImage src={member.image || undefined} />
@@ -168,9 +175,7 @@ export default async function TeamManagementPage() {
                       })}
                     </p>
                   </div>
-                  <Badge variant={getRoleBadgeVariant(member.role)}>
-                    {member.role}
-                  </Badge>
+                  <Badge variant={getRoleBadgeVariant(member.role)}>{member.role}</Badge>
                 </div>
                 <TeamMemberActions
                   memberId={member.id}
@@ -186,4 +191,3 @@ export default async function TeamManagementPage() {
     </div>
   );
 }
-

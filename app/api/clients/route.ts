@@ -44,19 +44,23 @@ export async function GET(req: NextRequest) {
         .where(eq(clients.workspaceId, workspaceId))
         .orderBy(clients.name);
     } else {
-      // Fetch all clients (for file upload use case)
-      const { workspaces } = await import("@/src/db/schema");
-      const [defaultWorkspace] = await db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.slug, "nextoria-agency"))
+      // Fetch all clients from user's workspace
+      const { workspaces, workspaceMembers } = await import("@/src/db/schema");
+
+      // Get user's workspace
+      const [membership] = await db
+        .select({
+          workspaceId: workspaceMembers.workspaceId,
+        })
+        .from(workspaceMembers)
+        .where(eq(workspaceMembers.userId, user.id))
         .limit(1);
 
-      if (defaultWorkspace) {
+      if (membership) {
         allClients = await db
           .select()
           .from(clients)
-          .where(eq(clients.workspaceId, defaultWorkspace.id))
+          .where(eq(clients.workspaceId, membership.workspaceId))
           .orderBy(clients.name);
       } else {
         allClients = [];

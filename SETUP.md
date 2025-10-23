@@ -618,11 +618,11 @@ You now have a fully functional agency operations platform running locally!
 - ✅ Team chat
 - ✅ Client portal
 
-**Demo Credentials:**
+**Next Steps:**
 
-- Admin: `admin@nextoria.com` / `password123`
-- Developer: `developer@nextoria.com` / `password123`
-- Designer: `designer@nextoria.com` / `password123`
+1. Visit [http://localhost:3000/auth/signup](http://localhost:3000/auth/signup)
+2. Create your account (you'll be the admin of your workspace)
+3. Start inviting team members and managing projects!
 
 **Access the app:** [http://localhost:3000](http://localhost:3000)
 

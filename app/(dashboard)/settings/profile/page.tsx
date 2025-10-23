@@ -27,33 +27,20 @@ export default async function ProfileSettingsPage() {
   const hasPassword = !!userData.password;
 
   return (
-    <div className='w-full min-h-[calc(100vh-4rem)] flex items-start justify-center py-8 px-4'>
-      <div className='w-full max-w-5xl space-y-8'>
-        {/* Header */}
-        <div className='text-center space-y-2'>
-          <h1 className='text-4xl font-bold tracking-tight'>Profile Settings</h1>
-          <p className='text-muted-foreground text-lg'>
-            Manage your personal information and preferences
-          </p>
-        </div>
+    <div className='space-y-6'>
+      <ProfileForm
+        user={{
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          image: userData.image,
+          phone: userData.phone,
+          bio: userData.bio,
+          timezone: userData.timezone,
+        }}
+      />
 
-        {/* Main Content */}
-        <div className='space-y-6'>
-          <ProfileForm
-            user={{
-              id: userData.id,
-              name: userData.name,
-              email: userData.email,
-              image: userData.image,
-              phone: userData.phone,
-              bio: userData.bio,
-              timezone: userData.timezone,
-            }}
-          />
-
-          {hasPassword && <PasswordChangeForm />}
-        </div>
-      </div>
+      {hasPassword && <PasswordChangeForm />}
     </div>
   );
 }
