@@ -97,16 +97,29 @@ export function NotificationItem({
   const content = (
     <div
       className={cn(
-        "flex gap-3 p-4 hover:bg-accent/50 transition-colors",
-        !notification.isRead && "bg-accent/30",
-        compact && "p-3"
+        "group relative flex items-center gap-3 p-3 hover:bg-accent/50 transition-all duration-200 cursor-pointer",
+        "first:rounded-t-[calc(var(--radius)-2px)] last:rounded-b-[calc(var(--radius)-2px)]",
+        !notification.isRead && "bg-primary/5 border-l-[3px] border-l-primary",
+        notification.isRead && "hover:border-l-2 hover:border-l-muted",
+        compact && "p-2 gap-2"
       )}
     >
-      <div className='flex-shrink-0 mt-1'>
+      {/* Unread indicator dot */}
+      {!notification.isRead && !compact && (
+        <div className='absolute left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary animate-pulse' />
+      )}
+
+      <div className='shrink-0'>
         {notification.sender?.avatarUrl ? (
-          <Avatar className='h-8 w-8'>
+          <Avatar
+            className={cn(
+              "border",
+              compact ? "h-7 w-7" : "h-9 w-9",
+              !notification.isRead && "border-primary/30"
+            )}
+          >
             <AvatarImage src={notification.sender.avatarUrl} />
-            <AvatarFallback>
+            <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold'>
               {notification.sender.name
                 .split(" ")
                 .map((n) => n[0])
@@ -115,96 +128,117 @@ export function NotificationItem({
             </AvatarFallback>
           </Avatar>
         ) : (
-          getNotificationIcon(notification.type)
+          <div
+            className={cn(
+              "rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center",
+              compact ? "h-7 w-7" : "h-9 w-9"
+            )}
+          >
+            {getNotificationIcon(notification.type)}
+          </div>
         )}
       </div>
 
-      <div className='flex-1 min-w-0'>
-        <div className='flex items-start justify-between gap-2'>
-          <div className='flex-1 min-w-0'>
-            <p
-              className={cn(
-                "font-medium text-sm",
-                !notification.isRead && "font-semibold"
-              )}
-            >
-              {notification.title}
-            </p>
-            <p className='text-sm text-muted-foreground line-clamp-2 mt-0.5'>
-              {notification.message}
-            </p>
-          </div>
-          {!notification.isRead && (
-            <div className='flex-shrink-0'>
-              <div className='h-2 w-2 rounded-full bg-blue-500' />
+      <div className='flex-1 min-w-0 flex items-center justify-center'>
+        <div className='flex-1'>
+          <div className='flex items-start justify-between gap-2'>
+            <div className='flex-1 min-w-0'>
+              <p
+                className={cn(
+                  "text-sm mb-1 leading-snug",
+                  !notification.isRead
+                    ? "font-semibold text-foreground"
+                    : "font-medium text-foreground/90"
+                )}
+              >
+                {notification.title}
+              </p>
+              <p
+                className={cn(
+                  "text-xs line-clamp-2 leading-relaxed",
+                  !notification.isRead
+                    ? "text-muted-foreground"
+                    : "text-muted-foreground/70"
+                )}
+              >
+                {notification.message}
+              </p>
             </div>
-          )}
-        </div>
-
-        <div className='flex items-center gap-2 mt-2'>
-          <time className='text-xs text-muted-foreground'>
-            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-          </time>
-          {notification.sender && (
-            <>
-              <span className='text-xs text-muted-foreground'>•</span>
-              <span className='text-xs text-muted-foreground'>
-                {notification.sender.name}
-              </span>
-            </>
-          )}
-        </div>
-
-        {!compact && (
-          <div className='flex items-center gap-1 mt-2'>
-            {!notification.isRead && onMarkAsRead && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onMarkAsRead(notification.id);
-                }}
-                className='h-7 text-xs'
+            {!notification.isRead && !compact && (
+              <Badge
+                variant='secondary'
+                className='shrink-0 text-[10px] px-1.5 py-0 h-5 bg-primary/10 text-primary border-primary/20'
               >
-                <Eye className='h-3 w-3 mr-1' />
-                Mark read
-              </Button>
-            )}
-            {notification.isRead && onMarkAsUnread && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onMarkAsUnread(notification.id);
-                }}
-                className='h-7 text-xs'
-              >
-                <EyeOff className='h-3 w-3 mr-1' />
-                Mark unread
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete(notification.id);
-                }}
-                className='h-7 text-xs text-destructive hover:text-destructive'
-              >
-                <Trash2 className='h-3 w-3 mr-1' />
-                Delete
-              </Button>
+                New
+              </Badge>
             )}
           </div>
-        )}
+
+          <div className='flex items-center gap-1.5 mt-2'>
+            <time className='text-[11px] text-muted-foreground/60'>
+              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+            </time>
+            {notification.sender && (
+              <>
+                <span className='text-[11px] text-muted-foreground/30'>•</span>
+                <span className='text-[11px] text-muted-foreground/60'>
+                  {notification.sender.name}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
       </div>
+
+      {!compact && (
+        <div className='flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0'>
+          {!notification.isRead && onMarkAsRead && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMarkAsRead(notification.id);
+              }}
+              className='h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary transition-colors'
+            >
+              <Eye className='h-3 w-3 mr-1' />
+              Mark read
+            </Button>
+          )}
+          {notification.isRead && onMarkAsUnread && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMarkAsUnread(notification.id);
+              }}
+              className='h-7 px-2 text-xs hover:bg-accent transition-colors'
+            >
+              <EyeOff className='h-3 w-3 mr-1' />
+              Mark unread
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(notification.id);
+              }}
+              className='h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors'
+            >
+              <Trash2 className='h-3 w-3 mr-1' />
+              Delete
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 
