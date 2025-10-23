@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
 import { notifications, users } from "@/src/db/schema";
-import { eq, desc, and, or, like } from "drizzle-orm";
+import { eq, desc, and, or, like, sql } from "drizzle-orm";
 
 /**
  * GET /api/notifications
@@ -60,10 +60,12 @@ export async function GET(req: NextRequest) {
       .offset(offset);
 
     // Get total count
-    const [{ count }] = await db
-      .select({ count: db.$count(notifications.id) })
+    const countResult = await db
+      .select({ count: sql<number>`count(*)::int` })
       .from(notifications)
       .where(and(...conditions));
+
+    const totalCount = countResult[0]?.count || 0;
 
     return NextResponse.json({
       notifications: userNotifications.map((n) => ({
@@ -80,8 +82,8 @@ export async function GET(req: NextRequest) {
       pagination: {
         page,
         limit,
-        total: count,
-        totalPages: Math.ceil(count / limit),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
       },
     });
   } catch (error) {

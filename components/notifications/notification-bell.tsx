@@ -52,7 +52,7 @@ export function NotificationBell() {
 
   // Fetch recent notifications when popover opens
   useEffect(() => {
-    if (open && notifications.length === 0) {
+    if (open) {
       fetchNotifications();
     }
   }, [open]);
@@ -63,7 +63,11 @@ export function NotificationBell() {
       const res = await fetch("/api/notifications?limit=5");
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications);
+        console.log("Notifications data:", data);
+        console.log("Notifications array:", data.notifications);
+        setNotifications(data.notifications || []);
+      } else {
+        console.error("Failed to fetch notifications:", res.status);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -85,6 +89,13 @@ export function NotificationBell() {
           prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
+
+        // Refresh unread count to ensure accuracy
+        const countRes = await fetch("/api/notifications/unread-count");
+        if (countRes.ok) {
+          const data = await countRes.json();
+          setUnreadCount(data.count);
+        }
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);

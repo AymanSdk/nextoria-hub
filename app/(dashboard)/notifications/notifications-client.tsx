@@ -65,8 +65,13 @@ export function NotificationsClient() {
       const res = await fetch(`/api/notifications?${params}`);
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications);
+        console.log("Notifications page data:", data);
+        console.log("Notifications count:", data.notifications?.length);
+        setNotifications(data.notifications || []);
         setHasMore(data.pagination.page < data.pagination.totalPages);
+      } else {
+        console.error("Failed to fetch notifications:", res.status);
+        toast.error("Failed to load notifications");
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
