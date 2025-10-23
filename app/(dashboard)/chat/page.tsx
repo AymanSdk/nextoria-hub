@@ -229,7 +229,7 @@ export default function ChatPage() {
 
   if (!session?.user) {
     return (
-      <div className='flex flex-1 items-center justify-center -m-4 md:-m-6 lg:-m-8'>
+      <div className='flex items-center justify-center h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)]'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>Loading...</p>
@@ -240,7 +240,7 @@ export default function ChatPage() {
 
   if (isLoading || !workspaceId) {
     return (
-      <div className='flex flex-1 items-center justify-center -m-4 md:-m-6 lg:-m-8'>
+      <div className='flex items-center justify-center h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)]'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>
@@ -252,7 +252,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className='flex flex-1 gap-0 -m-4 md:-m-6 lg:-m-8 h-full overflow-hidden'>
+    <div className='flex gap-0 h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] lg:h-[calc(100vh-8rem)] -m-4 md:-m-6 lg:-m-8 rounded-lg overflow-hidden border bg-background shadow-sm'>
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div
@@ -264,10 +264,10 @@ export default function ChatPage() {
       {/* Channel List Sidebar */}
       <div
         className={cn(
-          "w-64 border-r bg-card/50 backdrop-blur-sm shrink-0 flex flex-col h-full",
-          "fixed lg:static inset-y-0 lg:inset-y-auto left-0 z-50 lg:z-auto",
+          "w-64 border-r bg-card shrink-0 flex flex-col h-full",
+          "fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto",
           "transition-transform duration-300 ease-in-out lg:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <ChannelList
@@ -287,7 +287,7 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Area */}
-      <div className='flex-1 flex flex-col min-w-0 bg-background h-full overflow-hidden'>
+      <div className='flex-1 flex flex-col min-w-0 bg-background overflow-hidden'>
         {currentChannel && workspaceId ? (
           <ChatRoomProvider channelId={currentChannel.id} workspaceId={workspaceId}>
             {/* Real-time message sync */}
@@ -298,22 +298,22 @@ export default function ChatPage() {
             />
 
             {/* Channel Header */}
-            <div className='h-14 px-4 sm:px-6 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between shrink-0'>
-              <div className='flex items-center gap-3 min-w-0'>
+            <div className='h-16 px-4 sm:px-6 border-b bg-background flex items-center justify-between shrink-0'>
+              <div className='flex items-center gap-3 min-w-0 flex-1'>
                 {/* Mobile Menu Button */}
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='lg:hidden h-8 w-8 shrink-0'
+                  className='lg:hidden h-9 w-9 shrink-0'
                   onClick={() => setIsSidebarOpen(true)}
                 >
                   <Menu className='h-5 w-5' />
                 </Button>
 
-                <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0'>
-                  <MessageSquare className='h-4 w-4 text-primary' />
+                <div className='h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0'>
+                  <MessageSquare className='h-5 w-5 text-primary' />
                 </div>
-                <div className='min-w-0'>
+                <div className='min-w-0 flex-1'>
                   <h2 className='font-semibold text-base truncate'>
                     #{currentChannel.name}
                   </h2>
@@ -326,13 +326,13 @@ export default function ChatPage() {
               </div>
 
               {/* Presence Indicator - Right side of header */}
-              <div className='shrink-0'>
+              <div className='shrink-0 ml-4'>
                 <ChatPresence />
               </div>
             </div>
 
             {/* Messages Area */}
-            <div className='flex-1 overflow-hidden bg-background relative'>
+            <div className='flex-1 overflow-hidden relative'>
               {isLoadingMessages ? (
                 <div className='absolute inset-0 flex items-center justify-center'>
                   <div className='text-center'>
@@ -358,7 +358,7 @@ export default function ChatPage() {
             </div>
 
             {/* Message Input - Fixed at bottom */}
-            <div className='border-t bg-background/95 backdrop-blur-sm shrink-0'>
+            <div className='border-t bg-background shrink-0'>
               <ChatInput
                 onSendMessage={handleSendMessage}
                 channelId={currentChannel.id}
@@ -367,12 +367,13 @@ export default function ChatPage() {
             </div>
           </ChatRoomProvider>
         ) : (
-          <div className='flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/5'>
+          <div className='flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/20'>
             {/* Mobile Menu Button for Empty State */}
-            <div className='absolute top-4 left-4 lg:hidden'>
+            <div className='absolute top-6 left-6 lg:hidden'>
               <Button
                 variant='outline'
                 size='icon'
+                className='h-10 w-10'
                 onClick={() => setIsSidebarOpen(true)}
               >
                 <Menu className='h-5 w-5' />
@@ -380,18 +381,19 @@ export default function ChatPage() {
             </div>
 
             <div className='text-center max-w-md px-4'>
-              <div className='h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4'>
-                <MessageSquare className='h-10 w-10 text-primary' />
+              <div className='h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6'>
+                <MessageSquare className='h-12 w-12 text-primary' />
               </div>
-              <h3 className='text-xl font-semibold mb-2 text-foreground'>
+              <h3 className='text-2xl font-semibold mb-3 text-foreground'>
                 Welcome to Chat
               </h3>
-              <p className='text-sm text-muted-foreground mb-4'>
+              <p className='text-sm text-muted-foreground mb-6 leading-relaxed'>
                 Select a channel from the sidebar to start chatting with your team, or
                 create a new channel to get started.
               </p>
               <Button
                 variant='default'
+                size='lg'
                 className='lg:hidden'
                 onClick={() => setIsSidebarOpen(true)}
               >

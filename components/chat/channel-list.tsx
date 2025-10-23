@@ -77,7 +77,7 @@ export function ChannelList({
   return (
     <div className='flex flex-col h-full bg-card'>
       {/* Header */}
-      <div className='h-14 px-4 border-b flex items-center justify-between shrink-0 bg-muted/30'>
+      <div className='h-16 px-4 border-b flex items-center justify-between shrink-0 bg-muted/20'>
         <h2 className='font-semibold text-sm uppercase tracking-wide text-muted-foreground'>
           Channels
         </h2>
@@ -88,7 +88,7 @@ export function ChannelList({
               <Button
                 variant='ghost'
                 size='icon'
-                className='h-7 w-7 hover:bg-primary/10 hover:text-primary transition-colors'
+                className='h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors'
               >
                 <Plus className='h-4 w-4' />
               </Button>
@@ -173,7 +173,7 @@ export function ChannelList({
             <Button
               variant='ghost'
               size='icon'
-              className='h-7 w-7 lg:hidden hover:bg-muted'
+              className='h-8 w-8 lg:hidden hover:bg-muted'
               onClick={onClose}
             >
               <X className='h-4 w-4' />
@@ -184,13 +184,13 @@ export function ChannelList({
 
       {/* Channel List */}
       <ScrollArea className='flex-1'>
-        <div className='p-2 space-y-0.5'>
+        <div className='p-3 space-y-1'>
           {channels.length === 0 ? (
-            <div className='p-6 text-center text-sm text-muted-foreground'>
-              <div className='h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3'>
-                <Hash className='h-6 w-6 text-muted-foreground' />
+            <div className='p-8 text-center text-sm text-muted-foreground'>
+              <div className='h-14 w-14 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4'>
+                <Hash className='h-7 w-7 text-muted-foreground' />
               </div>
-              <p className='font-medium text-foreground mb-1'>No channels yet</p>
+              <p className='font-medium text-foreground mb-1.5'>No channels yet</p>
               <p className='text-xs'>Create one to get started!</p>
             </div>
           ) : (
@@ -207,7 +207,7 @@ export function ChannelList({
                   key={channel.id}
                   onClick={() => onChannelSelect(channel.id)}
                   className={cn(
-                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all",
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
                     "hover:bg-muted/80",
                     currentChannelId === channel.id
                       ? "bg-primary/10 text-primary font-medium shadow-sm ring-1 ring-primary/20"
@@ -218,14 +218,14 @@ export function ChannelList({
                 >
                   <div
                     className={cn(
-                      "h-5 w-5 rounded flex items-center justify-center shrink-0",
+                      "h-6 w-6 rounded flex items-center justify-center shrink-0",
                       currentChannelId === channel.id ? "bg-primary/20" : "bg-muted"
                     )}
                   >
                     {channel.isPrivate ? (
-                      <Lock className='h-3 w-3' />
+                      <Lock className='h-3.5 w-3.5' />
                     ) : (
-                      <Hash className='h-3 w-3' />
+                      <Hash className='h-3.5 w-3.5' />
                     )}
                   </div>
                   <span className='truncate flex-1 text-left'>{channel.name}</span>

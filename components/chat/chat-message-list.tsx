@@ -81,10 +81,10 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
   };
 
   return (
-    <div className='flex flex-col h-full overflow-hidden'>
-      <ScrollArea className='flex-1 overflow-y-auto'>
-        <div className='px-4 sm:px-6 lg:px-8 py-6' ref={scrollRef}>
-          <div className='space-y-4'>
+    <div className='flex flex-col h-full'>
+      <ScrollArea className='flex-1'>
+        <div className='px-4 sm:px-6 py-6' ref={scrollRef}>
+          <div className='space-y-1'>
             {/* Load Older Messages Button */}
             {hasOlderMessages && (
               <div className='flex justify-center pb-4'>
@@ -122,7 +122,7 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                 return (
                   <div
                     key={message.id}
-                    className={`flex gap-3 group hover:bg-muted/30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-2 rounded-lg transition-colors ${
+                    className={`flex gap-3 group hover:bg-muted/40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 rounded-lg transition-colors ${
                       isCurrentUser ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -136,12 +136,12 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                     )}
 
                     <div
-                      className={`flex flex-col max-w-[75%] sm:max-w-[70%] ${
+                      className={`flex flex-col max-w-[80%] sm:max-w-[75%] ${
                         isCurrentUser ? "items-end" : "items-start"
                       }`}
                     >
                       <div
-                        className={`flex items-center gap-2 mb-1 flex-wrap ${
+                        className={`flex items-center gap-2 mb-1.5 flex-wrap ${
                           isCurrentUser ? "flex-row-reverse" : ""
                         }`}
                       >
@@ -159,10 +159,10 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                       </div>
 
                       <div
-                        className={`px-4 py-2.5 rounded-2xl ${
+                        className={`px-4 py-3 rounded-2xl shadow-sm ${
                           isCurrentUser
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-muted text-foreground rounded-bl-sm"
+                            ? "bg-primary text-primary-foreground rounded-br-md"
+                            : "bg-muted text-foreground rounded-bl-md"
                         }`}
                       >
                         <RichTextRenderer
@@ -197,9 +197,9 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
 
       {/* Typing Indicator */}
       {typingUsers.length > 0 && (
-        <div className='px-4 py-2 text-sm text-muted-foreground flex items-center gap-2 border-t bg-background/95'>
-          <Loader2 className='h-3 w-3 animate-spin' />
-          <span className='font-medium'>
+        <div className='px-6 py-3 text-sm text-muted-foreground flex items-center gap-2 border-t bg-background'>
+          <Loader2 className='h-3.5 w-3.5 animate-spin' />
+          <span>
             {typingUsers.length === 1
               ? `${typingUsers[0]} is typing...`
               : typingUsers.length === 2

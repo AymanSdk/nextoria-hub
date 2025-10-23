@@ -63,23 +63,25 @@ export function ChatInput({
   const isEmpty = isMessageEmpty(message) && attachments.length === 0;
 
   return (
-    <div className='p-3 sm:p-4 border-t bg-background'>
+    <div className='p-4 bg-background'>
       {/* Show attached files */}
       {attachments.length > 0 && (
-        <div className='mb-3 p-2 bg-muted/50 rounded-lg border'>
+        <div className='mb-3 p-3 bg-muted/50 rounded-lg border'>
           <p className='text-xs text-muted-foreground mb-2 font-medium'>
-            {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
+            {attachments.length} file{attachments.length !== 1 ? "s" : ""} attached
           </p>
           <div className='flex flex-wrap gap-2'>
             {attachments.map((file, index) => (
               <div
                 key={file.id}
-                className='flex items-center gap-2 px-3 py-1.5 bg-background rounded-md border text-sm group hover:border-primary/50 transition-colors'
+                className='flex items-center gap-2 px-3 py-2 bg-background rounded-md border text-sm group hover:border-primary/50 transition-colors'
               >
                 <span className='truncate max-w-[150px]'>{file.name}</span>
                 <button
-                  onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
-                  className='text-muted-foreground hover:text-destructive transition-colors'
+                  onClick={() =>
+                    setAttachments((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className='text-muted-foreground hover:text-destructive transition-colors text-lg leading-none'
                   title='Remove file'
                 >
                   ×
@@ -89,8 +91,8 @@ export function ChatInput({
           </div>
         </div>
       )}
-      
-      <div className='flex items-end gap-2 sm:gap-3'>
+
+      <div className='flex items-end gap-3'>
         <div className='flex-1 relative'>
           <RichTextEditor
             ref={editorRef}
@@ -104,16 +106,16 @@ export function ChatInput({
             workspaceId={workspaceId}
           />
 
-          <div className='absolute right-2 bottom-2 flex items-center gap-0.5 sm:gap-1 z-10'>
+          <div className='absolute right-3 bottom-3 flex items-center gap-1 z-10'>
             <Button
               type='button'
               variant='ghost'
               size='icon'
-              className='h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted'
+              className='h-8 w-8 hover:bg-muted rounded-lg'
               disabled={disabled}
               title='Add emoji (coming soon)'
             >
-              <Smile className='h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground' />
+              <Smile className='h-4 w-4 text-muted-foreground' />
             </Button>
 
             <FileUploadButton onFilesUploaded={handleFilesUploaded} disabled={disabled} />
@@ -124,16 +126,20 @@ export function ChatInput({
           onClick={handleSubmit}
           disabled={isEmpty || disabled}
           size='icon'
-          className='h-[48px] w-[48px] sm:h-[52px] sm:w-[52px] rounded-xl shrink-0'
+          className='h-12 w-12 rounded-xl shrink-0 shadow-md'
           title='Send message (Enter)'
         >
-          <SendHorizonal className='h-4 w-4 sm:h-5 sm:w-5' />
+          <SendHorizonal className='h-5 w-5' />
         </Button>
       </div>
-      <p className='text-[10px] sm:text-xs text-muted-foreground mt-2 px-1'>
-        Press <kbd className='px-1 py-0.5 bg-muted rounded text-[10px]'>Enter</kbd> to
-        send, <kbd className='px-1 py-0.5 bg-muted rounded text-[10px]'>Shift+Enter</kbd>{" "}
-        for new line • Use toolbar for formatting
+      <p className='text-xs text-muted-foreground mt-3 px-1'>
+        Press{" "}
+        <kbd className='px-1.5 py-0.5 bg-muted rounded text-xs font-mono'>Enter</kbd> to
+        send,{" "}
+        <kbd className='px-1.5 py-0.5 bg-muted rounded text-xs font-mono'>
+          Shift+Enter
+        </kbd>{" "}
+        for new line
       </p>
     </div>
   );
