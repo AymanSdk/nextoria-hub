@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -108,6 +109,7 @@ const statusColors: Record<TaskStatus, string> = {
 
 export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
@@ -146,7 +148,8 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         <Button
           variant='ghost'
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className='h-8 px-2'>
+          className='h-8 px-2'
+        >
           <Flag className='h-4 w-4' />
           <ArrowUpDown className='ml-2 h-3 w-3' />
         </Button>
@@ -169,11 +172,10 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
               className='inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-white hover:opacity-80 transition-opacity'
               style={{
                 backgroundColor: row.original.project.color || "#6b7280",
-              }}>
+              }}
+            >
               <FolderKanban className='h-3 w-3' />
-              <span className='truncate max-w-[120px]'>
-                {row.original.project.name}
-              </span>
+              <span className='truncate max-w-[120px]'>{row.original.project.name}</span>
             </div>
           </Link>
         ) : (
@@ -187,7 +189,8 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         <Button
           variant='ghost'
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className='h-8 px-2'>
+          className='h-8 px-2'
+        >
           Task
           <ArrowUpDown className='ml-2 h-3 w-3' />
         </Button>
@@ -209,7 +212,8 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         <Button
           variant='ghost'
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className='h-8 px-2'>
+          className='h-8 px-2'
+        >
           Status
           <ArrowUpDown className='ml-2 h-3 w-3' />
         </Button>
@@ -230,12 +234,13 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
             <Avatar className='h-7 w-7'>
               <AvatarImage src={row.original.assignee.image || undefined} />
               <AvatarFallback className='text-xs'>
-                {row.original.assignee.name?.substring(0, 2).toUpperCase() ||
-                  "??"}
+                {row.original.assignee.name?.substring(0, 2).toUpperCase() || "??"}
               </AvatarFallback>
             </Avatar>
             <span className='text-sm truncate max-w-[120px]'>
-              {row.original.assignee.name || row.original.assignee.name}
+              {row.original.assignee.id === session?.user?.id
+                ? "me"
+                : row.original.assignee.name}
             </span>
           </div>
         ) : (
@@ -249,7 +254,8 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         <Button
           variant='ghost'
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className='h-8 px-2'>
+          className='h-8 px-2'
+        >
           Due Date
           <ArrowUpDown className='ml-2 h-3 w-3' />
         </Button>
@@ -261,7 +267,8 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
               new Date(row.original.dueDate) < new Date()
                 ? "text-red-500 font-medium"
                 : "text-neutral-600 dark:text-neutral-400"
-            }`}>
+            }`}
+          >
             {new Date(row.original.dueDate).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
@@ -280,10 +287,7 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
         row.original.labels ? (
           <div className='flex flex-wrap gap-1'>
             {row.original.labels.split(",").map((label) => (
-              <Badge
-                key={label}
-                variant='secondary'
-                className='text-[10px] px-1.5 py-0'>
+              <Badge key={label} variant='secondary' className='text-[10px] px-1.5 py-0'>
                 {label.trim()}
               </Badge>
             ))}
@@ -310,10 +314,9 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
                 {statusOptions.map((status) => (
                   <DropdownMenuItem
                     key={status.value}
-                    onClick={() =>
-                      handleStatusChange(row.original.id, status.value)
-                    }
-                    disabled={row.original.status === status.value}>
+                    onClick={() => handleStatusChange(row.original.id, status.value)}
+                    disabled={row.original.status === status.value}
+                  >
                     <div
                       className='h-2 w-2 rounded-full mr-2'
                       style={{ backgroundColor: status.color }}
@@ -365,10 +368,7 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -380,19 +380,14 @@ export function TaskTableView({ tasks, members = [] }: TaskTableViewProps) {
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className='h-24 text-center'>
+                <TableCell colSpan={columns.length} className='h-24 text-center'>
                   No tasks found
                 </TableCell>
               </TableRow>

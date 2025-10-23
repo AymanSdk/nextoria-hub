@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -11,8 +12,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,7 +20,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Separator } from "@/components/ui/separator";
+import {
+  Plus,
+  Loader2,
+  Type,
+  AlignLeft,
+  Flag,
+  User,
+  Calendar,
+  Clock,
+  Tag,
+  ListTodo,
+} from "lucide-react";
+import { format } from "date-fns";
 
 interface TeamMember {
   id: string;
@@ -35,11 +57,9 @@ interface CreateTaskDialogProps {
   members: TeamMember[];
 }
 
-export function CreateTaskDialog({
-  projectId,
-  members,
-}: CreateTaskDialogProps) {
+export function CreateTaskDialog({ projectId, members }: CreateTaskDialogProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -108,169 +128,291 @@ export function CreateTaskDialog({
           New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
-            Add a new task to this project. Fill in the details below.
+          <DialogTitle className='text-2xl font-semibold'>Create New Task</DialogTitle>
+          <DialogDescription className='text-base'>
+            Add a new task to your project with all the necessary details.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
+        <form onSubmit={handleSubmit} className='space-y-6'>
           {error && (
-            <div className='p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg'>
+            <div className='p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800'>
               {error}
             </div>
           )}
 
-          <div className='space-y-2'>
-            <Label htmlFor='title'>
-              Task Title <span className='text-red-500'>*</span>
-            </Label>
-            <Input
-              id='title'
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder='Enter task title'
-              required
-            />
+          {/* Task Details Section */}
+          <div className='space-y-4'>
+            <div className='space-y-3'>
+              <Label
+                htmlFor='title'
+                className='text-sm font-medium flex items-center gap-2'
+              >
+                <Type className='h-4 w-4' />
+                Task Title <span className='text-red-500'>*</span>
+              </Label>
+              <InputGroup>
+                <InputGroupInput
+                  id='title'
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder='Enter a descriptive task title'
+                  required
+                />
+              </InputGroup>
+            </div>
+
+            <div className='space-y-3'>
+              <Label
+                htmlFor='description'
+                className='text-sm font-medium flex items-center gap-2'
+              >
+                <AlignLeft className='h-4 w-4' />
+                Description
+              </Label>
+              <InputGroup>
+                <InputGroupTextarea
+                  id='description'
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder='Provide detailed information about the task'
+                  rows={4}
+                />
+              </InputGroup>
+            </div>
           </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='description'>Description</Label>
-            <Textarea
-              id='description'
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder='Enter task description'
-              rows={4}
-            />
+          <Separator />
+
+          {/* Status & Priority Section */}
+          <div className='space-y-4'>
+            <h3 className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+              Task Configuration
+            </h3>
+            <ButtonGroup className='w-full gap-4'>
+              <div className='flex-1 space-y-2'>
+                <Label
+                  htmlFor='status'
+                  className='text-xs font-medium flex items-center gap-2'
+                >
+                  <ListTodo className='h-3.5 w-3.5' />
+                  Status
+                </Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger id='status' className='w-full'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='TODO'>📋 To Do</SelectItem>
+                    <SelectItem value='IN_PROGRESS'>🚀 In Progress</SelectItem>
+                    <SelectItem value='IN_REVIEW'>👀 In Review</SelectItem>
+                    <SelectItem value='DONE'>✅ Done</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='flex-1 space-y-2'>
+                <Label
+                  htmlFor='priority'
+                  className='text-xs font-medium flex items-center gap-2'
+                >
+                  <Flag className='h-3.5 w-3.5' />
+                  Priority
+                </Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
+                  <SelectTrigger id='priority' className='w-full'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='LOW'>🟢 Low</SelectItem>
+                    <SelectItem value='MEDIUM'>🟡 Medium</SelectItem>
+                    <SelectItem value='HIGH'>🟠 High</SelectItem>
+                    <SelectItem value='URGENT'>🔴 Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </ButtonGroup>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <Separator />
+
+          {/* Assignment Section */}
+          <div className='space-y-4'>
+            <h3 className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+              Assignment
+            </h3>
             <div className='space-y-2'>
-              <Label htmlFor='status'>Status</Label>
+              <Label
+                htmlFor='assigneeId'
+                className='text-xs font-medium flex items-center gap-2'
+              >
+                <User className='h-3.5 w-3.5' />
+                Assign To
+              </Label>
               <Select
-                value={formData.status}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, status: value })
-                }>
-                <SelectTrigger id='status'>
-                  <SelectValue />
+                value={formData.assigneeId}
+                onValueChange={(value) => setFormData({ ...formData, assigneeId: value })}
+              >
+                <SelectTrigger id='assigneeId' className='w-full'>
+                  <SelectValue placeholder='Select team member' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='TODO'>To Do</SelectItem>
-                  <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-                  <SelectItem value='IN_REVIEW'>In Review</SelectItem>
-                  <SelectItem value='DONE'>Done</SelectItem>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.id === session?.user?.id
+                        ? "👤 me"
+                        : member.name || member.email}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
+          <Separator />
+
+          {/* Timeline Section */}
+          <div className='space-y-4'>
+            <h3 className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+              Timeline & Effort
+            </h3>
+            <ButtonGroup className='w-full gap-4'>
+              <div className='flex-1 space-y-2'>
+                <Label
+                  htmlFor='dueDate'
+                  className='text-xs font-medium flex items-center gap-2'
+                >
+                  <Calendar className='h-3.5 w-3.5' />
+                  Due Date
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant='outline'
+                      className='w-full justify-start text-left font-normal'
+                    >
+                      <Calendar className='mr-2 h-4 w-4' />
+                      {formData.dueDate
+                        ? format(new Date(formData.dueDate), "PPP")
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className='w-auto p-0' align='start'>
+                    <CalendarComponent
+                      mode='single'
+                      selected={formData.dueDate ? new Date(formData.dueDate) : undefined}
+                      onSelect={(date) =>
+                        setFormData({
+                          ...formData,
+                          dueDate: date ? format(date, "yyyy-MM-dd") : "",
+                        })
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className='flex-1 space-y-2'>
+                <Label
+                  htmlFor='estimatedHours'
+                  className='text-xs font-medium flex items-center gap-2'
+                >
+                  <Clock className='h-3.5 w-3.5' />
+                  Estimated Hours
+                </Label>
+                <InputGroup>
+                  <InputGroupAddon>
+                    <Clock className='h-4 w-4' />
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    id='estimatedHours'
+                    type='number'
+                    min='0'
+                    step='0.5'
+                    value={formData.estimatedHours}
+                    onChange={(e) =>
+                      setFormData({ ...formData, estimatedHours: e.target.value })
+                    }
+                    placeholder='8'
+                  />
+                  <InputGroupAddon align='inline-end'>
+                    <InputGroupText>hrs</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
+            </ButtonGroup>
+          </div>
+
+          <Separator />
+
+          {/* Labels Section */}
+          <div className='space-y-4'>
+            <h3 className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
+              Organization
+            </h3>
             <div className='space-y-2'>
-              <Label htmlFor='priority'>Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, priority: value })
-                }>
-                <SelectTrigger id='priority'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='LOW'>Low</SelectItem>
-                  <SelectItem value='MEDIUM'>Medium</SelectItem>
-                  <SelectItem value='HIGH'>High</SelectItem>
-                  <SelectItem value='URGENT'>Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label
+                htmlFor='labels'
+                className='text-xs font-medium flex items-center gap-2'
+              >
+                <Tag className='h-3.5 w-3.5' />
+                Labels
+              </Label>
+              <InputGroup>
+                <InputGroupAddon>
+                  <Tag className='h-4 w-4' />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id='labels'
+                  value={formData.labels}
+                  onChange={(e) => setFormData({ ...formData, labels: e.target.value })}
+                  placeholder='bug, feature, design'
+                />
+              </InputGroup>
+              <p className='text-xs text-muted-foreground'>
+                Separate multiple labels with commas
+              </p>
             </div>
           </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='assigneeId'>Assign To</Label>
-            <Select
-              value={formData.assigneeId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, assigneeId: value })
-              }>
-              <SelectTrigger id='assigneeId'>
-                <SelectValue placeholder='Unassigned' />
-              </SelectTrigger>
-              <SelectContent>
-                {members.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name || member.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Separator />
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='dueDate'>Due Date</Label>
-              <Input
-                id='dueDate'
-                type='date'
-                value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='estimatedHours'>Estimated Hours</Label>
-              <Input
-                id='estimatedHours'
-                type='number'
-                min='0'
-                step='0.5'
-                value={formData.estimatedHours}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedHours: e.target.value })
-                }
-                placeholder='e.g., 8'
-              />
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='labels'>Labels</Label>
-            <Input
-              id='labels'
-              value={formData.labels}
-              onChange={(e) =>
-                setFormData({ ...formData, labels: e.target.value })
-              }
-              placeholder='e.g., bug, feature, design (comma-separated)'
-            />
-          </div>
-
-          <div className='flex items-center justify-end gap-3 pt-4'>
+          {/* Actions */}
+          <ButtonGroup className='w-full justify-end'>
             <Button
               type='button'
               variant='outline'
               onClick={() => setOpen(false)}
-              disabled={loading}>
+              disabled={loading}
+              className='min-w-[100px]'
+            >
               Cancel
             </Button>
-            <Button type='submit' disabled={loading}>
+            <Button type='submit' disabled={loading} className='min-w-[120px]'>
               {loading ? (
                 <>
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                   Creating...
                 </>
               ) : (
-                "Create Task"
+                <>
+                  <Plus className='h-4 w-4 mr-2' />
+                  Create Task
+                </>
               )}
             </Button>
-          </div>
+          </ButtonGroup>
         </form>
       </DialogContent>
     </Dialog>

@@ -23,11 +23,18 @@ export function UserAvatar({
   const [imageSrc, setImageSrc] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    console.log("UserAvatar: Received src:", src);
-
     if (!src) {
       setImageSrc(null);
       setImageError(false);
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(src);
+    } catch (error) {
+      console.warn("UserAvatar: Invalid URL format, using fallback:", src);
+      setImageError(true);
       return;
     }
 
@@ -35,10 +42,8 @@ export function UserAvatar({
     const isPrivateR2 = src.includes("r2.cloudflarestorage.com") && !src.includes("pub-");
 
     if (isPrivateR2) {
-      console.log("UserAvatar: Detected private R2 URL, using proxy");
       setImageSrc(`/api/proxy-image?url=${encodeURIComponent(src)}`);
     } else {
-      console.log("UserAvatar: Using direct URL");
       setImageSrc(src);
     }
 
@@ -46,12 +51,13 @@ export function UserAvatar({
   }, [src]);
 
   const handleError = () => {
-    console.error("UserAvatar: Image failed to load:", imageSrc);
+    // Use warn instead of error since we have graceful fallback
+    console.warn("UserAvatar: Image failed to load, showing fallback:", imageSrc);
     setImageError(true);
   };
 
   const handleLoad = () => {
-    console.log("UserAvatar: Image loaded successfully:", imageSrc);
+    // Image loaded successfully, no action needed
   };
 
   // Show fallback if no src, error, or loading

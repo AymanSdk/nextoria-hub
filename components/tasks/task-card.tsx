@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, MoreHorizontal, Pencil, MoveRight, GripVertical } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Calendar,
+  MoreHorizontal,
+  Pencil,
+  MoveRight,
+  GripVertical,
+  Clock,
+  User,
+  AlertCircle,
+} from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -18,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditTaskDialog } from "./edit-task-dialog";
+import { cn } from "@/lib/utils";
 
 type TaskStatus =
   | "BACKLOG"
@@ -76,7 +89,9 @@ const getInitials = (name: string) => {
 
 export function TaskCard({ task, members = [] }: TaskCardProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [updating, setUpdating] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: task.id });
@@ -122,114 +137,90 @@ export function TaskCard({ task, members = [] }: TaskCardProps) {
   const priorityConfig: Record<
     TaskPriority,
     {
-      stripe: string;
-      badge: string;
-      text: string;
-      icon: string;
-      dotColor: string;
+      variant: "default" | "secondary" | "destructive" | "outline";
+      label: string;
+      color: string;
+      bgColor: string;
     }
   > = {
     LOW: {
-      stripe: "bg-slate-400/60",
-      badge:
-        "bg-slate-50 dark:bg-slate-950/50 text-slate-600 dark:text-slate-400 border border-slate-200/50 dark:border-slate-800",
-      text: "text-slate-600 dark:text-slate-400",
-      icon: "◯",
-      dotColor: "bg-slate-400",
+      variant: "secondary",
+      label: "Low",
+      color: "text-slate-600 dark:text-slate-400",
+      bgColor: "bg-slate-100/50 dark:bg-slate-900/50",
     },
     MEDIUM: {
-      stripe: "bg-blue-500/70",
-      badge:
-        "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800",
-      text: "text-blue-600 dark:text-blue-400",
-      icon: "◐",
-      dotColor: "bg-blue-500",
+      variant: "default",
+      label: "Medium",
+      color: "text-blue-600 dark:text-blue-400",
+      bgColor: "bg-blue-100/50 dark:bg-blue-900/50",
     },
     HIGH: {
-      stripe: "bg-orange-500/70",
-      badge:
-        "bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 border border-orange-200/50 dark:border-orange-800",
-      text: "text-orange-600 dark:text-orange-400",
-      icon: "●",
-      dotColor: "bg-orange-500",
+      variant: "outline",
+      label: "High",
+      color: "text-orange-600 dark:text-orange-400",
+      bgColor: "bg-orange-100/50 dark:bg-orange-900/50",
     },
     URGENT: {
-      stripe: "bg-red-500/80",
-      badge:
-        "bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-800",
-      text: "text-red-600 dark:text-red-400",
-      icon: "◉",
-      dotColor: "bg-red-500",
+      variant: "destructive",
+      label: "Urgent",
+      color: "text-red-600 dark:text-red-400",
+      bgColor: "bg-red-100/50 dark:bg-red-900/50",
     },
   };
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date();
 
   return (
-    <div
+    <Card
       ref={setNodeRef}
       style={style}
-      className={`
-        group relative
-        bg-card rounded-lg border border-border/30
-        p-3 transition-all duration-200 ease-out
-        hover:shadow-md hover:border-border/60 hover:-translate-y-0.5
-        ${updating ? "opacity-50" : ""}
-        ${isDragging ? "opacity-0" : ""}
-        cursor-pointer
-      `}
+      className={cn(
+        "group relative p-2.5 transition-all duration-200 cursor-pointer",
+        "hover:shadow-lg hover:scale-[1.02] hover:border-primary/20",
+        "bg-linear-to-br from-card to-card/95",
+        "h-[200px] flex flex-col",
+        updating && "opacity-50 pointer-events-none",
+        isDragging && "opacity-30 scale-95"
+      )}
     >
-      <div className='space-y-2.5'>
-        {/* Priority Indicator Dot */}
-        <div
-          className={`absolute left-2 top-2 w-1 h-1 rounded-full ${
-            priorityConfig[task.priority].dotColor
-          }`}
-        />
+      {/* Priority Accent Bar */}
+      <div
+        className={cn(
+          "absolute inset-y-0 left-0 w-1 rounded-l-lg",
+          priorityConfig[task.priority].bgColor
+        )}
+      />
 
-        {/* Header Row */}
-        <div className='flex items-start gap-2 min-h-[24px]'>
-          <button
-            {...attributes}
-            {...listeners}
-            className='opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none transition-opacity shrink-0 mt-0.5'
-          >
-            <GripVertical className='h-3.5 w-3.5' />
-          </button>
-
-          <div className='flex-1 flex items-center gap-1.5 flex-wrap min-w-0'>
-            {/* Priority Badge - Subtle */}
-            <div
-              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide ${
-                priorityConfig[task.priority].badge
-              }`}
+      <div className='flex flex-col flex-1 min-h-0 space-y-2 pl-1.5'>
+        {/* Header: Priority + Actions */}
+        <div className='flex items-center justify-between gap-2'>
+          <div className='flex items-center gap-1.5'>
+            <button
+              {...attributes}
+              {...listeners}
+              className='opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none transition-opacity'
             >
-              <span className='text-[7px]'>{priorityConfig[task.priority].icon}</span>
-              {task.priority.slice(0, 1)}
-            </div>
+              <GripVertical className='h-3.5 w-3.5' />
+            </button>
 
-            {/* Project Badge */}
-            {task.project && (
-              <Link
-                href={`/projects/${task.project.slug}`}
-                onClick={(e) => e.stopPropagation()}
-                className='shrink-0'
-              >
-                <span
-                  className='inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-white/95 hover:text-white transition-all'
-                  style={{
-                    backgroundColor: task.project.color || "#6b7280",
-                  }}
-                >
-                  {task.project.name}
-                </span>
-              </Link>
-            )}
+            <Badge
+              variant={priorityConfig[task.priority].variant}
+              className='text-[9px] px-1.5 py-0 h-5 font-semibold'
+            >
+              {priorityConfig[task.priority].label}
+            </Badge>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className='opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-foreground transition-all hover:bg-muted/50 rounded-md p-1 shrink-0'>
+              <button
+                className={cn(
+                  "opacity-0 group-hover:opacity-100 text-muted-foreground/40",
+                  "hover:text-foreground hover:bg-accent rounded-md p-1",
+                  "transition-all"
+                )}
+              >
                 <MoreHorizontal className='h-3.5 w-3.5' />
               </button>
             </DropdownMenuTrigger>
@@ -257,89 +248,136 @@ export function TaskCard({ task, members = [] }: TaskCardProps) {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSeparator />
-              <EditTaskDialog
-                task={taskForEdit}
-                members={members}
-                trigger={
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <Pencil className='h-4 w-4 mr-2' />
-                    Edit Task
-                  </DropdownMenuItem>
-                }
-              />
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  setEditDialogOpen(true);
+                }}
+              >
+                <Pencil className='h-4 w-4 mr-2' />
+                Edit Task
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
+        {/* Project Badge */}
+        {task.project && (
+          <Link
+            href={`/projects/${task.project.slug}`}
+            onClick={(e) => e.stopPropagation()}
+            className='inline-block'
+          >
+            <Badge
+              variant='outline'
+              className='text-[10px] px-2 py-0.5 h-5 font-medium hover:bg-accent transition-colors'
+              style={{
+                borderColor: task.project.color || "#6b7280",
+                color: task.project.color || "#6b7280",
+              }}
+            >
+              {task.project.name}
+            </Badge>
+          </Link>
+        )}
+
         {/* Title */}
-        <h4 className='text-sm font-medium text-foreground line-clamp-2 leading-tight pl-4'>
+        <h4 className='text-xs font-semibold text-foreground line-clamp-2 leading-tight'>
           {task.title}
         </h4>
 
         {/* Description */}
         {task.description && (
-          <p className='text-xs text-muted-foreground/70 line-clamp-1 leading-relaxed pl-4'>
+          <p className='text-[10px] text-muted-foreground/70 line-clamp-1 leading-tight'>
             {task.description}
           </p>
         )}
 
         {/* Labels */}
         {task.labels && (
-          <div className='flex flex-wrap gap-1 pl-4'>
-            {task.labels.split(",").map((label, idx) => (
-              <span
-                key={idx}
-                className='inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted/50 text-muted-foreground hover:bg-muted transition-colors'
-              >
-                #{label.trim()}
-              </span>
-            ))}
+          <div className='flex flex-wrap gap-0.5'>
+            {task.labels
+              .split(",")
+              .slice(0, 2)
+              .map((label, idx) => (
+                <Badge
+                  key={idx}
+                  variant='secondary'
+                  className='text-[8px] px-1 py-0 h-3.5 font-medium'
+                >
+                  #{label.trim()}
+                </Badge>
+              ))}
           </div>
         )}
 
-        {/* Footer - Clean Spacing */}
-        <div className='flex items-center justify-between pt-2 pl-4'>
+        {/* Divider */}
+        {(task.assignee || task.dueDate) && (
+          <div className='border-t border-border/50 mt-auto' />
+        )}
+
+        {/* Footer: Assignee + Due Date */}
+        <div className='flex items-center justify-between mt-auto'>
           {/* Assignee */}
           {task.assignee ? (
             <div className='flex items-center gap-1.5 group/assignee'>
-              <Avatar className='h-5 w-5 border border-border/50'>
+              <Avatar className='h-5 w-5 border border-background shadow-sm'>
                 <AvatarImage src={task.assignee.image || undefined} />
-                <AvatarFallback className='text-[8px] bg-muted text-muted-foreground font-semibold'>
+                <AvatarFallback className='text-[8px] bg-primary/10 text-primary font-bold'>
                   {getInitials(task.assignee.name || task.assignee.name)}
                 </AvatarFallback>
               </Avatar>
-              <span className='text-[10px] text-muted-foreground/80 truncate max-w-[70px] group-hover/assignee:text-foreground transition-colors'>
-                {task.assignee.name}
-              </span>
+              <div className='flex flex-col'>
+                <span className='text-[8px] text-muted-foreground uppercase tracking-wide font-medium'>
+                  Assignee
+                </span>
+                <span className='text-[9px] text-foreground font-medium truncate max-w-[70px]'>
+                  {task.assignee.id === session?.user?.id ? "You" : task.assignee.name}
+                </span>
+              </div>
             </div>
           ) : (
             <div className='flex items-center gap-1.5'>
               <div className='h-5 w-5 rounded-full border border-dashed border-muted-foreground/30 flex items-center justify-center'>
-                <span className='text-[8px] text-muted-foreground/50'>?</span>
+                <User className='h-2.5 w-2.5 text-muted-foreground/40' />
               </div>
+              <span className='text-[9px] text-muted-foreground/60'>Unassigned</span>
             </div>
           )}
 
           {/* Due Date */}
           {task.dueDate && (
-            <div
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                isOverdue
-                  ? "bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400"
-                  : "text-muted-foreground/70 hover:text-muted-foreground"
-              }`}
-            >
-              <Calendar className='h-2.5 w-2.5' />
-              <span>
-                {new Date(task.dueDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}
+            <div className='flex flex-col items-end'>
+              <span className='text-[8px] text-muted-foreground uppercase tracking-wide font-medium'>
+                Due
               </span>
+              <div
+                className={cn(
+                  "flex items-center gap-0.5 text-[9px] font-medium",
+                  isOverdue ? "text-destructive" : "text-foreground"
+                )}
+              >
+                {isOverdue && <AlertCircle className='h-2.5 w-2.5' />}
+                {!isOverdue && <Calendar className='h-2.5 w-2.5' />}
+                <span>
+                  {new Date(task.dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+
+      {/* Edit Task Dialog - Controlled state */}
+      <EditTaskDialog
+        task={taskForEdit}
+        members={members}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+    </Card>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, MoreHorizontal, Pencil, MoveRight } from "lucide-react";
 import Link from "next/link";
@@ -113,6 +114,7 @@ const statusColors: Record<TaskStatus, string> = {
 
 export function TaskListView({ tasks, members = [] }: TaskListViewProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const [sortBy, setSortBy] = useState<string>("priority");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
@@ -325,7 +327,7 @@ export function TaskListView({ tasks, members = [] }: TaskListViewProps) {
                       </AvatarFallback>
                     </Avatar>
                     <span className='text-[10px] text-muted-foreground/80 hidden xl:inline max-w-[80px] truncate'>
-                      {task.assignee.name}
+                      {task.assignee.id === session?.user?.id ? "me" : task.assignee.name}
                     </span>
                   </div>
                 ) : (

@@ -210,15 +210,6 @@ export function AppSidebar({
   const userImage = session?.user?.image;
   const isClient = userRole === "CLIENT";
 
-  // Log session changes for debugging
-  React.useEffect(() => {
-    console.log("AppSidebar: Session updated", {
-      userImage,
-      userName,
-      status,
-    });
-  }, [userImage, userName, status]);
-
   // Customize navigation items based on role
   const customMainNavItems = mainNavItems.map((item) => {
     if (isClient) {
