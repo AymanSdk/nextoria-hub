@@ -5,6 +5,7 @@ import { tasks, projects, workspaceMembers } from "@/src/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { createTask } from "@/src/lib/api/tasks";
 import { logTaskCreated } from "@/src/lib/notifications/activity-logger";
+import { notifyTaskAssigned } from "@/src/lib/notifications/service";
 import { z } from "zod";
 
 const createTaskSchema = z.object({
@@ -86,6 +87,17 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         taskId: task.id,
         taskTitle: task.title,
+        projectName: project.name,
+      });
+    }
+
+    // Notify assignee if task was assigned during creation
+    if (validated.assigneeId && validated.assigneeId !== user.id && project) {
+      await notifyTaskAssigned({
+        taskId: task.id,
+        taskTitle: task.title,
+        assigneeId: validated.assigneeId,
+        assignedBy: user.id,
         projectName: project.name,
       });
     }

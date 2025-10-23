@@ -4,6 +4,7 @@ import { db } from "@/src/db";
 import { invoices, invoiceLineItems, users, projects, clients } from "@/src/db/schema";
 import { eq, desc, and, or, ilike, inArray } from "drizzle-orm";
 import { logActivity } from "@/src/lib/notifications/activity-logger";
+import { notifyInvoiceSent } from "@/src/lib/notifications/service";
 import { nanoid } from "nanoid";
 
 /**
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
       }))
     );
 
-    // Get client details for activity log
+    // Get client details for activity log and notifications
     const client = await db.query.clients.findFirst({
       where: eq(clients.id, clientId),
     });
@@ -223,6 +224,25 @@ export async function POST(request: NextRequest) {
       title: `${status === "SENT" ? "sent" : "created"} invoice ${invoiceNumber}`,
       description: client?.name ? `to ${client.name}` : undefined,
     });
+
+    // Notify client if invoice is sent and client has a user account
+    if (status === "SENT" && client?.email) {
+      const [clientUser] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, client.email))
+        .limit(1);
+
+      if (clientUser) {
+        await notifyInvoiceSent({
+          clientId: clientUser.id,
+          invoiceNumber: invoiceNumber,
+          amount: total,
+          currency: "USD",
+          dueDate: calculatedDueDate,
+        });
+      }
+    }
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error: any) {

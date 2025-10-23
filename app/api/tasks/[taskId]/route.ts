@@ -7,6 +7,10 @@ import {
   logTaskStatusChanged,
   logActivity,
 } from "@/src/lib/notifications/activity-logger";
+import {
+  notifyTaskStatusChanged,
+  notifyTaskAssigned,
+} from "@/src/lib/notifications/service";
 import { z } from "zod";
 
 const updateTaskSchema = z.object({
@@ -85,10 +89,11 @@ export async function PATCH(
       where: eq(workspaceMembers.userId, user.id),
     });
 
-    // Log activity based on what changed
+    // Log activity and send notifications based on what changed
     if (membership) {
-      // Log status change
+      // Status change
       if (validated.status && validated.status !== originalTask.status) {
+        // Log activity
         await logTaskStatusChanged({
           workspaceId: membership.workspaceId,
           userId: user.id,
@@ -97,12 +102,25 @@ export async function PATCH(
           oldStatus: originalTask.status,
           newStatus: validated.status,
         });
+
+        // Notify assignee about status change (if not the one who changed it)
+        if (originalTask.assigneeId && originalTask.assigneeId !== user.id) {
+          await notifyTaskStatusChanged({
+            taskId: updatedTask.id,
+            taskTitle: updatedTask.title,
+            notifyUserId: originalTask.assigneeId,
+            oldStatus: originalTask.status,
+            newStatus: validated.status,
+            changedBy: user.id,
+          });
+        }
       }
-      // Log assignee change
+      // Assignee change
       else if (
         validated.assigneeId !== undefined &&
         validated.assigneeId !== originalTask.assigneeId
       ) {
+        // Log activity
         await logActivity({
           workspaceId: membership.workspaceId,
           userId: user.id,
@@ -114,8 +132,19 @@ export async function PATCH(
             ? `in ${originalTask.project.name}`
             : undefined,
         });
+
+        // Notify new assignee (if assigned to someone else)
+        if (validated.assigneeId && validated.assigneeId !== user.id) {
+          await notifyTaskAssigned({
+            taskId: updatedTask.id,
+            taskTitle: updatedTask.title,
+            assigneeId: validated.assigneeId,
+            assignedBy: user.id,
+            projectName: originalTask.project?.name || "Project",
+          });
+        }
       }
-      // Log general update
+      // General update
       else if (validated.title || validated.description || validated.priority) {
         await logActivity({
           workspaceId: membership.workspaceId,

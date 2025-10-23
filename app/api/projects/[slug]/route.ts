@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { projects, workspaceMembers } from "@/src/db/schema";
+import { projects, workspaceMembers, tasks } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { logActivity } from "@/src/lib/notifications/activity-logger";
+import { notifyProjectStatusChanged } from "@/src/lib/notifications/service";
 import { z } from "zod";
 
 const updateProjectSchema = z.object({
@@ -73,10 +74,11 @@ export async function PATCH(
       where: eq(workspaceMembers.userId, user.id),
     });
 
-    // Log activity
+    // Log activity and send notifications
     if (membership) {
-      // Log status change
+      // Status change
       if (validated.status && validated.status !== originalProject.status) {
+        // Log activity
         await logActivity({
           workspaceId: membership.workspaceId,
           userId: user.id,
@@ -86,8 +88,35 @@ export async function PATCH(
           title: `changed "${updatedProject.name}" status to ${validated.status}`,
           description: `from ${originalProject.status}`,
         });
+
+        // Get all team members assigned to tasks in this project
+        const projectTasks = await db
+          .select({ assigneeId: tasks.assigneeId })
+          .from(tasks)
+          .where(eq(tasks.projectId, updatedProject.id));
+
+        const uniqueAssigneeIds = [
+          ...new Set(
+            projectTasks
+              .map((t) => t.assigneeId)
+              .filter((id): id is string => id !== null && id !== user.id)
+          ),
+        ];
+
+        // Notify project team members about status change
+        if (uniqueAssigneeIds.length > 0) {
+          await notifyProjectStatusChanged({
+            projectId: updatedProject.id,
+            projectName: updatedProject.name,
+            projectSlug: updatedProject.slug,
+            memberIds: uniqueAssigneeIds,
+            oldStatus: originalProject.status,
+            newStatus: validated.status,
+            changedBy: user.id,
+          });
+        }
       }
-      // Log completion
+      // Completion
       else if (validated.status === "COMPLETED") {
         await logActivity({
           workspaceId: membership.workspaceId,
@@ -98,7 +127,7 @@ export async function PATCH(
           title: `completed project "${updatedProject.name}"`,
         });
       }
-      // Log general update
+      // General update
       else if (validated.name || validated.description || validated.budgetAmount) {
         await logActivity({
           workspaceId: membership.workspaceId,
