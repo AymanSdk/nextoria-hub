@@ -128,7 +128,7 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
 
   return (
     <div className='flex flex-col h-full relative'>
-      <ScrollArea className='flex-1' onScrollCapture={handleScroll}>
+      <ScrollArea className='flex-1 h-0' onScrollCapture={handleScroll}>
         <div className='px-4 sm:px-6 py-6' ref={scrollRef}>
           <div className='space-y-0'>
             {/* Load Older Messages Button */}
