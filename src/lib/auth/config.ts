@@ -28,6 +28,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    name?: string | null;
+    image?: string | null;
   }
 }
 
@@ -109,11 +111,24 @@ export const {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.name = user.name;
+        token.image = user.image;
       }
 
-      // Handle session updates
+      // Handle session updates (e.g., when profile is updated)
       if (trigger === "update" && session) {
-        token = { ...token, ...session };
+        // Fetch fresh user data from database
+        const [freshUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, token.id as string))
+          .limit(1);
+
+        if (freshUser) {
+          token.name = freshUser.name;
+          token.image = freshUser.image;
+          token.role = freshUser.role;
+        }
       }
 
       return token;
@@ -123,6 +138,8 @@ export const {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
+        session.user.name = token.name as string;
+        session.user.image = token.image as string | null;
       }
 
       return session;

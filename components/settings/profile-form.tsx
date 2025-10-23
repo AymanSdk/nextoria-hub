@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Camera, Save, Loader2, User, Mail, Phone, Globe, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,8 +59,11 @@ const TIMEZONES = [
 
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(user.image || null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: user.name || "",
     phone: user.phone || "",
@@ -75,6 +79,16 @@ export function ProfileForm({ user }: ProfileFormProps) {
         return;
       }
 
+      // Validate file type
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Only JPG, PNG, GIF, and WebP images are allowed");
+        return;
+      }
+
+      setImageFile(file);
+
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -83,25 +97,76 @@ export function ProfileForm({ user }: ProfileFormProps) {
     }
   };
 
+  const uploadProfilePicture = async () => {
+    if (!imageFile) return;
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", imageFile);
+
+      console.log("Uploading profile picture...");
+      const response = await fetch("/api/user/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Upload failed:", error);
+        throw new Error(error.error || "Failed to upload avatar");
+      }
+
+      const data = await response.json();
+      console.log("Upload successful, new image URL:", data.imageUrl);
+
+      setImagePreview(data.imageUrl);
+      setImageFile(null);
+
+      // Update the session to reflect the new avatar
+      console.log("Updating session...");
+      await updateSession();
+
+      toast.success("Profile picture updated successfully");
+
+      // Refresh the router to update server components and re-fetch session
+      router.refresh();
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload profile picture"
+      );
+      throw error; // Re-throw to prevent further execution
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      // Upload profile picture first if there's a new one
+      if (imageFile) {
+        await uploadProfilePicture();
+      }
+
+      // Update other profile fields
       const response = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          image: imagePreview,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         throw new Error("Failed to update profile");
       }
+
+      // Update the session to reflect profile changes
+      await updateSession();
 
       toast.success("Profile updated successfully");
       router.refresh();
@@ -145,22 +210,61 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   <p className='text-sm text-muted-foreground'>{user.email}</p>
                 </div>
                 <div className='flex flex-col sm:flex-row gap-3'>
-                  <Label
-                    htmlFor='profile-image'
-                    className='cursor-pointer inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6'
-                  >
-                    <Camera className='mr-2 h-4 w-4' />
-                    Upload Photo
-                  </Label>
-                  <Input
-                    id='profile-image'
-                    type='file'
-                    accept='image/*'
-                    className='hidden'
-                    onChange={handleImageChange}
-                  />
+                  {!imageFile ? (
+                    <>
+                      <Label
+                        htmlFor='profile-image'
+                        className='cursor-pointer inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6'
+                      >
+                        <Camera className='mr-2 h-4 w-4' />
+                        Choose Photo
+                      </Label>
+                      <Input
+                        id='profile-image'
+                        type='file'
+                        accept='image/jpeg,image/png,image/gif,image/webp'
+                        className='hidden'
+                        onChange={handleImageChange}
+                      />
+                    </>
+                  ) : (
+                    <div className='flex gap-2'>
+                      <Button
+                        type='button'
+                        onClick={uploadProfilePicture}
+                        disabled={isUploadingImage}
+                        size='sm'
+                        className='h-10'
+                      >
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Save className='mr-2 h-4 w-4' />
+                            Upload Now
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview(user.image || null);
+                        }}
+                        disabled={isUploadingImage}
+                        className='h-10'
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
                   <p className='text-xs text-muted-foreground self-center'>
-                    JPG, PNG or GIF. Max 5MB
+                    JPG, PNG, GIF or WebP. Max 5MB
                   </p>
                 </div>
               </div>

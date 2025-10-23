@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/src/db";
 import { users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { ProfileForm } from "@/components/settings/profile-form";
+import { ProfileSection } from "@/components/settings/profile-section";
 import { PasswordChangeForm } from "@/components/settings/password-change-form";
 
 export default async function ProfileSettingsPage() {
@@ -28,7 +28,7 @@ export default async function ProfileSettingsPage() {
 
   return (
     <div className='space-y-6'>
-      <ProfileForm
+      <ProfileSection
         user={{
           id: userData.id,
           name: userData.name,

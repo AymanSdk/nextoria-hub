@@ -1,13 +1,13 @@
 import { getSession } from "@/src/lib/auth/session";
 import { redirect } from "next/navigation";
-import { NotificationsSection } from "@/components/settings/notifications-section";
+import { AppearanceSection } from "@/components/settings/appearance-section";
 
-export default async function NotificationSettingsPage() {
+export default async function AppearanceSettingsPage() {
   const session = await getSession();
 
   if (!session?.user) {
     redirect("/auth/signin");
   }
 
-  return <NotificationsSection />;
+  return <AppearanceSection />;
 }

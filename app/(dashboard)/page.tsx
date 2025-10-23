@@ -587,14 +587,26 @@ export default async function DashboardPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <CardTitle className='flex items-center gap-2'>
-                  <Activity className='h-5 w-5' />
-                  Recent Activity
+                  <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center'>
+                    <Activity className='h-4 w-4 text-primary' />
+                  </div>
+                  <div>
+                    <h3 className='font-semibold'>Recent Activity</h3>
+                    <p className='text-xs text-muted-foreground font-normal'>
+                      Latest updates across your workspace
+                    </p>
+                  </div>
                 </CardTitle>
-                <CardDescription>Latest updates across your workspace</CardDescription>
               </div>
+              <Link href='/notifications'>
+                <Button variant='ghost' size='sm'>
+                  View All
+                  <ArrowUpRight className='h-4 w-4 ml-1' />
+                </Button>
+              </Link>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className='pt-2'>
             <ActivityFeed activities={recentActivities} />
           </CardContent>
         </Card>

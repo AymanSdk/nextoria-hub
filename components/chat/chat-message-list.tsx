@@ -30,7 +30,7 @@ interface Message {
   id: string;
   senderId: string;
   senderName: string;
-  senderAvatar?: string;
+  senderImage?: string;
   senderRole?: Role;
   content: string;
   createdAt: number;
@@ -128,7 +128,7 @@ export function ChatMessageList({ channelId, messages }: ChatMessageListProps) {
                   >
                     {!isCurrentUser && (
                       <Avatar className='h-10 w-10 mt-1 shrink-0'>
-                        <AvatarImage src={message.senderAvatar} />
+                        <AvatarImage src={message.senderImage || undefined} />
                         <AvatarFallback className='bg-primary/10 text-primary font-medium'>
                           {message.senderName?.charAt(0).toUpperCase() || "?"}
                         </AvatarFallback>
