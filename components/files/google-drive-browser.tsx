@@ -17,6 +17,7 @@ import {
   Search,
   Grid3x3,
   List,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { LinkDriveFileDialog } from "./link-drive-file-dialog";
+import { FilePreviewDialog } from "./file-preview-dialog";
 
 interface DriveFile {
   id: string;
@@ -54,6 +56,8 @@ export function GoogleDriveBrowser() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<DriveFile | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     fetchFiles();
@@ -266,6 +270,17 @@ export function GoogleDriveBrowser() {
                       </div>
 
                       <div className='flex items-center gap-2'>
+                        <Button
+                          variant='default'
+                          size='sm'
+                          onClick={() => {
+                            setPreviewFile(file);
+                            setPreviewOpen(true);
+                          }}
+                        >
+                          <Eye className='h-4 w-4 mr-2' />
+                          Preview
+                        </Button>
                         <LinkDriveFileDialog file={file}>
                           <Button variant='outline' size='sm'>
                             <LinkIcon className='h-4 w-4 mr-2' />
@@ -302,11 +317,14 @@ export function GoogleDriveBrowser() {
                 <Card
                   key={file.id}
                   className='hover:shadow-md transition-shadow cursor-pointer group'
-                  onClick={() => window.open(file.webViewLink, "_blank")}
+                  onClick={() => {
+                    setPreviewFile(file);
+                    setPreviewOpen(true);
+                  }}
                 >
                   <CardContent className='p-4'>
                     <div className='space-y-3'>
-                      <div className='aspect-square rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden'>
+                      <div className='aspect-square rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden relative'>
                         {file.thumbnailLink ? (
                           <img
                             src={file.thumbnailLink}
@@ -318,6 +336,9 @@ export function GoogleDriveBrowser() {
                             {getFileIcon(file.mimeType)}
                           </div>
                         )}
+                        <div className='absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100'>
+                          <Eye className='h-8 w-8 text-white' />
+                        </div>
                       </div>
                       <div>
                         <h3 className='font-medium text-sm truncate group-hover:text-blue-600 dark:group-hover:text-blue-400'>
@@ -362,6 +383,13 @@ export function GoogleDriveBrowser() {
           )}
         </>
       )}
+
+      {/* File Preview Dialog */}
+      <FilePreviewDialog
+        file={previewFile}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }
