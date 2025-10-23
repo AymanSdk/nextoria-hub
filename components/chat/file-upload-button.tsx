@@ -89,80 +89,110 @@ export function FileUploadButton({ onFilesUploaded, disabled }: FileUploadButton
         disabled={disabled || isUploading}
       />
 
-      {selectedFiles.length > 0 ? (
-        <div className='absolute bottom-full left-0 mb-2 w-80 max-w-full bg-card border rounded-lg shadow-lg p-3 z-10'>
-          <div className='flex items-center justify-between mb-2'>
-            <h4 className='text-sm font-semibold'>
-              {selectedFiles.length} file(s) selected
-            </h4>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => setSelectedFiles([])}
-              disabled={isUploading}
-            >
-              <X className='h-4 w-4' />
-            </Button>
-          </div>
-
-          <div className='space-y-2 max-h-60 overflow-y-auto'>
-            {selectedFiles.map((file, index) => (
-              <div
-                key={index}
-                className='flex items-center gap-2 p-2 bg-muted rounded-md'
-              >
-                <span className='text-lg'>{getFileIcon(file.type)}</span>
-                <div className='flex-1 min-w-0'>
-                  <p className='text-sm truncate'>{file.name}</p>
+      {selectedFiles.length > 0 && (
+        <div className='fixed bottom-20 right-4 z-50 w-full max-w-sm'>
+          <div className='bg-background border rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-200'>
+            {/* Header */}
+            <div className='flex items-center justify-between p-3 border-b bg-muted/30'>
+              <div className='flex items-center gap-2'>
+                <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0'>
+                  <Upload className='h-4 w-4 text-primary' />
+                </div>
+                <div className='min-w-0'>
+                  <h4 className='text-sm font-semibold'>Upload Files</h4>
                   <p className='text-xs text-muted-foreground'>
-                    {formatFileSize(file.size)}
+                    {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""}{" "}
+                    selected
                   </p>
                 </div>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => removeFile(index)}
-                  disabled={isUploading}
-                >
-                  <X className='h-3 w-3' />
-                </Button>
               </div>
-            ))}
-          </div>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8 shrink-0'
+                onClick={() => setSelectedFiles([])}
+                disabled={isUploading}
+              >
+                <X className='h-4 w-4' />
+              </Button>
+            </div>
 
-          <Button
-            className='w-full mt-3'
-            onClick={handleUpload}
-            disabled={isUploading || uploadThingLoading}
-          >
-            {isUploading || uploadThingLoading ? (
-              <>
-                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                Uploading...
-              </>
-            ) : (
-              <>
-                <Upload className='h-4 w-4 mr-2' />
-                Upload {selectedFiles.length} file(s)
-              </>
-            )}
-          </Button>
+            {/* File List */}
+            <div className='p-3 space-y-2 max-h-60 overflow-y-auto'>
+              {selectedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className='flex items-center gap-2 p-2 bg-muted/50 hover:bg-muted rounded-lg transition-colors group'
+                >
+                  <div className='h-9 w-9 rounded-lg bg-background flex items-center justify-center text-lg shrink-0'>
+                    {getFileIcon(file.type)}
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-xs font-medium truncate'>{file.name}</p>
+                    <p className='text-xs text-muted-foreground'>
+                      {formatFileSize(file.size)}
+                    </p>
+                  </div>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity'
+                    onClick={() => removeFile(index)}
+                    disabled={isUploading}
+                  >
+                    <X className='h-3 w-3' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className='p-3 border-t bg-muted/30 flex gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='flex-1'
+                onClick={() => setSelectedFiles([])}
+                disabled={isUploading || uploadThingLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                size='sm'
+                className='flex-1'
+                onClick={handleUpload}
+                disabled={isUploading || uploadThingLoading}
+              >
+                {isUploading || uploadThingLoading ? (
+                  <>
+                    <Loader2 className='h-4 w-4 mr-1.5 animate-spin' />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className='h-4 w-4 mr-1.5' />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
-      ) : null}
+      )}
 
       <Button
         type='button'
         variant='ghost'
         size='icon'
-        className='h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted'
+        className='h-7 w-7 sm:h-8 sm:w-8 hover:bg-muted rounded-lg'
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled || isUploading}
         title='Attach files'
       >
         <Paperclip
           className={cn(
-            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground",
-            (isUploading || uploadThingLoading) && "animate-pulse"
+            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground transition-all",
+            (isUploading || uploadThingLoading) && "animate-pulse text-primary"
           )}
         />
       </Button>

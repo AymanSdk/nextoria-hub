@@ -99,11 +99,31 @@ export default function ChatPage() {
 
       const data = await response.json();
       setMessages(data);
+
+      // Mark messages as read after viewing
+      if (data.length > 0) {
+        const lastMessage = data[data.length - 1];
+        markAsRead(channelId, lastMessage.id);
+      }
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast.error("Failed to load messages");
     } finally {
       setIsLoadingMessages(false);
+    }
+  };
+
+  const markAsRead = async (channelId: string, lastMessageId: string) => {
+    try {
+      await fetch(`/api/chat/channels/${channelId}/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lastReadMessageId: lastMessageId }),
+      });
+      // Refresh channels to update unread counts
+      fetchChannels();
+    } catch (error) {
+      console.error("Error marking as read:", error);
     }
   };
 
@@ -193,7 +213,17 @@ export default function ChatPage() {
       if (prev.some((msg) => msg.id === newMessage.id)) {
         return prev;
       }
-      return [...prev, newMessage];
+      const updated = [...prev, newMessage];
+
+      // Mark as read if we're viewing this channel
+      if (currentChannel?.id === newMessage.channelId) {
+        markAsRead(newMessage.channelId, newMessage.id);
+      } else {
+        // Refresh channels to update unread counts
+        fetchChannels();
+      }
+
+      return updated;
     });
   };
 

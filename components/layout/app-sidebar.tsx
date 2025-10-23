@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useProjectRequestStats } from "@/hooks/use-project-request-stats";
+import { useChatUnread } from "@/hooks/use-chat-unread";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -41,6 +42,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -197,8 +199,11 @@ export function AppSidebar({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { pendingCount } = useProjectRequestStats();
+  const chatUnreadCount = useChatUnread(currentWorkspace?.id);
+  const { state } = useSidebar();
 
   const userRole = session?.user?.role || "CLIENT";
+  const isSidebarCollapsed = state === "collapsed";
   const userName = session?.user?.name || "User";
   const userEmail = session?.user?.email || "";
   const userImage = session?.user?.image;
@@ -231,6 +236,14 @@ export function AppSidebar({
     return item;
   });
 
+  // Add badge count to Chat when there are unread messages
+  const customToolsItems = toolsItems.map((item) => {
+    if (item.href === "/chat" && chatUnreadCount > 0) {
+      return { ...item, badge: chatUnreadCount };
+    }
+    return item;
+  });
+
   const filterByRole = (items: NavItem[]) => {
     return items.filter((item) => {
       if (!item.roles) return true;
@@ -256,12 +269,17 @@ export function AppSidebar({
               return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                    <Link href={item.href}>
+                    <Link href={item.href} className='relative'>
                       <Icon />
                       <span>{item.title}</span>
+                      {/* Show dot when collapsed */}
+                      {item.badge && item.badge > 0 && isSidebarCollapsed && (
+                        <span className='absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background' />
+                      )}
                     </Link>
                   </SidebarMenuButton>
-                  {item.badge && item.badge > 0 && (
+                  {/* Show number badge when expanded */}
+                  {item.badge && item.badge > 0 && !isSidebarCollapsed && (
                     <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
@@ -317,10 +335,12 @@ export function AppSidebar({
         {renderNavGroup(customMainNavItems)}
         {isClient && renderNavGroup(clientRequestItems)}
         {!isClient && renderNavGroup(customWorkspaceItems, "Workspace")}
-        {!isClient && renderNavGroup(toolsItems, "Tools")}
+        {!isClient && renderNavGroup(customToolsItems, "Tools")}
         {isClient &&
           renderNavGroup(
-            toolsItems.filter((item) => item.href === "/chat" || item.href === "/files"),
+            customToolsItems.filter(
+              (item) => item.href === "/chat" || item.href === "/files"
+            ),
             "Tools"
           )}
         {renderNavGroup(

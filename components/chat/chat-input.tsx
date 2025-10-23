@@ -64,6 +64,32 @@ export function ChatInput({
 
   return (
     <div className='p-3 sm:p-4 border-t bg-background'>
+      {/* Show attached files */}
+      {attachments.length > 0 && (
+        <div className='mb-3 p-2 bg-muted/50 rounded-lg border'>
+          <p className='text-xs text-muted-foreground mb-2 font-medium'>
+            {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
+          </p>
+          <div className='flex flex-wrap gap-2'>
+            {attachments.map((file, index) => (
+              <div
+                key={file.id}
+                className='flex items-center gap-2 px-3 py-1.5 bg-background rounded-md border text-sm group hover:border-primary/50 transition-colors'
+              >
+                <span className='truncate max-w-[150px]'>{file.name}</span>
+                <button
+                  onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
+                  className='text-muted-foreground hover:text-destructive transition-colors'
+                  title='Remove file'
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <div className='flex items-end gap-2 sm:gap-3'>
         <div className='flex-1 relative'>
           <RichTextEditor
@@ -92,30 +118,6 @@ export function ChatInput({
 
             <FileUploadButton onFilesUploaded={handleFilesUploaded} disabled={disabled} />
           </div>
-
-          {/* Show attached files */}
-          {attachments.length > 0 && (
-            <div className='absolute bottom-full left-0 right-0 mb-2 p-2 bg-muted rounded-lg border'>
-              <div className='flex flex-wrap gap-2'>
-                {attachments.map((file, index) => (
-                  <div
-                    key={file.id}
-                    className='flex items-center gap-2 px-2 py-1 bg-background rounded text-xs'
-                  >
-                    <span>{file.name}</span>
-                    <button
-                      onClick={() =>
-                        setAttachments((prev) => prev.filter((_, i) => i !== index))
-                      }
-                      className='text-muted-foreground hover:text-foreground'
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <Button
