@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -67,6 +67,11 @@ export function NewInvoiceDialog({
   const [projects, setProjects] = useState<Project[]>([]);
   const router = useRouter();
 
+  // Log workspaceId on component mount/update
+  useEffect(() => {
+    console.log("NewInvoiceDialog - workspaceId:", workspaceId);
+  }, [workspaceId]);
+
   // Form state
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
@@ -79,39 +84,76 @@ export function NewInvoiceDialog({
     { description: "", quantity: 1, unitPrice: 0 },
   ]);
 
-  // Fetch clients and projects when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchClientsAndProjects();
-    }
-  }, [open]);
-
-  const fetchClientsAndProjects = async () => {
+  const fetchClientsAndProjects = useCallback(async () => {
     setLoadingData(true);
     try {
-      // Fetch client users (users with role CLIENT)
-      const usersRes = await fetch("/api/users?role=CLIENT");
-      if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        // Filter to ensure only CLIENT role users (double-check)
-        const clientUsers =
-          usersData.users
-            ?.filter((user: any) => user.role === "CLIENT")
-            ?.map((user: any) => ({
-              id: user.id,
-              name: user.name || user.email,
-              email: user.email,
-            })) || [];
-        setClients(clientUsers);
+      // Try to fetch from clients table first
+      if (workspaceId) {
+        const clientsRes = await fetch(`/api/clients?workspaceId=${workspaceId}`);
+        if (clientsRes.ok) {
+          const clientsData = await clientsRes.json();
+          console.log("Fetched clients from /api/clients:", clientsData.clients);
+          if (clientsData.clients && clientsData.clients.length > 0) {
+            const formattedClients = clientsData.clients.map(
+              (client: {
+                id: string;
+                name: string;
+                email: string;
+                companyName?: string;
+              }) => ({
+                id: client.id,
+                name: client.companyName || client.name,
+                email: client.email,
+              })
+            );
+            setClients(formattedClients);
+          } else {
+            // Fallback to users with CLIENT role if no clients in clients table
+            console.log("No clients in clients table, trying users with CLIENT role");
+            await fetchClientUsers();
+          }
+        } else {
+          console.error("Failed to fetch clients:", clientsRes.status);
+          // Fallback to users with CLIENT role
+          await fetchClientUsers();
+        }
+      } else {
+        // If no workspaceId, fetch users with CLIENT role
+        console.log("No workspaceId provided, fetching users with CLIENT role");
+        await fetchClientUsers();
       }
 
       // Fetch projects (only if workspaceId is provided)
       if (workspaceId) {
+        console.log("Fetching projects for workspaceId:", workspaceId);
         const projectsRes = await fetch(`/api/projects?workspaceId=${workspaceId}`);
+        console.log("Projects API response status:", projectsRes.status);
+
         if (projectsRes.ok) {
           const projectsData = await projectsRes.json();
-          setProjects(projectsData.projects || []);
+          console.log("Fetched projects data:", projectsData);
+          console.log("Projects array:", projectsData.projects);
+          console.log("Number of projects:", projectsData.projects?.length || 0);
+
+          if (projectsData.projects && Array.isArray(projectsData.projects)) {
+            const formattedProjects = projectsData.projects.map(
+              (project: { id: string; name: string; slug?: string }) => ({
+                id: project.id,
+                name: project.name,
+              })
+            );
+            console.log("Formatted projects:", formattedProjects);
+            setProjects(formattedProjects);
+          } else {
+            console.warn("Projects data is not in expected format");
+            setProjects([]);
+          }
+        } else {
+          const errorText = await projectsRes.text();
+          console.error("Failed to fetch projects:", projectsRes.status, errorText);
         }
+      } else {
+        console.warn("No workspaceId provided, cannot fetch projects");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -119,7 +161,38 @@ export function NewInvoiceDialog({
     } finally {
       setLoadingData(false);
     }
+  }, [workspaceId]);
+
+  const fetchClientUsers = async () => {
+    const usersRes = await fetch("/api/users?role=CLIENT");
+    if (usersRes.ok) {
+      const usersData = await usersRes.json();
+      const clientUsers =
+        usersData.users
+          ?.filter((user: { role: string }) => user.role === "CLIENT")
+          ?.map((user: { id: string; name: string; email: string }) => ({
+            id: user.id,
+            name: user.name || user.email,
+            email: user.email,
+          })) || [];
+      console.log("Fetched client users from /api/users:", clientUsers);
+      setClients(clientUsers);
+    } else {
+      console.error("Failed to fetch client users:", usersRes.status);
+    }
   };
+
+  // Fetch clients and projects when dialog opens
+  useEffect(() => {
+    if (open) {
+      if (!workspaceId) {
+        console.error("Cannot fetch data: workspaceId is missing!");
+        toast.error("Workspace not found. Please refresh the page.");
+        return;
+      }
+      fetchClientsAndProjects();
+    }
+  }, [open, fetchClientsAndProjects, workspaceId]);
 
   const addLineItem = () => {
     setLineItems([...lineItems, { description: "", quantity: 1, unitPrice: 0 }]);
@@ -131,7 +204,11 @@ export function NewInvoiceDialog({
     }
   };
 
-  const updateLineItem = (index: number, field: keyof LineItem, value: any) => {
+  const updateLineItem = (
+    index: number,
+    field: keyof LineItem,
+    value: string | number
+  ) => {
     const updated = [...lineItems];
     updated[index] = { ...updated[index], [field]: value };
     setLineItems(updated);
@@ -207,9 +284,11 @@ export function NewInvoiceDialog({
 
       // Navigate to invoice detail page
       router.push(`/invoices/${invoice.id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error creating invoice:", error);
-      toast.error(error.message || "Failed to create invoice");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create invoice";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -230,10 +309,22 @@ export function NewInvoiceDialog({
           <DialogTitle className='text-2xl font-bold flex items-center gap-2'>
             <Receipt className='h-6 w-6 text-primary' />
             Create New Invoice
+            {loadingData && (
+              <Loader2 className='h-4 w-4 animate-spin text-muted-foreground ml-2' />
+            )}
           </DialogTitle>
           <DialogDescription className='text-base'>
-            Fill in the details below to generate a professional invoice
+            {loadingData
+              ? "Loading clients and projects..."
+              : "Fill in the details below to generate a professional invoice"}
           </DialogDescription>
+          {/* Debug info - remove after testing */}
+          {!loadingData && (
+            <div className='text-xs text-muted-foreground mt-2'>
+              Debug: {clients.length} clients, {projects.length} projects, workspaceId:{" "}
+              {workspaceId || "missing"}
+            </div>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-8 py-4'>
@@ -256,16 +347,30 @@ export function NewInvoiceDialog({
                   disabled={loadingData}
                 >
                   <SelectTrigger className='bg-background'>
-                    <SelectValue placeholder='Select client' />
+                    <SelectValue
+                      placeholder={loadingData ? "Loading clients..." : "Select client"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name || client.email}
-                      </SelectItem>
-                    ))}
+                    {clients.length > 0 ? (
+                      clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name || client.email}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className='px-2 py-6 text-center text-sm text-muted-foreground'>
+                        No clients found. Add clients in Team page.
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
+                {!loadingData && clients.length === 0 && (
+                  <p className='text-xs text-muted-foreground'>
+                    No clients available. Please add clients with CLIENT role in the Team
+                    page.
+                  </p>
+                )}
               </div>
 
               {/* Project Selection (Optional) */}
@@ -275,21 +380,45 @@ export function NewInvoiceDialog({
                   Project (Optional)
                 </Label>
                 <Select
-                  value={projectId || undefined}
-                  onValueChange={(value) => setProjectId(value)}
-                  disabled={loadingData}
+                  value={projectId}
+                  onValueChange={setProjectId}
+                  disabled={loadingData || !workspaceId}
                 >
                   <SelectTrigger className='bg-background'>
-                    <SelectValue placeholder='Select project (optional)' />
+                    <SelectValue
+                      placeholder={
+                        !workspaceId
+                          ? "Workspace not found"
+                          : loadingData
+                          ? "Loading projects..."
+                          : "Select project (optional)"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
+                    {projects.length > 0 ? (
+                      projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className='px-2 py-6 text-center text-sm text-muted-foreground'>
+                        {!workspaceId ? "Workspace not found" : "No projects found"}
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
+                {!loadingData && workspaceId && projects.length === 0 && (
+                  <p className='text-xs text-muted-foreground'>
+                    No projects available in this workspace. Create a project first.
+                  </p>
+                )}
+                {!workspaceId && (
+                  <p className='text-xs text-destructive'>
+                    Workspace not found. Please refresh the page.
+                  </p>
+                )}
               </div>
 
               {/* Due Date */}
@@ -332,7 +461,10 @@ export function NewInvoiceDialog({
                   <Receipt className='h-4 w-4 text-muted-foreground' />
                   Invoice Status
                 </Label>
-                <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as "DRAFT" | "SENT")}
+                >
                   <SelectTrigger className='bg-background'>
                     <SelectValue />
                   </SelectTrigger>

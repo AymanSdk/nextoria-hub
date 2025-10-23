@@ -7,32 +7,45 @@ import { nanoid } from "nanoid";
  * Get all projects for a workspace
  */
 export async function getProjects(workspaceId: string) {
-  return await db.query.projects.findMany({
-    where: eq(projects.workspaceId, workspaceId),
-    orderBy: [desc(projects.updatedAt)],
-    with: {
-      owner: {
-        columns: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
+  try {
+    return await db.query.projects.findMany({
+      where: eq(projects.workspaceId, workspaceId),
+      orderBy: [desc(projects.updatedAt)],
+      with: {
+        owner: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
         },
-      },
-      members: {
-        with: {
-          user: {
-            columns: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
+        members: {
+          with: {
+            user: {
+              columns: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error(
+      "Error in getProjects with relations, falling back to simple query:",
+      error
+    );
+    // Fallback to simple query without relations
+    return await db
+      .select()
+      .from(projects)
+      .where(eq(projects.workspaceId, workspaceId))
+      .orderBy(desc(projects.updatedAt));
+  }
 }
 
 /**
@@ -163,10 +176,7 @@ export async function removeProjectMember(projectId: string, userId: string) {
   await db
     .delete(projectMembers)
     .where(
-      and(
-        eq(projectMembers.projectId, projectId),
-        eq(projectMembers.userId, userId)
-      )
+      and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId))
     );
 }
 

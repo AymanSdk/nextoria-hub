@@ -32,12 +32,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "workspaceId is required" }, { status: 400 });
     }
 
+    console.log("Fetching projects for workspaceId:", workspaceId);
     const projects = await getProjects(workspaceId);
+    console.log("Found projects:", projects?.length || 0);
 
     return NextResponse.json({ projects });
   } catch (error) {
     console.error("Error fetching projects:", error);
-    return NextResponse.json({ error: "Failed to fetch projects" }, { status: 500 });
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    return NextResponse.json(
+      {
+        error: "Failed to fetch projects",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
