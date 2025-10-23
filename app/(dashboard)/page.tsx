@@ -44,6 +44,7 @@ import { TaskDistributionChart } from "@/components/dashboard/task-distribution-
 import { ProjectStatusChart } from "@/components/dashboard/project-status-chart";
 import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { LiveClock } from "@/components/dashboard/live-clock";
 import { getRecentActivities } from "@/src/lib/notifications/activity-logger";
 
 export default async function DashboardPage() {
@@ -271,14 +272,7 @@ export default async function DashboardPage() {
               : "Here's what's happening with your work today"}
           </p>
         </div>
-        <div className='flex gap-2'>
-          <Link href='/projects/new'>
-            <Button>
-              <Plus className='h-4 w-4 mr-2' />
-              New Project
-            </Button>
-          </Link>
-        </div>
+        <LiveClock />
       </div>
 
       {/* Primary Statistics Cards */}

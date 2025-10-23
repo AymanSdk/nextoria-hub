@@ -97,144 +97,97 @@ export function NotificationItem({
   const content = (
     <div
       className={cn(
-        "group relative flex items-center gap-3 p-3 hover:bg-accent/50 transition-all duration-200 cursor-pointer",
-        "first:rounded-t-[calc(var(--radius)-2px)] last:rounded-b-[calc(var(--radius)-2px)]",
-        !notification.isRead && "bg-primary/5 border-l-[3px] border-l-primary",
-        notification.isRead && "hover:border-l-2 hover:border-l-muted",
-        compact && "p-2 gap-2"
+        "group flex gap-3 px-4 py-3 transition-colors hover:bg-accent/50",
+        !notification.isRead && "bg-accent/20"
       )}
+      onClick={() => {
+        if (!notification.isRead && onMarkAsRead) {
+          onMarkAsRead(notification.id);
+        }
+      }}
     >
-      {/* Unread indicator dot */}
-      {!notification.isRead && !compact && (
-        <div className='absolute left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary animate-pulse' />
-      )}
-
+      {/* Icon/Avatar */}
       <div className='shrink-0'>
         {notification.sender?.avatarUrl ? (
-          <Avatar
-            className={cn(
-              "border",
-              compact ? "h-7 w-7" : "h-9 w-9",
-              !notification.isRead && "border-primary/30"
-            )}
-          >
+          <Avatar className='h-8 w-8'>
             <AvatarImage src={notification.sender.avatarUrl} />
-            <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-semibold'>
+            <AvatarFallback className='text-xs'>
               {notification.sender.name
                 .split(" ")
                 .map((n) => n[0])
                 .join("")
-                .toUpperCase()}
+                .toUpperCase()
+                .slice(0, 2)}
             </AvatarFallback>
           </Avatar>
         ) : (
-          <div
-            className={cn(
-              "rounded-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center",
-              compact ? "h-7 w-7" : "h-9 w-9"
-            )}
-          >
-            {getNotificationIcon(notification.type)}
+          <div className='flex h-8 w-8 items-center justify-center rounded-full bg-muted'>
+            <div className='scale-75'>{getNotificationIcon(notification.type)}</div>
           </div>
         )}
       </div>
 
-      <div className='flex-1 min-w-0 flex items-center justify-center'>
-        <div className='flex-1'>
-          <div className='flex items-start justify-between gap-2'>
-            <div className='flex-1 min-w-0'>
-              <p
-                className={cn(
-                  "text-sm mb-1 leading-snug",
-                  !notification.isRead
-                    ? "font-semibold text-foreground"
-                    : "font-medium text-foreground/90"
-                )}
-              >
-                {notification.title}
-              </p>
-              <p
-                className={cn(
-                  "text-xs line-clamp-2 leading-relaxed",
-                  !notification.isRead
-                    ? "text-muted-foreground"
-                    : "text-muted-foreground/70"
-                )}
-              >
-                {notification.message}
-              </p>
-            </div>
-            {!notification.isRead && !compact && (
-              <Badge
-                variant='secondary'
-                className='shrink-0 text-[10px] px-1.5 py-0 h-5 bg-primary/10 text-primary border-primary/20'
-              >
-                New
-              </Badge>
-            )}
-          </div>
-
-          <div className='flex items-center gap-1.5 mt-2'>
-            <time className='text-[11px] text-muted-foreground/60'>
-              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-            </time>
-            {notification.sender && (
-              <>
-                <span className='text-[11px] text-muted-foreground/30'>•</span>
-                <span className='text-[11px] text-muted-foreground/60'>
-                  {notification.sender.name}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Content */}
+      <div className='flex-1 space-y-1'>
+        <p className={cn("text-sm", !notification.isRead && "font-medium")}>
+          {notification.title}
+        </p>
+        <p className='text-xs text-muted-foreground line-clamp-2'>{notification.message}</p>
+        <p className='text-xs text-muted-foreground'>
+          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+        </p>
       </div>
 
+      {/* Unread indicator */}
+      {!notification.isRead && (
+        <div className='flex items-start pt-1'>
+          <div className='h-2 w-2 rounded-full bg-primary' />
+        </div>
+      )}
+
+      {/* Actions (only for non-compact) */}
       {!compact && (
-        <div className='flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shrink-0'>
+        <div className='flex items-start gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
           {!notification.isRead && onMarkAsRead && (
             <Button
+              size='icon'
               variant='ghost'
-              size='sm'
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onMarkAsRead(notification.id);
               }}
-              className='h-7 px-2 text-xs hover:bg-primary/10 hover:text-primary transition-colors'
+              className='h-8 w-8'
             >
-              <Eye className='h-3 w-3 mr-1' />
-              Mark read
+              <Eye className='h-4 w-4' />
             </Button>
           )}
           {notification.isRead && onMarkAsUnread && (
             <Button
+              size='icon'
               variant='ghost'
-              size='sm'
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onMarkAsUnread(notification.id);
               }}
-              className='h-7 px-2 text-xs hover:bg-accent transition-colors'
+              className='h-8 w-8'
             >
-              <EyeOff className='h-3 w-3 mr-1' />
-              Mark unread
+              <EyeOff className='h-4 w-4' />
             </Button>
           )}
           {onDelete && (
             <Button
+              size='icon'
               variant='ghost'
-              size='sm'
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 onDelete(notification.id);
               }}
-              className='h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors'
+              className='h-8 w-8 text-destructive'
             >
-              <Trash2 className='h-3 w-3 mr-1' />
-              Delete
+              <Trash2 className='h-4 w-4' />
             </Button>
           )}
         </div>
@@ -244,19 +197,11 @@ export function NotificationItem({
 
   if (notification.actionUrl) {
     return (
-      <Link
-        href={notification.actionUrl}
-        className='block border-b last:border-b-0 hover:no-underline'
-        onClick={() => {
-          if (!notification.isRead && onMarkAsRead) {
-            onMarkAsRead(notification.id);
-          }
-        }}
-      >
+      <Link href={notification.actionUrl} className='block'>
         {content}
       </Link>
     );
   }
 
-  return <div className='border-b last:border-b-0'>{content}</div>;
+  return content;
 }

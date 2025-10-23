@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NotificationItem } from "./notification-item";
 import Link from "next/link";
@@ -102,37 +103,60 @@ export function NotificationBell() {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    try {
+      const res = await fetch("/api/notifications/mark-all-read", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant='ghost' size='icon' className='relative'>
+        <Button size='icon' variant='ghost' className='relative'>
           <Bell className='h-5 w-5' />
           {unreadCount > 0 && (
-            <Badge
-              variant='destructive'
-              className='absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs'
-            >
+            <span className='absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground'>
               {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
+            </span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-80 p-0' align='end'>
-        <div className='flex items-center justify-between p-4 border-b'>
-          <h3 className='font-semibold'>Notifications</h3>
-          {unreadCount > 0 && <Badge variant='secondary'>{unreadCount} new</Badge>}
+        {/* Header */}
+        <div className='flex items-center justify-between border-b px-4 py-3'>
+          <p className='text-sm font-medium'>Notifications</p>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={handleMarkAllAsRead}
+            disabled={unreadCount === 0}
+            className='h-auto p-0 text-xs font-normal hover:underline disabled:opacity-50'
+          >
+            Mark all read
+          </Button>
         </div>
-        <ScrollArea className='h-[400px]'>
-          {loading ? (
-            <div className='flex items-center justify-center h-32'>
-              <p className='text-sm text-muted-foreground'>Loading...</p>
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className='flex flex-col items-center justify-center h-32 text-center p-4'>
-              <Bell className='h-8 w-8 text-muted-foreground mb-2' />
-              <p className='text-sm text-muted-foreground'>No notifications</p>
-            </div>
-          ) : (
+
+        {/* Content */}
+        {loading ? (
+          <div className='flex h-32 items-center justify-center'>
+            <p className='text-sm text-muted-foreground'>Loading...</p>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className='flex h-32 flex-col items-center justify-center gap-1 text-center'>
+            <Bell className='h-6 w-6 text-muted-foreground/50' />
+            <p className='text-sm text-muted-foreground'>No notifications</p>
+          </div>
+        ) : (
+          <ScrollArea className='h-[320px]'>
             <div className='divide-y'>
               {notifications.map((notification) => (
                 <NotificationItem
@@ -143,15 +167,19 @@ export function NotificationBell() {
                 />
               ))}
             </div>
-          )}
-        </ScrollArea>
-        <div className='p-2 border-t'>
-          <Link href='/notifications'>
-            <Button variant='ghost' className='w-full' size='sm'>
-              View All Notifications
-            </Button>
-          </Link>
-        </div>
+          </ScrollArea>
+        )}
+
+        {/* Footer */}
+        {notifications.length > 0 && (
+          <div className='border-t p-2'>
+            <Link href='/notifications' className='block'>
+              <Button variant='ghost' size='sm' className='w-full justify-center text-xs'>
+                View all
+              </Button>
+            </Link>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
