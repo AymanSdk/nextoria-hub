@@ -5,7 +5,6 @@ import {
   Building2,
   Mail,
   Phone,
-  Globe,
   MapPin,
   List,
   Grid3x3,
@@ -76,6 +75,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Client {
   id: string;
@@ -133,7 +141,9 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importPreviewData, setImportPreviewData] = useState<ImportClientData[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const itemsPerPage = 10;
   const [formData, setFormData] = useState({
     name: "",
     companyName: "",
@@ -313,6 +323,19 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
     return result;
   }, [clients, searchQuery, filterIndustry, filterStatus, sortField, sortOrder]);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterIndustry, filterStatus, sortField, sortOrder]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedClients.length / itemsPerPage);
+  const paginatedClients = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedClients.slice(startIndex, endIndex);
+  }, [filteredAndSortedClients, currentPage, itemsPerPage]);
+
   // Statistics
   const stats = useMemo(() => {
     const total = clients.length;
@@ -332,10 +355,10 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
 
   // Bulk actions
   const handleSelectAll = () => {
-    if (selectedClients.size === filteredAndSortedClients.length) {
+    if (selectedClients.size === paginatedClients.length && paginatedClients.length > 0) {
       setSelectedClients(new Set());
     } else {
-      setSelectedClients(new Set(filteredAndSortedClients.map((c) => c.id)));
+      setSelectedClients(new Set(paginatedClients.map((c) => c.id)));
     }
   };
 
@@ -1124,7 +1147,7 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
           {/* List View */}
           {viewMode === "list" && (
             <div className='space-y-1'>
-              {filteredAndSortedClients.map((client) => (
+              {paginatedClients.map((client) => (
                 <Card
                   key={client.id}
                   className='group hover:shadow-md transition-all duration-150 border hover:border-primary/40'
@@ -1270,93 +1293,244 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
             </div>
           )}
 
+          {/* Pagination for List View */}
+          {viewMode === "list" && totalPages > 1 && (
+            <div className='flex justify-center mt-6'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first page, last page, current page, and pages around current
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className='cursor-pointer'
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
           {/* Grid View */}
           {viewMode === "grid" && (
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-              {filteredAndSortedClients.map((client) => (
+            <div className='grid gap-5 md:grid-cols-3 xl:grid-cols-5'>
+              {paginatedClients.map((client) => (
                 <Card
                   key={client.id}
-                  className='hover:shadow-md transition-all border-2 hover:border-primary/50 relative'
+                  className='group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border'
                 >
-                  <div className='absolute top-4 left-4 z-10'>
+                  {/* Gradient Background Effect */}
+                  <div className='absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity' />
+
+                  {/* Selection Checkbox */}
+                  <div className='absolute top-3 left-3 z-10'>
                     <Button
                       variant='secondary'
                       size='sm'
-                      className='h-6 w-6 p-0 rounded-full'
+                      className='h-7 w-7 p-0 rounded-full shadow-md hover:shadow-lg transition-all'
                       onClick={(e) => {
                         e.preventDefault();
                         handleSelectClient(client.id);
                       }}
                     >
                       {selectedClients.has(client.id) ? (
-                        <CheckSquare className='h-3 w-3 text-primary' />
+                        <CheckSquare className='h-4 w-4 text-primary' />
                       ) : (
-                        <Square className='h-3 w-3' />
+                        <Square className='h-4 w-4 text-muted-foreground/60' />
                       )}
                     </Button>
                   </div>
+
+                  {/* Status Badge */}
+                  {client.isActive && (
+                    <div className='absolute top-3 right-3 z-10'>
+                      <Badge
+                        variant='default'
+                        className='text-[10px] px-2 py-0.5 font-bold shadow'
+                      >
+                        Active
+                      </Badge>
+                    </div>
+                  )}
+
                   <Link href={`/clients/${client.id}`}>
-                    <CardContent className='p-6'>
-                      <div className='flex flex-col items-center text-center mb-4'>
+                    <CardContent className='p-5 relative'>
+                      {/* Header Section */}
+                      <div className='flex flex-col items-center text-center mb-4 pb-4 border-b'>
                         <Avatar
-                          className={`h-16 w-16 mb-3 bg-gradient-to-br ${getAvatarColor(
+                          className={`h-20 w-20 mb-3 bg-gradient-to-br ${getAvatarColor(
                             client.id
-                          )}`}
+                          )} ring-4 ring-background shadow-lg group-hover:ring-primary/20 transition-all`}
                         >
-                          <AvatarFallback className='bg-transparent text-white font-semibold text-lg'>
+                          <AvatarFallback className='bg-transparent text-white font-bold text-lg'>
                             {getInitials(client.name, client.companyName)}
                           </AvatarFallback>
                         </Avatar>
-                        <h3 className='font-semibold text-lg'>{client.name}</h3>
-                        {client.companyName && (
-                          <p className='text-sm text-muted-foreground'>
-                            {client.companyName}
-                          </p>
-                        )}
-                        {client.isActive && (
-                          <Badge variant='default' className='mt-2 text-xs'>
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                      <div className='space-y-2 text-sm'>
-                        <div className='flex items-center gap-2 text-muted-foreground'>
-                          <Mail className='h-4 w-4 flex-shrink-0' />
-                          <span className='truncate'>{client.email}</span>
+                        <div className='space-y-1'>
+                          <h3 className='font-bold text-base text-foreground group-hover:text-primary transition-colors'>
+                            {client.name}
+                          </h3>
+                          {client.companyName && (
+                            <p className='text-xs font-semibold text-muted-foreground/80 tracking-wide'>
+                              {client.companyName}
+                            </p>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Contact Info Section */}
+                      <div className='space-y-2.5 mb-3'>
+                        <div className='flex items-center gap-2.5 group/item'>
+                          <div className='h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-blue-500/20 transition-colors'>
+                            <Mail className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
+                          </div>
+                          <span className='truncate text-xs font-medium text-foreground/80'>
+                            {client.email}
+                          </span>
+                        </div>
+
                         {client.phone && (
-                          <div className='flex items-center gap-2 text-muted-foreground'>
-                            <Phone className='h-4 w-4 flex-shrink-0' />
-                            <span>{client.phone}</span>
+                          <div className='flex items-center gap-2.5 group/item'>
+                            <div className='h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-green-500/20 transition-colors'>
+                              <Phone className='h-3.5 w-3.5 text-green-600 dark:text-green-400' />
+                            </div>
+                            <span className='text-xs font-medium text-foreground/80'>
+                              {client.phone}
+                            </span>
                           </div>
                         )}
-                        {client.website && (
-                          <div className='flex items-center gap-2 text-muted-foreground'>
-                            <Globe className='h-4 w-4 flex-shrink-0' />
-                            <span className='truncate'>{client.website}</span>
-                          </div>
-                        )}
+
                         {client.city && (
-                          <div className='flex items-center gap-2 text-muted-foreground'>
-                            <MapPin className='h-4 w-4 flex-shrink-0' />
-                            <span>
+                          <div className='flex items-center gap-2.5 group/item'>
+                            <div className='h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 group-hover/item:bg-purple-500/20 transition-colors'>
+                              <MapPin className='h-3.5 w-3.5 text-purple-600 dark:text-purple-400' />
+                            </div>
+                            <span className='text-xs font-medium text-foreground/80 truncate'>
                               {client.city}
                               {client.state && `, ${client.state}`}
                             </span>
                           </div>
                         )}
-                        {client.industry && (
-                          <div className='mt-3 flex justify-center'>
-                            <Badge variant='secondary' className='text-xs'>
-                              {client.industry}
-                            </Badge>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Industry Badge */}
+                      {client.industry && (
+                        <div className='pt-3 border-t flex justify-center'>
+                          <Badge
+                            variant='secondary'
+                            className='text-[10px] px-3 py-1 font-bold'
+                          >
+                            {client.industry}
+                          </Badge>
+                        </div>
+                      )}
                     </CardContent>
                   </Link>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {/* Pagination for Grid View */}
+          {viewMode === "grid" && totalPages > 1 && (
+            <div className='flex justify-center mt-6'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className='cursor-pointer'
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
 
@@ -1375,7 +1549,8 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
                             className='h-6 w-6 p-0'
                             onClick={handleSelectAll}
                           >
-                            {selectedClients.size === filteredAndSortedClients.length ? (
+                            {selectedClients.size === paginatedClients.length &&
+                            paginatedClients.length > 0 ? (
                               <CheckSquare className='h-4 w-4 text-primary' />
                             ) : (
                               <Square className='h-4 w-4' />
@@ -1398,7 +1573,7 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredAndSortedClients.map((client, index) => (
+                      {paginatedClients.map((client, index) => (
                         <tr
                           key={client.id}
                           className={`border-b hover:bg-muted/50 transition-colors ${
@@ -1517,6 +1692,66 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination for Compact View */}
+          {viewMode === "compact" && totalPages > 1 && (
+            <div className='flex justify-center mt-6'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className='cursor-pointer'
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </>
       )}
