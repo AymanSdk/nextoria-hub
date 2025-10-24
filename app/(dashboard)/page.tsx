@@ -46,6 +46,14 @@ import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { LiveClock } from "@/components/dashboard/live-clock";
 import { getRecentActivities } from "@/src/lib/notifications/activity-logger";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -508,85 +516,123 @@ export default async function DashboardPage() {
 
       {/* Recent Projects and Activity */}
       <div className='grid gap-6 md:grid-cols-2'>
-        <Card>
-          <CardHeader>
+        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl'>
+          <CardHeader className='pb-3 pt-5'>
             <div className='flex items-center justify-between'>
-              <div>
-                <CardTitle>Recent Projects</CardTitle>
-                <CardDescription>Your latest project updates</CardDescription>
+              <div className='flex items-center gap-4'>
+                <div className='relative'>
+                  <div className='h-12 w-12 rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center border border-primary/20 shadow-sm'>
+                    <FolderKanban className='h-5 w-5 text-primary' />
+                  </div>
+                  <div className='absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-background animate-pulse' />
+                </div>
+                <div>
+                  <h3 className='font-semibold text-base text-foreground tracking-tight'>
+                    Recent Projects
+                  </h3>
+                  <p className='text-xs text-muted-foreground/80 mt-0.5'>
+                    Your latest project updates
+                  </p>
+                </div>
               </div>
               <Link href='/projects'>
-                <Button variant='ghost' size='sm'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all h-8 text-xs font-medium px-3'
+                >
                   View All
-                  <ArrowUpRight className='h-4 w-4 ml-1' />
+                  <ArrowUpRight className='h-3.5 w-3.5 ml-1' />
                 </Button>
               </Link>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent
+            className={
+              recentProjects.length === 0
+                ? "pt-0 pb-2 px-3 min-h-[300px] flex items-center"
+                : "pt-0 pb-2 px-3"
+            }
+          >
             {recentProjects.length > 0 ? (
-              <div className='space-y-3'>
-                {recentProjects.slice(0, 3).map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/projects/${project.slug}`}
-                    className='flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors group'
-                  >
-                    <div className='flex items-center gap-3'>
-                      <div
-                        className='h-10 w-10 rounded-lg flex items-center justify-center shadow-sm'
-                        style={{
-                          backgroundColor: project.color || "hsl(var(--primary))",
-                        }}
-                      >
-                        <FolderKanban className='h-5 w-5 text-white' />
-                      </div>
-                      <div>
-                        <p className='font-semibold group-hover:text-primary transition-colors'>
-                          {project.name}
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                          {project.description?.substring(0, 50)}
-                          {project.description && project.description.length > 50
-                            ? "..."
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={project.status === "ACTIVE" ? "default" : "secondary"}
+              <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-3 backdrop-blur-sm shadow-inner'>
+                <div className='space-y-2'>
+                  {recentProjects.slice(0, 3).map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/projects/${project.slug}`}
+                      className='flex items-center justify-between p-3 rounded-lg transition-all duration-200 relative group bg-linear-to-r from-primary/5 via-card/50 to-card/50 hover:from-primary/10 hover:bg-card cursor-pointer border border-primary/10 hover:border-primary/20'
                     >
-                      {project.status}
-                    </Badge>
-                  </Link>
-                ))}
+                      <div className='flex items-center gap-3'>
+                        <div
+                          className='h-10 w-10 rounded-lg flex items-center justify-center shadow-sm'
+                          style={{
+                            backgroundColor: project.color || "hsl(var(--primary))",
+                          }}
+                        >
+                          <FolderKanban className='h-5 w-5 text-white' />
+                        </div>
+                        <div>
+                          <p className='font-semibold group-hover:text-primary transition-colors'>
+                            {project.name}
+                          </p>
+                          <p className='text-sm text-muted-foreground'>
+                            {project.description?.substring(0, 50)}
+                            {project.description && project.description.length > 50
+                              ? "..."
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant={project.status === "ACTIVE" ? "default" : "secondary"}
+                      >
+                        {project.status}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className='text-center py-8'>
-                <FolderKanban className='h-12 w-12 mx-auto text-muted-foreground mb-3' />
-                <p className='text-muted-foreground mb-4'>No projects yet</p>
-                <Link href='/projects/new'>
-                  <Button>
-                    <Plus className='h-4 w-4 mr-2' />
-                    Create Your First Project
-                  </Button>
-                </Link>
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <FolderKanban />
+                  </EmptyMedia>
+                  <EmptyTitle>No projects yet</EmptyTitle>
+                  <EmptyDescription>
+                    Get started by creating your first project to organize your work
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Link href='/projects/new'>
+                    <Button>
+                      <Plus className='h-4 w-4 mr-2' />
+                      Create Your First Project
+                    </Button>
+                  </Link>
+                </EmptyContent>
+              </Empty>
             )}
           </CardContent>
         </Card>
 
-        <Card className='border-border/50 shadow-sm'>
-          <CardHeader className='pb-4'>
+        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl'>
+          <CardHeader className='pb-3 pt-5'>
             <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center ring-4 ring-primary/5'>
-                  <Activity className='h-5 w-5 text-primary' />
+              <div className='flex items-center gap-4'>
+                <div className='relative'>
+                  <div className='h-12 w-12 rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center border border-primary/20 shadow-sm'>
+                    <Activity className='h-5 w-5 text-primary' />
+                  </div>
+                  <div className='absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary border-2 border-background animate-pulse' />
                 </div>
                 <div>
-                  <h3 className='font-semibold text-lg'>Recent Activity</h3>
-                  <p className='text-xs text-muted-foreground font-normal mt-0.5'>
-                    Latest updates across your workspace
+                  <h3 className='font-semibold text-base text-foreground tracking-tight'>
+                    Recent Activity
+                  </h3>
+                  <p className='text-xs text-muted-foreground/80 mt-0.5'>
+                    Latest workspace updates
                   </p>
                 </div>
               </div>
@@ -594,16 +640,18 @@ export default async function DashboardPage() {
                 <Button
                   variant='ghost'
                   size='sm'
-                  className='hover:bg-primary/10 hover:text-primary transition-colors'
+                  className='hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all h-8 text-xs font-medium px-3'
                 >
                   View All
-                  <ArrowUpRight className='h-4 w-4 ml-1' />
+                  <ArrowUpRight className='h-3.5 w-3.5 ml-1' />
                 </Button>
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='pt-0'>
-            <ActivityFeed activities={recentActivities} />
+          <CardContent className='pt-0 pb-2 px-3'>
+            <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-3 backdrop-blur-sm shadow-inner'>
+              <ActivityFeed activities={recentActivities} />
+            </div>
           </CardContent>
         </Card>
       </div>

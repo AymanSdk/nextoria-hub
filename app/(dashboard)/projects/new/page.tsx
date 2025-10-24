@@ -205,7 +205,7 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className='container max-w-5xl mx-auto py-8 px-4 md:px-6'>
+    <div className='max-w-4xl mx-auto'>
       {/* Header */}
       <div className='mb-8 space-y-4'>
         <Link href='/projects'>

@@ -25,7 +25,11 @@ export default async function ClientLayout({ children }: { children: React.React
       />
       <SidebarInset>
         <AppHeader />
-        <main className='flex flex-1 flex-col p-4 md:p-6 lg:p-8'>{children}</main>
+        <main className='flex flex-1 flex-col'>
+          <div className='w-full mx-auto max-w-[1600px] p-4 md:p-6 lg:p-8'>
+            {children}
+          </div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
