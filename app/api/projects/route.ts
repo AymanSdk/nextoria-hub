@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
-import { createProject, getProjects } from "@/src/lib/api/projects";
+import { createProject, getProjects, addProjectMember } from "@/src/lib/api/projects";
 import { logProjectCreated } from "@/src/lib/notifications/activity-logger";
 import { z } from "zod";
 
@@ -71,6 +71,9 @@ export async function POST(req: NextRequest) {
       startDate: validated.startDate ? new Date(validated.startDate) : undefined,
       dueDate: validated.dueDate ? new Date(validated.dueDate) : undefined,
     });
+
+    // Automatically add the owner as a project member
+    await addProjectMember(project.id, user.id, user.id);
 
     // Log activity
     await logProjectCreated({

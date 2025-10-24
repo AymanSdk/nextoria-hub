@@ -1,7 +1,8 @@
 import { getSession } from "@/src/lib/auth/session";
 import { db } from "@/src/db";
-import { projects, projectMembers, tasks, clients } from "@/src/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { projects, tasks, clients, workspaceMembers, users } from "@/src/db/schema";
+import { eq, and, count, ne } from "drizzle-orm";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -88,14 +89,23 @@ export default async function ProjectsPage() {
       .from(projects);
   }
 
-  // Get member counts and task stats for each project
+  // Get workspace team member count (all team members excluding clients)
+  const workspace = await getCurrentWorkspace(session.user.id);
+
+  // Count all workspace team members (excluding clients)
+  const [teamMemberCount] = workspace
+    ? await db
+        .select({ count: count() })
+        .from(workspaceMembers)
+        .innerJoin(users, eq(workspaceMembers.userId, users.id))
+        .where(
+          and(eq(workspaceMembers.workspaceId, workspace.id), ne(users.role, "CLIENT"))
+        )
+    : [{ count: 0 }];
+
+  // Get task stats for each project
   const projectsWithData = await Promise.all(
     allProjects.map(async (project) => {
-      const [memberCount] = await db
-        .select({ count: count() })
-        .from(projectMembers)
-        .where(eq(projectMembers.projectId, project.id));
-
       const [taskStats] = await db
         .select({
           total: count(),
@@ -112,7 +122,7 @@ export default async function ProjectsPage() {
 
       return {
         ...project,
-        membersCount: memberCount?.count || 0,
+        membersCount: teamMemberCount.count || 0, // Use workspace team count
         tasksCount: taskStats?.total || 0,
         completedTasks: completedStats?.completed || 0,
       };

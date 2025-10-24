@@ -72,19 +72,19 @@ const getStatusBadgeVariant = (
 };
 
 const getPriorityLabel = (priority: number | null) => {
-  if (priority === null) return "None";
-  if (priority >= 8) return "Critical";
-  if (priority >= 6) return "High";
-  if (priority >= 4) return "Medium";
+  if (priority === null || priority === 0) return "Low";
+  if (priority === 1) return "Medium";
+  if (priority === 2) return "High";
+  if (priority === 3) return "Critical";
   return "Low";
 };
 
 const getPriorityColor = (priority: number | null) => {
-  if (priority === null) return "text-neutral-500";
-  if (priority >= 8) return "text-red-500";
-  if (priority >= 6) return "text-orange-500";
-  if (priority >= 4) return "text-yellow-500";
-  return "text-green-500";
+  if (priority === null || priority === 0) return "text-slate-500";
+  if (priority === 1) return "text-sky-500";
+  if (priority === 2) return "text-amber-500";
+  if (priority === 3) return "text-rose-500";
+  return "text-slate-500";
 };
 
 export function ProjectsBrowser({ projects, isClient = false }: ProjectsBrowserProps) {
@@ -149,10 +149,10 @@ export function ProjectsBrowser({ projects, isClient = false }: ProjectsBrowserP
     if (priorityFilter !== "all") {
       filtered = filtered.filter((project) => {
         const priority = project.priority || 0;
-        if (priorityFilter === "critical") return priority >= 8;
-        if (priorityFilter === "high") return priority >= 6 && priority < 8;
-        if (priorityFilter === "medium") return priority >= 4 && priority < 6;
-        if (priorityFilter === "low") return priority < 4;
+        if (priorityFilter === "critical") return priority === 3;
+        if (priorityFilter === "high") return priority === 2;
+        if (priorityFilter === "medium") return priority === 1;
+        if (priorityFilter === "low") return priority === 0;
         return true;
       });
     }
@@ -482,13 +482,13 @@ export function ProjectsBrowser({ projects, isClient = false }: ProjectsBrowserP
         {/* Projects Display */}
         <div className='mt-6'>
           {viewMode === "grid" ? (
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            <div className='grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3'>
               {filteredProjects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           ) : (
-            <div className='space-y-3'>
+            <div className='space-y-4'>
               {filteredProjects.map((project) => (
                 <ProjectListItem key={project.id} project={project} />
               ))}
@@ -541,95 +541,210 @@ function ProjectCard({ project }: { project: Project }) {
     new Date(project.dueDate) < new Date() &&
     project.status !== "COMPLETED";
 
+  // Generate muted color variants
+  const getColorOpacity = (hexColor: string, opacity: number) => {
+    const hex = hexColor.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const projectColor = project.color || "#0070f3";
+
   return (
     <Link href={`/projects/${project.slug}`}>
-      <Card
-        className='h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer border-l-4 group'
-        style={{ borderLeftColor: project.color || "#0070f3" }}
-      >
-        <CardHeader>
-          <div className='flex items-start justify-between'>
+      <Card className='group relative h-full overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60 bg-white/50 dark:bg-neutral-950/50 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:shadow-neutral-900/5 dark:hover:shadow-neutral-900/20 hover:border-neutral-300/80 dark:hover:border-neutral-700/80 hover:-translate-y-1 cursor-pointer'>
+        {/* Subtle gradient overlay */}
+        <div
+          className='absolute inset-0 opacity-[0.02] dark:opacity-[0.03] pointer-events-none'
+          style={{
+            background: `linear-gradient(135deg, ${projectColor} 0%, transparent 100%)`,
+          }}
+        />
+
+        {/* Color accent line */}
+        <div
+          className='absolute top-0 left-0 right-0 h-[2px] transition-all duration-300 group-hover:h-[3px]'
+          style={{ backgroundColor: projectColor }}
+        />
+
+        <CardHeader className='pb-3 space-y-4'>
+          {/* Header Section */}
+          <div className='flex items-start justify-between gap-3'>
+            {/* Icon with muted background */}
             <div
-              className='h-12 w-12 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110'
-              style={{ backgroundColor: project.color || "#0070f3" }}
+              className='relative h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-sm'
+              style={{
+                backgroundColor: getColorOpacity(projectColor, 0.1),
+                borderWidth: "1px",
+                borderColor: getColorOpacity(projectColor, 0.2),
+              }}
             >
-              <FolderKanban className='h-6 w-6 text-white' />
+              <FolderKanban
+                className='h-5 w-5 transition-colors duration-300'
+                style={{ color: projectColor }}
+              />
             </div>
-            <div className='flex flex-col gap-2 items-end'>
-              <Badge variant={getStatusBadgeVariant(project.status)} className='text-xs'>
-                {project.status}
+
+            {/* Status & Priority Badges */}
+            <div className='flex flex-col gap-1.5 items-end'>
+              <Badge
+                variant={getStatusBadgeVariant(project.status)}
+                className='text-[10px] font-medium px-2.5 py-0.5 tracking-wider uppercase'
+              >
+                {project.status.replace("_", " ")}
               </Badge>
               {project.priority !== null && (
                 <Badge
                   variant='outline'
-                  className={cn("text-xs", getPriorityColor(project.priority))}
+                  className={cn(
+                    "text-[10px] font-medium px-2.5 py-0.5 tracking-wider uppercase border-neutral-200 dark:border-neutral-800",
+                    getPriorityColor(project.priority)
+                  )}
                 >
                   {getPriorityLabel(project.priority)}
                 </Badge>
               )}
             </div>
           </div>
-          <CardTitle className='mt-4 line-clamp-1'>{project.name}</CardTitle>
-          <p className='text-sm text-neutral-500 line-clamp-2 min-h-[40px]'>
-            {project.description || "No description"}
-          </p>
+
+          {/* Project Name & Description */}
+          <div className='space-y-2'>
+            <CardTitle className='text-lg font-semibold leading-snug tracking-tight text-neutral-900 dark:text-neutral-50 line-clamp-2 min-h-14'>
+              {project.name}
+            </CardTitle>
+            <p className='text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-2 min-h-[42px]'>
+              {project.description || "No description provided"}
+            </p>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className='space-y-4'>
-            {/* Progress */}
-            {project.tasksCount > 0 && (
-              <div>
-                <div className='flex items-center justify-between text-sm mb-2'>
-                  <span className='text-neutral-500'>Progress</span>
-                  <span className='font-medium'>{progress}%</span>
+
+        <CardContent className='pt-0 pb-5 space-y-4'>
+          {/* Progress Section */}
+          {project.tasksCount > 0 && (
+            <div className='space-y-2.5'>
+              <div className='flex items-baseline justify-between'>
+                <div className='space-y-0.5'>
+                  <span className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider'>
+                    Task Completion
+                  </span>
+                  <p className='text-[11px] text-neutral-500 dark:text-neutral-500 tabular-nums'>
+                    {project.completedTasks} of {project.tasksCount} completed
+                  </p>
                 </div>
-                <div className='h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden'>
-                  <div
-                    className='h-full transition-all duration-300'
-                    style={{
-                      width: `${progress}%`,
-                      backgroundColor: project.color || "#0070f3",
-                    }}
-                  />
-                </div>
-                <p className='text-xs text-neutral-500 mt-1'>
-                  {project.completedTasks} of {project.tasksCount} tasks completed
+                <span className='text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-50'>
+                  {progress}%
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className='relative h-2 bg-neutral-100 dark:bg-neutral-900 rounded-full overflow-hidden'>
+                <div
+                  className='absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out'
+                  style={{
+                    width: `${progress}%`,
+                    backgroundColor: projectColor,
+                    boxShadow: `0 0 8px ${getColorOpacity(projectColor, 0.4)}`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <Separator className='bg-neutral-200/50 dark:bg-neutral-800/50' />
+
+          {/* Metadata Grid */}
+          <div className='grid grid-cols-2 gap-4'>
+            {/* Team Size */}
+            <div className='flex items-start gap-2.5'>
+              <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center shrink-0'>
+                <Users className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
+              </div>
+              <div className='min-w-0 flex-1'>
+                <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                  Team Members
+                </p>
+                <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 tabular-nums mt-0.5'>
+                  {project.membersCount}
                 </p>
               </div>
-            )}
+            </div>
 
-            {/* Meta info */}
-            <div className='flex items-center justify-between text-sm'>
-              <div className='flex items-center gap-4 text-neutral-500'>
-                <div className='flex items-center gap-1'>
-                  <Users className='h-4 w-4' />
-                  <span>{project.membersCount}</span>
+            {/* Budget or Tasks Count */}
+            {project.budget ? (
+              <div className='flex items-start gap-2.5'>
+                <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center shrink-0'>
+                  <DollarSign className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
                 </div>
-                {project.budget && (
-                  <div className='flex items-center gap-1'>
-                    <DollarSign className='h-4 w-4' />
-                    <span>${project.budget.toLocaleString()}</span>
-                  </div>
-                )}
+                <div className='min-w-0 flex-1'>
+                  <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                    Budget
+                  </p>
+                  <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 truncate tabular-nums mt-0.5'>
+                    ${project.budget.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              {project.dueDate && (
-                <div
+            ) : (
+              <div className='flex items-start gap-2.5'>
+                <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center shrink-0'>
+                  <Clock className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
+                </div>
+                <div className='min-w-0 flex-1'>
+                  <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                    Total Tasks
+                  </p>
+                  <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 tabular-nums mt-0.5'>
+                    {project.tasksCount}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Due Date */}
+          {project.dueDate && (
+            <div className='flex items-start gap-2.5 pt-1'>
+              <div
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                  isOverdue
+                    ? "bg-red-50 dark:bg-red-950/30"
+                    : "bg-neutral-100 dark:bg-neutral-900"
+                )}
+              >
+                <Calendar
                   className={cn(
-                    "flex items-center gap-1 text-xs",
-                    isOverdue ? "text-red-500 font-medium" : "text-neutral-500"
+                    "h-4 w-4",
+                    isOverdue
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-neutral-600 dark:text-neutral-400"
+                  )}
+                />
+              </div>
+              <div className='min-w-0 flex-1'>
+                <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                  {isOverdue ? "Overdue Since" : "Due Date"}
+                </p>
+                <p
+                  className={cn(
+                    "text-sm font-bold tabular-nums mt-0.5",
+                    isOverdue
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-neutral-900 dark:text-neutral-50"
                   )}
                 >
-                  <Calendar className='h-3 w-3' />
-                  <span>
-                    {new Date(project.dueDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              )}
+                  {new Date(project.dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </Link>
@@ -648,48 +763,168 @@ function ProjectListItem({ project }: { project: Project }) {
     new Date(project.dueDate) < new Date() &&
     project.status !== "COMPLETED";
 
+  // Generate muted color variants
+  const getColorOpacity = (hexColor: string, opacity: number) => {
+    const hex = hexColor.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const projectColor = project.color || "#0070f3";
+
   return (
     <Link href={`/projects/${project.slug}`}>
-      <Card className='transition-all hover:shadow-md cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900/50'>
-        <CardContent className='p-6'>
-          <div className='flex items-center gap-6'>
-            {/* Color Indicator & Icon */}
+      <Card className='group relative overflow-hidden border border-neutral-200/60 dark:border-neutral-800/60 bg-white/50 dark:bg-neutral-950/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-neutral-900/5 dark:hover:shadow-neutral-900/20 hover:border-neutral-300/80 dark:hover:border-neutral-700/80 cursor-pointer'>
+        {/* Color accent line */}
+        <div
+          className='absolute top-0 left-0 right-0 h-[2px] transition-all duration-300'
+          style={{ backgroundColor: projectColor }}
+        />
+
+        <CardContent className='p-5'>
+          <div className='flex items-center gap-5'>
+            {/* Project Icon */}
             <div
-              className='h-14 w-14 rounded-lg flex items-center justify-center shrink-0'
-              style={{ backgroundColor: project.color || "#0070f3" }}
+              className='relative h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-sm'
+              style={{
+                backgroundColor: getColorOpacity(projectColor, 0.1),
+                borderWidth: "1px",
+                borderColor: getColorOpacity(projectColor, 0.2),
+              }}
             >
-              <FolderKanban className='h-7 w-7 text-white' />
+              <FolderKanban className='h-5.5 w-5.5' style={{ color: projectColor }} />
             </div>
 
             {/* Project Info */}
-            <div className='flex-1 min-w-0'>
-              <div className='flex items-start justify-between gap-4'>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex items-center gap-3 mb-1'>
-                    <h3 className='font-semibold text-lg truncate'>{project.name}</h3>
+            <div className='flex-1 min-w-0 flex items-center gap-6'>
+              {/* Left Section - Name & Description */}
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center gap-2.5 mb-1.5'>
+                  <h3 className='font-semibold text-lg leading-tight tracking-tight truncate text-neutral-900 dark:text-neutral-50'>
+                    {project.name}
+                  </h3>
+                  <Badge
+                    variant={getStatusBadgeVariant(project.status)}
+                    className='text-[10px] font-medium px-2.5 py-0.5 tracking-wider uppercase shrink-0'
+                  >
+                    {project.status.replace("_", " ")}
+                  </Badge>
+                  {project.priority !== null && (
                     <Badge
-                      variant={getStatusBadgeVariant(project.status)}
-                      className='text-xs'
+                      variant='outline'
+                      className={cn(
+                        "text-[10px] font-medium px-2.5 py-0.5 tracking-wider uppercase border-neutral-200 dark:border-neutral-800 shrink-0",
+                        getPriorityColor(project.priority)
+                      )}
                     >
-                      {project.status}
+                      {getPriorityLabel(project.priority)}
                     </Badge>
-                    {project.priority !== null && (
-                      <Badge
-                        variant='outline'
-                        className={cn("text-xs", getPriorityColor(project.priority))}
-                      >
-                        {getPriorityLabel(project.priority)}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className='text-sm text-neutral-500 line-clamp-1'>
-                    {project.description || "No description"}
-                  </p>
+                  )}
                 </div>
+                <p className='text-[13px] leading-relaxed text-neutral-600 dark:text-neutral-400 line-clamp-1'>
+                  {project.description || "No description provided"}
+                </p>
+              </div>
+
+              {/* Metadata Section */}
+              <div className='flex items-center gap-6 shrink-0'>
+                {/* Team */}
+                <div className='flex items-center gap-2.5'>
+                  <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center'>
+                    <Users className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
+                  </div>
+                  <div>
+                    <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                      Team
+                    </p>
+                    <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 tabular-nums'>
+                      {project.membersCount}{" "}
+                      {project.membersCount === 1 ? "member" : "members"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tasks Progress */}
+                {project.tasksCount > 0 && (
+                  <div className='flex items-center gap-2.5'>
+                    <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center'>
+                      <Clock className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
+                    </div>
+                    <div>
+                      <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                        Tasks
+                      </p>
+                      <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 tabular-nums'>
+                        {project.completedTasks}/{project.tasksCount}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Budget */}
+                {project.budget && (
+                  <div className='flex items-center gap-2.5'>
+                    <div className='h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center'>
+                      <DollarSign className='h-4 w-4 text-neutral-600 dark:text-neutral-400' />
+                    </div>
+                    <div>
+                      <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                        Budget
+                      </p>
+                      <p className='text-sm font-bold text-neutral-900 dark:text-neutral-50 tabular-nums'>
+                        ${project.budget.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Due Date */}
+                {project.dueDate && (
+                  <div className='flex items-center gap-2.5'>
+                    <div
+                      className={cn(
+                        "h-8 w-8 rounded-lg flex items-center justify-center",
+                        isOverdue
+                          ? "bg-red-50 dark:bg-red-950/30"
+                          : "bg-neutral-100 dark:bg-neutral-900"
+                      )}
+                    >
+                      <Calendar
+                        className={cn(
+                          "h-4 w-4",
+                          isOverdue
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-neutral-600 dark:text-neutral-400"
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <p className='text-[11px] font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider leading-tight'>
+                        {isOverdue ? "Overdue" : "Due"}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-sm font-bold tabular-nums",
+                          isOverdue
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-neutral-900 dark:text-neutral-50"
+                        )}
+                      >
+                        {new Date(project.dueDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Progress Circle */}
                 {project.tasksCount > 0 && (
-                  <div className='flex flex-col items-center gap-1 shrink-0'>
+                  <div className='flex flex-col items-center gap-1'>
                     <div className='relative h-12 w-12'>
                       <svg className='transform -rotate-90 h-12 w-12'>
                         <circle
@@ -697,65 +932,32 @@ function ProjectListItem({ project }: { project: Project }) {
                           cy='24'
                           r='20'
                           stroke='currentColor'
-                          strokeWidth='4'
+                          strokeWidth='3'
                           fill='none'
-                          className='text-neutral-200 dark:text-neutral-700'
+                          className='text-neutral-100 dark:text-neutral-900'
                         />
                         <circle
                           cx='24'
                           cy='24'
                           r='20'
-                          stroke={project.color || "#0070f3"}
-                          strokeWidth='4'
+                          strokeWidth='3'
                           fill='none'
-                          strokeDasharray={`${progress * 1.25663706} 125.663706`}
-                          className='transition-all duration-300'
+                          strokeDasharray={`${progress * 1.2566} 125.66`}
+                          className='transition-all duration-500'
+                          style={{
+                            stroke: projectColor,
+                          }}
                         />
                       </svg>
                       <div className='absolute inset-0 flex items-center justify-center'>
-                        <span className='text-xs font-semibold'>{progress}%</span>
+                        <span className='text-xs font-bold tabular-nums text-neutral-900 dark:text-neutral-50'>
+                          {progress}%
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Meta Row */}
-              <div className='flex items-center gap-6 mt-3 text-sm text-neutral-500'>
-                <div className='flex items-center gap-1'>
-                  <Users className='h-4 w-4' />
-                  <span>{project.membersCount} members</span>
-                </div>
-                {project.tasksCount > 0 && (
-                  <div className='flex items-center gap-1'>
-                    <Clock className='h-4 w-4' />
-                    <span>
-                      {project.completedTasks}/{project.tasksCount} tasks
-                    </span>
-                  </div>
-                )}
-                {project.budget && (
-                  <div className='flex items-center gap-1'>
-                    <DollarSign className='h-4 w-4' />
-                    <span>${project.budget.toLocaleString()}</span>
-                  </div>
-                )}
-                {project.dueDate && (
-                  <div
-                    className={cn(
-                      "flex items-center gap-1 ml-auto",
-                      isOverdue ? "text-red-500 font-medium" : ""
-                    )}
-                  >
-                    <Calendar className='h-4 w-4' />
-                    <span>
-                      Due{" "}
-                      {new Date(project.dueDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
+                    <p className='text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider'>
+                      Complete
+                    </p>
                   </div>
                 )}
               </div>
