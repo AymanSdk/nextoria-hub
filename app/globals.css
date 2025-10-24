@@ -2,6 +2,25 @@
 @import "tw-animate-css";
 @import "tldraw/tldraw.css";
 
+/* Smooth cursor optimizations */
+.smooth-cursor {
+  transform: translate3d(var(--x), var(--y), 0);
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Hide tldraw's built-in collaborative cursors */
+.tl-cursor,
+.tl-collaborator__cursor,
+.tl-collaborator__cursor-hint,
+.tl-collaborator-cursor,
+.tlui-cursor {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
