@@ -27,6 +27,7 @@ import {
   User2,
   Send,
   BookOpen,
+  Presentation,
   type LucideIcon,
 } from "lucide-react";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
@@ -135,6 +136,11 @@ const toolsItems: NavItem[] = [
     title: "Chat",
     href: "/chat",
     icon: MessageSquare,
+  },
+  {
+    title: "Whiteboard",
+    href: "/whiteboard",
+    icon: Presentation,
   },
   {
     title: "Files",
@@ -349,7 +355,10 @@ export function AppSidebar({
         {isClient &&
           renderNavGroup(
             customToolsItems.filter(
-              (item) => item.href === "/chat" || item.href === "/files"
+              (item) =>
+                item.href === "/chat" ||
+                item.href === "/whiteboard" ||
+                item.href === "/files"
             ),
             "Tools"
           )}

@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveList, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 declare global {
@@ -16,19 +16,25 @@ declare global {
 
     // Custom storage type for the room
     Storage: {
-      messages: LiveList<LiveObject<ChatMessage>>;
+      messages?: LiveList<LiveObject<ChatMessage>>;
+      // Whiteboard storage (tldraw)
+      [key: string]: any;
     };
 
     // Presence type for user status in the room
     Presence: {
-      isTyping: boolean;
-      lastSeenAt: number;
+      isTyping?: boolean;
+      lastSeenAt?: number;
+      // Whiteboard presence
+      cursor?: { x: number; y: number } | null;
+      selectedElementIds?: Record<string, boolean>;
+      username?: string;
     };
 
     // Room events for custom real-time events
     RoomEvent: {
-      type: "MESSAGE_SENT" | "USER_JOINED" | "USER_LEFT";
-      data: Record<string, unknown>;
+      type: "MESSAGE_SENT" | "USER_JOINED" | "USER_LEFT" | "yjs-update";
+      update?: number[];
     };
 
     // Thread metadata for comments
@@ -76,10 +82,6 @@ export const {
     useEventListener,
     useErrorListener,
     useStorage,
-    useObject,
-    useMap,
-    useList,
-    useBatch,
     useHistory,
     useUndo,
     useRedo,
