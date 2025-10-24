@@ -28,6 +28,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -65,33 +66,76 @@ const COLORS = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: "DRAFT", label: "Draft", color: "text-slate-600", bgColor: "bg-slate-100" },
-  { value: "ACTIVE", label: "Active", color: "text-green-600", bgColor: "bg-green-100" },
+  {
+    value: "DRAFT",
+    label: "Draft",
+    color: "text-slate-600",
+    bgColor: "bg-slate-50",
+    ringColor: "ring-slate-200",
+  },
+  {
+    value: "ACTIVE",
+    label: "Active",
+    color: "text-emerald-700",
+    bgColor: "bg-emerald-50",
+    ringColor: "ring-emerald-200",
+  },
   {
     value: "ON_HOLD",
     label: "On Hold",
-    color: "text-yellow-600",
-    bgColor: "bg-yellow-100",
+    color: "text-amber-700",
+    bgColor: "bg-amber-50",
+    ringColor: "ring-amber-200",
   },
   {
     value: "COMPLETED",
     label: "Completed",
-    color: "text-blue-600",
-    bgColor: "bg-blue-100",
+    color: "text-blue-700",
+    bgColor: "bg-blue-50",
+    ringColor: "ring-blue-200",
   },
   {
     value: "CANCELLED",
     label: "Cancelled",
-    color: "text-red-600",
-    bgColor: "bg-red-100",
+    color: "text-rose-700",
+    bgColor: "bg-rose-50",
+    ringColor: "ring-rose-200",
   },
 ];
 
 const PRIORITY_OPTIONS = [
-  { value: "0", label: "Low", color: "text-slate-600", bgColor: "bg-slate-100" },
-  { value: "1", label: "Medium", color: "text-blue-600", bgColor: "bg-blue-100" },
-  { value: "2", label: "High", color: "text-orange-600", bgColor: "bg-orange-100" },
-  { value: "3", label: "Critical", color: "text-red-600", bgColor: "bg-red-100" },
+  {
+    value: "0",
+    label: "Low",
+    color: "text-slate-600",
+    iconColor: "text-slate-400",
+    bgColor: "bg-slate-50",
+    ringColor: "ring-slate-200",
+  },
+  {
+    value: "1",
+    label: "Medium",
+    color: "text-sky-700",
+    iconColor: "text-sky-500",
+    bgColor: "bg-sky-50",
+    ringColor: "ring-sky-200",
+  },
+  {
+    value: "2",
+    label: "High",
+    color: "text-amber-700",
+    iconColor: "text-amber-500",
+    bgColor: "bg-amber-50",
+    ringColor: "ring-amber-200",
+  },
+  {
+    value: "3",
+    label: "Critical",
+    color: "text-rose-700",
+    iconColor: "text-rose-500",
+    bgColor: "bg-rose-50",
+    ringColor: "ring-rose-200",
+  },
 ];
 
 const CURRENCY_OPTIONS = [
@@ -238,15 +282,15 @@ export default function NewProjectPage() {
       {/* Form */}
       <form onSubmit={handleSubmit} className='space-y-6'>
         {/* Basic Information Section */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2 text-primary'>
-                <FileText className='h-5 w-5' />
+        <Card className='border-border/60'>
+          <CardHeader className='pb-5'>
+            <div className='flex items-center gap-3.5'>
+              <div className='rounded-lg bg-muted/60 p-2.5 ring-1 ring-border/50'>
+                <FileText className='h-4.5 w-4.5 text-muted-foreground' />
               </div>
               <div>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>
+                <CardTitle className='text-lg'>Basic Information</CardTitle>
+                <CardDescription className='text-sm mt-1'>
                   Start with the project name and description
                 </CardDescription>
               </div>
@@ -305,127 +349,172 @@ export default function NewProjectPage() {
           </CardContent>
         </Card>
 
-        {/* Client & Status Section */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2 text-primary'>
-                <Users className='h-5 w-5' />
+        {/* Client & Project Settings Section */}
+        <Card className='border-border/60'>
+          <CardHeader className='pb-5'>
+            <div className='flex items-center gap-3.5'>
+              <div className='rounded-lg bg-muted/60 p-2.5 ring-1 ring-border/50'>
+                <Users className='h-4.5 w-4.5 text-muted-foreground' />
               </div>
               <div>
-                <CardTitle>Client & Project Settings</CardTitle>
-                <CardDescription>
+                <CardTitle className='text-lg'>Client & Project Settings</CardTitle>
+                <CardDescription className='text-sm mt-1'>
                   Assign a client and configure project status and priority
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className='grid gap-4 lg:grid-cols-[2fr_1fr_1fr]'>
-              {/* Client Selection */}
-              <div className='space-y-2'>
-                <Label htmlFor='clientId' className='flex items-center gap-2'>
-                  <Building2 className='h-3.5 w-3.5 text-muted-foreground' />
-                  Client
-                </Label>
-                <Select
-                  value={formData.clientId}
-                  onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+          <CardContent className='space-y-7'>
+            {/* Client Selection */}
+            <div className='space-y-4'>
+              <Label
+                htmlFor='clientId'
+                className='flex items-center gap-2 text-sm font-medium text-muted-foreground'
+              >
+                <Building2 className='h-4 w-4' />
+                Client Assignment
+              </Label>
+              <Select
+                value={formData.clientId}
+                onValueChange={(value) => setFormData({ ...formData, clientId: value })}
+              >
+                <SelectTrigger
+                  id='clientId'
+                  className='h-11 bg-background border-border/50 hover:border-border hover:bg-muted/30 transition-colors'
                 >
-                  <SelectTrigger id='clientId'>
-                    <SelectValue placeholder='Select client' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        <div className='flex items-center gap-2'>
+                  <SelectValue placeholder='Select a client (optional)' />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      <div className='flex items-center gap-2.5'>
+                        <div className='flex h-7 w-7 items-center justify-center rounded-md bg-muted'>
                           <Building2 className='h-3.5 w-3.5 text-muted-foreground' />
-                          {client.companyName || client.name}
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {clients.length === 0 && (
-                  <p className='text-xs text-muted-foreground'>
-                    No clients.{" "}
+                        <span>
+                          {client.name}
+                          {client.companyName && (
+                            <span className='text-muted-foreground/70 ml-1.5 text-xs'>
+                              ({client.companyName})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clients.length === 0 && (
+                <div className='flex items-start gap-2.5 rounded-lg bg-muted/40 p-3 border border-border/50'>
+                  <AlertCircle className='h-4 w-4 text-muted-foreground mt-0.5 shrink-0' />
+                  <p className='text-sm text-muted-foreground'>
+                    No clients available.{" "}
                     <Link
                       href='/clients'
-                      className='text-primary hover:underline font-medium'
+                      className='text-foreground hover:underline font-medium'
                     >
-                      Add one
+                      Add one now
                     </Link>
                   </p>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Status */}
-              <div className='space-y-2'>
-                <Label htmlFor='status' className='flex items-center gap-2'>
-                  <Activity className='h-3.5 w-3.5 text-muted-foreground' />
-                  Status
-                </Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger id='status'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className='flex items-center gap-2'>
-                          <span
-                            className={`inline-flex w-2 h-2 rounded-full ${option.bgColor}`}
-                          />
-                          <span className={option.color}>{option.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className='h-px bg-border/60' />
 
-              {/* Priority */}
-              <div className='space-y-2'>
-                <Label htmlFor='priority' className='flex items-center gap-2'>
-                  <Flag className='h-3.5 w-3.5 text-muted-foreground' />
-                  Priority
-                </Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
-                >
-                  <SelectTrigger id='priority'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRIORITY_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className='flex items-center gap-2'>
-                          <Flag className={`h-3.5 w-3.5 ${option.color}`} />
-                          <span className={option.color}>{option.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Project Status */}
+            <div className='space-y-4'>
+              <Label className='flex items-center gap-2 text-sm font-medium text-muted-foreground'>
+                <Activity className='h-4 w-4' />
+                Project Status
+              </Label>
+              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5'>
+                {STATUS_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type='button'
+                    onClick={() => setFormData({ ...formData, status: option.value })}
+                    className={`group relative flex flex-col items-center justify-center gap-2 p-3.5 rounded-lg border transition-all duration-200 ${
+                      formData.status === option.value
+                        ? `${option.bgColor} border-transparent ring-1 ${option.ringColor} shadow-sm`
+                        : "bg-background border-border/50 hover:border-border hover:bg-muted/30"
+                    }`}
+                  >
+                    {formData.status === option.value && (
+                      <CheckCircle2 className={`h-4 w-4 ${option.color}`} />
+                    )}
+                    <span
+                      className={`text-xs font-medium transition-colors ${
+                        formData.status === option.value
+                          ? option.color
+                          : "text-muted-foreground group-hover:text-foreground"
+                      }`}
+                    >
+                      {option.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className='h-px bg-border' />
+
+            {/* Project Priority */}
+            <div className='space-y-4'>
+              <Label className='flex items-center gap-2 text-sm font-medium text-muted-foreground'>
+                <Flag className='h-4 w-4' />
+                Project Priority
+              </Label>
+              <div className='grid grid-cols-2 sm:grid-cols-4 gap-2.5'>
+                {PRIORITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type='button'
+                    onClick={() => setFormData({ ...formData, priority: option.value })}
+                    className={`group relative flex flex-col items-center justify-center gap-3 p-4 rounded-lg border transition-all duration-200 ${
+                      formData.priority === option.value
+                        ? `${option.bgColor} border-transparent ring-1 ${option.ringColor} shadow-sm`
+                        : "bg-background border-border/50 hover:border-border hover:bg-muted/30"
+                    }`}
+                  >
+                    <Flag
+                      className={`h-5 w-5 transition-colors ${
+                        formData.priority === option.value
+                          ? option.iconColor
+                          : "text-muted-foreground/40 group-hover:text-muted-foreground/60"
+                      }`}
+                    />
+                    <div className='flex flex-col items-center gap-1.5'>
+                      <span
+                        className={`text-xs font-medium transition-colors ${
+                          formData.priority === option.value
+                            ? option.color
+                            : "text-muted-foreground group-hover:text-foreground"
+                        }`}
+                      >
+                        {option.label}
+                      </span>
+                      {formData.priority === option.value && (
+                        <CheckCircle2 className={`h-3.5 w-3.5 ${option.color}`} />
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Timeline Section */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2 text-primary'>
-                <CalendarIcon className='h-5 w-5' />
+        <Card className='border-border/60'>
+          <CardHeader className='pb-5'>
+            <div className='flex items-center gap-3.5'>
+              <div className='rounded-lg bg-muted/60 p-2.5 ring-1 ring-border/50'>
+                <CalendarIcon className='h-4.5 w-4.5 text-muted-foreground' />
               </div>
               <div>
-                <CardTitle>Timeline</CardTitle>
-                <CardDescription>
+                <CardTitle className='text-lg'>Timeline</CardTitle>
+                <CardDescription className='text-sm mt-1'>
                   Define the project schedule and key dates
                 </CardDescription>
               </div>
@@ -503,24 +592,25 @@ export default function NewProjectPage() {
         </Card>
 
         {/* Budget Section */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2 text-primary'>
-                <DollarSign className='h-5 w-5' />
+        <Card className='border-border/60'>
+          <CardHeader className='pb-5'>
+            <div className='flex items-center gap-3.5'>
+              <div className='rounded-lg bg-muted/60 p-2.5 ring-1 ring-border/50'>
+                <DollarSign className='h-4.5 w-4.5 text-muted-foreground' />
               </div>
               <div>
-                <CardTitle>Budget</CardTitle>
-                <CardDescription>Set the project budget and currency</CardDescription>
+                <CardTitle className='text-lg'>Budget</CardTitle>
+                <CardDescription className='text-sm mt-1'>
+                  Set the project budget and currency
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className='grid gap-4 md:grid-cols-[1fr_auto]'>
-              {/* Budget Amount with Currency Symbol */}
-              <div className='space-y-2'>
-                <Label htmlFor='budgetAmount'>Budget Amount</Label>
-                <InputGroup>
+            <div className='space-y-2'>
+              <Label htmlFor='budgetAmount'>Budget Amount</Label>
+              <ButtonGroup className='w-full'>
+                <InputGroup className='flex-1'>
                   <InputGroupAddon align='inline-start'>
                     <InputGroupText>
                       {
@@ -539,80 +629,113 @@ export default function NewProjectPage() {
                     placeholder='0.00'
                     step='0.01'
                     min='0'
+                    className='rounded-r-none'
                   />
                 </InputGroup>
-              </div>
-
-              {/* Currency */}
-              <div className='space-y-2'>
-                <Label htmlFor='budgetCurrency'>Currency</Label>
                 <Select
                   value={formData.budgetCurrency}
                   onValueChange={(value) =>
                     setFormData({ ...formData, budgetCurrency: value })
                   }
                 >
-                  <SelectTrigger id='budgetCurrency' className='w-[120px]'>
+                  <SelectTrigger
+                    id='budgetCurrency'
+                    className='w-32 rounded-l-none border-l-0'
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {CURRENCY_OPTIONS.map((currency) => (
                       <SelectItem key={currency.value} value={currency.value}>
-                        {currency.label}
+                        {currency.symbol} {currency.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </ButtonGroup>
             </div>
           </CardContent>
         </Card>
 
         {/* Appearance Section */}
-        <Card>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-primary/10 p-2 text-primary'>
-                <Palette className='h-5 w-5' />
+        <Card className='border-border/60'>
+          <CardHeader className='pb-5'>
+            <div className='flex items-center gap-3.5'>
+              <div className='rounded-lg bg-muted/60 p-2.5 ring-1 ring-border/50'>
+                <Palette className='h-4.5 w-4.5 text-muted-foreground' />
               </div>
               <div>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Choose a color to identify this project</CardDescription>
+                <CardTitle className='text-lg'>Appearance</CardTitle>
+                <CardDescription className='text-sm mt-1'>
+                  Choose a color to identify this project
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='space-y-3'>
-              <div className='flex items-center gap-2'>
-                <Palette className='h-4 w-4 text-muted-foreground' />
-                <Label className='text-sm font-semibold'>Project Color Theme</Label>
-              </div>
-              <div className='grid grid-cols-8 gap-3'>
+          <CardContent className='space-y-5'>
+            <div className='space-y-4'>
+              <Label className='flex items-center gap-2 text-sm font-medium text-muted-foreground'>
+                <Palette className='h-4 w-4' />
+                Project Color Theme
+              </Label>
+              <div className='grid grid-cols-8 gap-2.5'>
                 {COLORS.map((color) => (
                   <button
                     key={color.value}
                     type='button'
                     onClick={() => setFormData({ ...formData, color: color.value })}
-                    className={`group relative w-full aspect-square rounded-lg border-2 transition-all hover:scale-110 hover:shadow-md ${
+                    className={`group relative w-full aspect-square rounded-md border transition-all duration-200 hover:scale-105 ${
                       formData.color === color.value
-                        ? "border-primary ring-2 ring-primary/30 scale-105 shadow-md"
-                        : "border-border hover:border-primary/50"
+                        ? "border-border ring-2 ring-offset-1 ring-border/40 scale-105 shadow-sm"
+                        : "border-border/40 hover:border-border"
                     }`}
                     title={color.name}
                   >
                     <div
-                      className='absolute inset-1 rounded-md transition-all'
+                      className='absolute inset-0.5 rounded-sm transition-all'
                       style={{ backgroundColor: color.value }}
                     />
                     {formData.color === color.value && (
                       <div className='absolute inset-0 flex items-center justify-center'>
-                        <CheckCircle2 className='h-5 w-5 text-white drop-shadow-lg' />
+                        <CheckCircle2 className='h-4 w-4 text-white drop-shadow-lg' />
                       </div>
                     )}
                   </button>
                 ))}
               </div>
-              <div className='flex items-start gap-2 rounded-lg bg-muted/50 p-3 mt-4'>
+
+              {/* Custom Color Input */}
+              <div className='space-y-2.5 pt-1'>
+                <Label className='text-sm text-muted-foreground'>
+                  Or enter custom color
+                </Label>
+                <ButtonGroup className='w-full'>
+                  <label
+                    htmlFor='customColor'
+                    className='w-14 border rounded-l-md cursor-pointer hover:opacity-90 transition-opacity'
+                    style={{ backgroundColor: formData.color }}
+                  >
+                    <input
+                      id='customColor'
+                      type='color'
+                      value={formData.color}
+                      onChange={(e) =>
+                        setFormData({ ...formData, color: e.target.value })
+                      }
+                      className='sr-only'
+                    />
+                  </label>
+                  <Input
+                    type='text'
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    placeholder='#0070f3'
+                    className='rounded-l-none border-l-0 font-mono'
+                  />
+                </ButtonGroup>
+              </div>
+
+              <div className='flex items-start gap-2 rounded-lg bg-muted/50 p-3'>
                 <AlertCircle className='h-4 w-4 text-muted-foreground shrink-0 mt-0.5' />
                 <p className='text-xs text-muted-foreground'>
                   The selected color will be used for visual identification across the

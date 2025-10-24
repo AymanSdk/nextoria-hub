@@ -357,16 +357,13 @@ export function EditProjectDialog({
               <h3 className='text-sm font-semibold text-muted-foreground uppercase tracking-wide'>
                 Budget
               </h3>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <div className='md:col-span-2 space-y-2'>
-                  <Label
-                    htmlFor='budgetAmount'
-                    className='text-xs font-medium flex items-center gap-2'
-                  >
-                    <DollarSign className='h-3.5 w-3.5' />
-                    Amount
-                  </Label>
-                  <InputGroup>
+              <div className='space-y-2'>
+                <Label className='text-xs font-medium flex items-center gap-2'>
+                  <DollarSign className='h-3.5 w-3.5' />
+                  Budget Amount
+                </Label>
+                <ButtonGroup className='w-full'>
+                  <InputGroup className='flex-1'>
                     <InputGroupInput
                       id='budgetAmount'
                       type='number'
@@ -377,25 +374,19 @@ export function EditProjectDialog({
                         setFormData({ ...formData, budgetAmount: e.target.value })
                       }
                       placeholder='0.00'
+                      className='rounded-r-none'
                     />
                   </InputGroup>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label
-                    htmlFor='budgetCurrency'
-                    className='text-xs font-medium flex items-center gap-2'
-                  >
-                    <DollarSign className='h-3.5 w-3.5' />
-                    Currency
-                  </Label>
                   <Select
                     value={formData.budgetCurrency}
                     onValueChange={(value) =>
                       setFormData({ ...formData, budgetCurrency: value })
                     }
                   >
-                    <SelectTrigger id='budgetCurrency' className='w-full'>
+                    <SelectTrigger
+                      id='budgetCurrency'
+                      className='w-32 rounded-l-none border-l-0'
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -405,7 +396,7 @@ export function EditProjectDialog({
                       <SelectItem value='MAD'>🇲🇦 MAD (DH)</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </ButtonGroup>
               </div>
             </div>
 
@@ -424,14 +415,22 @@ export function EditProjectDialog({
                   <Palette className='h-3.5 w-3.5' />
                   Project Color
                 </Label>
-                <div className='flex gap-3'>
-                  <input
-                    id='color'
-                    type='color'
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className='w-14 h-10 rounded-md border cursor-pointer'
-                  />
+                <ButtonGroup className='w-full'>
+                  <label
+                    htmlFor='color'
+                    className='w-14 border rounded-l-md cursor-pointer hover:opacity-90 transition-opacity'
+                    style={{ backgroundColor: formData.color }}
+                  >
+                    <input
+                      id='color'
+                      type='color'
+                      value={formData.color}
+                      onChange={(e) =>
+                        setFormData({ ...formData, color: e.target.value })
+                      }
+                      className='sr-only'
+                    />
+                  </label>
                   <InputGroup className='flex-1'>
                     <InputGroupInput
                       type='text'
@@ -440,9 +439,10 @@ export function EditProjectDialog({
                         setFormData({ ...formData, color: e.target.value })
                       }
                       placeholder='#0070f3'
+                      className='rounded-l-none border-l-0'
                     />
                   </InputGroup>
-                </div>
+                </ButtonGroup>
               </div>
             </div>
 

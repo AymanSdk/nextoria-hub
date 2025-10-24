@@ -23,7 +23,7 @@ import { db } from "@/src/db";
 import { projects, tasks, users, clients } from "@/src/db/schema";
 import { getSession } from "@/src/lib/auth/session";
 import { getCurrentWorkspace } from "@/src/lib/workspace/context";
-import { eq } from "drizzle-orm";
+import { eq, ne, and } from "drizzle-orm";
 import {
   Calendar,
   CheckCircle2,
@@ -92,7 +92,9 @@ export default async function ProjectDetailPage({
         })
         .from(workspaceMembers)
         .innerJoin(users, eq(workspaceMembers.userId, users.id))
-        .where(eq(workspaceMembers.workspaceId, workspace.id))
+        .where(
+          and(eq(workspaceMembers.workspaceId, workspace.id), ne(users.role, "CLIENT"))
+        )
     : [];
 
   // Fetch all clients for project editing
