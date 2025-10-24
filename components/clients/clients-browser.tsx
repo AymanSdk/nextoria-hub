@@ -659,43 +659,137 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
           </Card>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters Toolbar */}
         <Card className='border-2'>
-          <CardContent className='p-4'>
-            <div className='flex flex-col lg:flex-row gap-4'>
-              <div className='flex-1 relative'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+          <CardContent className='p-3'>
+            {/* Toolbar - All in One Line */}
+            <div className='flex items-center gap-2'>
+              {/* Search Input - Compact */}
+              <div className='relative w-80'>
+                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
                 <Input
-                  placeholder='Search clients by name, company, email, industry, or location...'
+                  placeholder='Search clients...'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className='pl-10'
+                  className='pl-8 h-9 text-sm'
                 />
               </div>
+
+              {/* Divider */}
+              <div className='h-6 w-px bg-border' />
+
+              {/* Filter Controls - Inline */}
               <div className='flex items-center gap-2'>
-                <Button
-                  variant={showFilters ? "default" : "outline"}
-                  size='default'
-                  onClick={() => setShowFilters(!showFilters)}
-                  className='gap-2'
+                <Select value={filterIndustry} onValueChange={setFilterIndustry}>
+                  <SelectTrigger className='h-9 w-[140px] text-sm'>
+                    <SelectValue placeholder='Industry' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Industries</SelectItem>
+                    {industries.map((industry) => (
+                      <SelectItem key={industry} value={industry}>
+                        {industry}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className='h-9 w-[120px] text-sm'>
+                    <SelectValue placeholder='Status' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>All Status</SelectItem>
+                    <SelectItem value='active'>Active</SelectItem>
+                    <SelectItem value='inactive'>Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={sortField}
+                  onValueChange={(value) => setSortField(value as SortField)}
                 >
-                  <SlidersHorizontal className='h-4 w-4' />
-                  Filters
-                  {(filterIndustry !== "all" || filterStatus !== "all") && (
-                    <Badge
-                      variant='secondary'
-                      className='ml-1 h-5 w-5 p-0 flex items-center justify-center'
-                    >
-                      {(filterIndustry !== "all" ? 1 : 0) +
-                        (filterStatus !== "all" ? 1 : 0)}
-                    </Badge>
-                  )}
+                  <SelectTrigger className='h-9 w-[130px] text-sm'>
+                    <SelectValue placeholder='Sort by' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='name'>Name</SelectItem>
+                    <SelectItem value='company'>Company</SelectItem>
+                    <SelectItem value='email'>Email</SelectItem>
+                    <SelectItem value='industry'>Industry</SelectItem>
+                    <SelectItem value='createdAt'>Date</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                  className='h-9 w-9 p-0'
+                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                >
+                  {sortOrder === "asc" ? "↑" : "↓"}
                 </Button>
+              </div>
+
+              {/* Active Filter Badges */}
+              {(filterIndustry !== "all" || filterStatus !== "all") && (
+                <>
+                  <div className='h-6 w-px bg-border' />
+                  <div className='flex items-center gap-1.5'>
+                    {filterIndustry !== "all" && (
+                      <Badge
+                        variant='secondary'
+                        className='h-7 gap-1 text-xs cursor-pointer hover:bg-secondary/80'
+                        onClick={() => setFilterIndustry("all")}
+                      >
+                        {filterIndustry}
+                        <X className='h-3 w-3' />
+                      </Badge>
+                    )}
+                    {filterStatus !== "all" && (
+                      <Badge
+                        variant='secondary'
+                        className='h-7 gap-1 text-xs capitalize cursor-pointer hover:bg-secondary/80'
+                        onClick={() => setFilterStatus("all")}
+                      >
+                        {filterStatus}
+                        <X className='h-3 w-3' />
+                      </Badge>
+                    )}
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => {
+                        setFilterIndustry("all");
+                        setFilterStatus("all");
+                      }}
+                      className='h-7 px-2 text-xs'
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Spacer */}
+              <div className='flex-1' />
+
+              {/* Right Actions */}
+              <div className='flex items-center gap-2'>
+                {/* Results Count */}
+                {(searchQuery || filterIndustry !== "all" || filterStatus !== "all") && (
+                  <span className='text-xs text-muted-foreground'>
+                    {filteredAndSortedClients.length} of {clients.length}
+                  </span>
+                )}
+
+                {/* Export */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='default' className='gap-2'>
-                      <Download className='h-4 w-4' />
-                      Export
+                    <Button variant='outline' size='sm' className='h-9 px-3 gap-1.5'>
+                      <Download className='h-3.5 w-3.5' />
+                      <span className='text-sm'>Export</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
@@ -705,116 +799,39 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div className='flex items-center gap-1 border rounded-md p-1'>
+
+                {/* View Mode Selector */}
+                <div className='flex items-center gap-0.5 border rounded-md p-0.5 bg-muted/30'>
                   <Button
                     variant={viewMode === "list" ? "secondary" : "ghost"}
                     size='sm'
                     onClick={() => setViewMode("list")}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0'
+                    title='List View'
                   >
-                    <List className='h-4 w-4' />
+                    <List className='h-3.5 w-3.5' />
                   </Button>
                   <Button
                     variant={viewMode === "grid" ? "secondary" : "ghost"}
                     size='sm'
                     onClick={() => setViewMode("grid")}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0'
+                    title='Grid View'
                   >
-                    <Grid3x3 className='h-4 w-4' />
+                    <Grid3x3 className='h-3.5 w-3.5' />
                   </Button>
                   <Button
                     variant={viewMode === "compact" ? "secondary" : "ghost"}
                     size='sm'
                     onClick={() => setViewMode("compact")}
-                    className='h-8 w-8 p-0'
+                    className='h-7 w-7 p-0'
+                    title='Compact View'
                   >
-                    <Rows3 className='h-4 w-4' />
+                    <Rows3 className='h-3.5 w-3.5' />
                   </Button>
                 </div>
               </div>
             </div>
-
-            {/* Filter Options */}
-            {showFilters && (
-              <div className='mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <div className='space-y-2'>
-                  <Label>Industry</Label>
-                  <Select value={filterIndustry} onValueChange={setFilterIndustry}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='All Industries' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Industries</SelectItem>
-                      {industries.map((industry) => (
-                        <SelectItem key={industry} value={industry}>
-                          {industry}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label>Status</Label>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='All Statuses' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>All Statuses</SelectItem>
-                      <SelectItem value='active'>Active</SelectItem>
-                      <SelectItem value='inactive'>Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label>Sort By</Label>
-                  <div className='flex gap-2'>
-                    <Select
-                      value={sortField}
-                      onValueChange={(value) => setSortField(value as SortField)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='name'>Name</SelectItem>
-                        <SelectItem value='company'>Company</SelectItem>
-                        <SelectItem value='email'>Email</SelectItem>
-                        <SelectItem value='industry'>Industry</SelectItem>
-                        <SelectItem value='createdAt'>Created</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant='outline'
-                      size='default'
-                      onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                      className='px-3'
-                    >
-                      {sortOrder === "asc" ? "↑" : "↓"}
-                    </Button>
-                  </div>
-                </div>
-                {(filterIndustry !== "all" || filterStatus !== "all") && (
-                  <div className='md:col-span-3 flex items-center justify-between'>
-                    <p className='text-sm text-muted-foreground'>
-                      {filteredAndSortedClients.length} of {clients.length} clients
-                    </p>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => {
-                        setFilterIndustry("all");
-                        setFilterStatus("all");
-                      }}
-                      className='gap-2'
-                    >
-                      <X className='h-4 w-4' />
-                      Clear Filters
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
           </CardContent>
         </Card>
 
