@@ -482,7 +482,7 @@ export function ProjectsBrowser({ projects, isClient = false }: ProjectsBrowserP
         {/* Projects Display */}
         <div className='mt-6'>
           {viewMode === "grid" ? (
-            <div className='grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3'>
+            <div className='grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
               {filteredProjects.map((project) => (
                 <ProjectCard key={project.id} project={project} />
               ))}
