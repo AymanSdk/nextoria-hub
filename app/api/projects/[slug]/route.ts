@@ -18,6 +18,7 @@ const updateProjectSchema = z.object({
   budgetAmount: z.number().optional().nullable(),
   budgetCurrency: z.string().optional(),
   clientId: z.string().optional().nullable(),
+  isArchived: z.boolean().optional(),
 });
 
 /**
