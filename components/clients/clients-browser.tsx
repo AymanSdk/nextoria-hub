@@ -121,7 +121,7 @@ type SortOrder = "asc" | "desc";
 export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterIndustry, setFilterIndustry] = useState<string>("all");
@@ -1187,24 +1187,28 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
                       {/* Contact Info & Industry */}
                       <div className='hidden lg:flex items-center gap-4'>
                         <div className='flex items-center gap-3'>
-                          <div className='flex items-center gap-2'>
-                            <div className='h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center'>
+                          {/* Email Section - Fixed Width */}
+                          <div className='flex items-center gap-2 w-[220px] shrink-0'>
+                            <div className='h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0'>
                               <Mail className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
                             </div>
-                            <span className='truncate max-w-[160px] text-xs font-medium text-foreground/80'>
+                            <span className='truncate text-xs font-medium text-foreground/80'>
                               {client.email}
                             </span>
                           </div>
-                          {client.phone && (
-                            <div className='flex items-center gap-2'>
-                              <div className='h-7 w-7 rounded-md bg-green-500/10 flex items-center justify-center'>
+                          {/* Phone Section - Fixed Width */}
+                          <div className='flex items-center gap-2 w-[180px] shrink-0'>
+                            <div className='h-7 w-7 rounded-md bg-green-500/10 flex items-center justify-center shrink-0'>
+                              {client.phone ? (
                                 <Phone className='h-3.5 w-3.5 text-green-600 dark:text-green-400' />
-                              </div>
-                              <span className='text-xs font-medium text-foreground/80'>
-                                {client.phone}
-                              </span>
+                              ) : (
+                                <span className='text-xs text-muted-foreground'>—</span>
+                              )}
                             </div>
-                          )}
+                            <span className='text-xs font-medium text-foreground/80 truncate'>
+                              {client.phone || "—"}
+                            </span>
+                          </div>
                         </div>
 
                         {client.industry && (
