@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Building2,
   Mail,
@@ -12,9 +12,7 @@ import {
   Rows3,
   Plus,
   Search,
-  SlidersHorizontal,
   Download,
-  Edit,
   Trash2,
   MoreHorizontal,
   CheckSquare,
@@ -22,19 +20,28 @@ import {
   Users,
   TrendingUp,
   Activity,
-  Calendar,
-  Filter,
   X,
-  FileSpreadsheet,
   Eye,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import Link from "next/link";
 import {
@@ -88,6 +95,21 @@ interface Client {
   createdAt: string;
 }
 
+interface ImportClientData {
+  name: string;
+  companyName?: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  industry?: string;
+  notes?: string;
+}
+
 interface ClientsBrowserProps {
   initialClients?: Client[];
 }
@@ -107,8 +129,11 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
-  const [showFilters, setShowFilters] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importPreviewData, setImportPreviewData] = useState<ImportClientData[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     companyName: "",
@@ -128,6 +153,7 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
     if (initialClients.length === 0) {
       fetchClients();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchClients = async () => {
@@ -384,6 +410,140 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
     toast.success("Exported clients to CSV");
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const parseCSV = (text: string): ImportClientData[] => {
+    const lines = text.split("\n").filter((line) => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+    const data: ImportClientData[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""));
+      const row: Partial<ImportClientData> = {};
+
+      headers.forEach((header, index) => {
+        const normalizedHeader = header.toLowerCase();
+        if (normalizedHeader.includes("name") && !normalizedHeader.includes("company")) {
+          row.name = values[index];
+        } else if (normalizedHeader.includes("company")) {
+          row.companyName = values[index];
+        } else if (normalizedHeader.includes("email")) {
+          row.email = values[index];
+        } else if (normalizedHeader.includes("phone")) {
+          row.phone = values[index];
+        } else if (normalizedHeader.includes("website")) {
+          row.website = values[index];
+        } else if (normalizedHeader.includes("industry")) {
+          row.industry = values[index];
+        } else if (normalizedHeader.includes("city")) {
+          row.city = values[index];
+        } else if (normalizedHeader.includes("state")) {
+          row.state = values[index];
+        } else if (normalizedHeader.includes("country")) {
+          row.country = values[index];
+        }
+      });
+
+      if (row.name && row.email) {
+        data.push(row as ImportClientData);
+      }
+    }
+
+    return data;
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Please upload a CSV file");
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsedData = parseCSV(text);
+
+      if (parsedData.length === 0) {
+        toast.error("No valid data found in CSV file");
+        return;
+      }
+
+      setImportPreviewData(parsedData);
+      setIsImportDialogOpen(true);
+    } catch (error) {
+      console.error("Error parsing CSV:", error);
+      toast.error("Failed to parse CSV file");
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImport = async () => {
+    if (importPreviewData.length === 0) return;
+
+    setIsImporting(true);
+
+    try {
+      const workspaceRes = await fetch("/api/workspaces");
+      const workspaceData = await workspaceRes.json();
+      const workspaceId = workspaceData.workspaces[0]?.id;
+
+      if (!workspaceId) {
+        toast.error("No workspace found");
+        setIsImporting(false);
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const clientData of importPreviewData) {
+        try {
+          const res = await fetch("/api/clients", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...clientData,
+              workspaceId,
+            }),
+          });
+
+          if (res.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch {
+          errorCount++;
+        }
+      }
+
+      setIsImportDialogOpen(false);
+      setImportPreviewData([]);
+      fetchClients();
+
+      if (errorCount === 0) {
+        toast.success(`Successfully imported ${successCount} client(s)`);
+      } else {
+        toast.warning(`Imported ${successCount} client(s), ${errorCount} failed`);
+      }
+    } catch (error) {
+      console.error("Error importing clients:", error);
+      toast.error("Failed to import clients");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const getInitials = (name: string, company: string | null) => {
     if (company) {
       return company
@@ -419,6 +579,14 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
 
   return (
     <div className='space-y-6'>
+      {/* Hidden File Input for CSV Import */}
+      <input
+        ref={fileInputRef}
+        type='file'
+        accept='.csv'
+        onChange={handleFileChange}
+        className='hidden'
+      />
       {/* Header */}
       <div className='flex flex-col gap-4'>
         <div className='flex items-center justify-between'>
@@ -594,246 +762,296 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
           </Dialog>
         </div>
 
-        {/* Stats Cards */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-          <Card className='relative overflow-hidden border-2 hover:border-primary/50 transition-colors'>
-            <div className='absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent' />
-            <CardContent className='p-6 relative'>
-              <div className='flex items-center justify-between'>
+        {/* Stats Cards - Modern Compact Design */}
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3'>
+          {/* Total Clients */}
+          <Card className='relative overflow-hidden border hover:shadow-lg transition-all duration-300 group'>
+            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform' />
+            <CardContent className='p-4 relative'>
+              <div className='flex items-start justify-between'>
                 <div className='space-y-1'>
-                  <p className='text-sm text-muted-foreground font-medium'>
-                    Total Clients
-                  </p>
-                  <p className='text-3xl font-bold'>{stats.total}</p>
-                </div>
-                <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center'>
-                  <Building2 className='h-6 w-6 text-white' />
+                  <div className='flex items-center gap-2'>
+                    <div className='h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30'>
+                      <Building2 className='h-4 w-4 text-white' />
+                    </div>
+                    <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+                      Total
+                    </p>
+                  </div>
+                  <p className='text-2xl font-bold tracking-tight'>{stats.total}</p>
+                  <p className='text-xs text-muted-foreground'>All clients</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className='relative overflow-hidden border-2 hover:border-primary/50 transition-colors'>
-            <div className='absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-transparent' />
-            <CardContent className='p-6 relative'>
-              <div className='flex items-center justify-between'>
+          {/* Active Clients */}
+          <Card className='relative overflow-hidden border hover:shadow-lg transition-all duration-300 group'>
+            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform' />
+            <CardContent className='p-4 relative'>
+              <div className='flex items-start justify-between'>
                 <div className='space-y-1'>
-                  <p className='text-sm text-muted-foreground font-medium'>Active</p>
-                  <p className='text-3xl font-bold'>{stats.active}</p>
-                </div>
-                <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center'>
-                  <Activity className='h-6 w-6 text-white' />
+                  <div className='flex items-center gap-2'>
+                    <div className='h-8 w-8 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30'>
+                      <Activity className='h-4 w-4 text-white' />
+                    </div>
+                    <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+                      Active
+                    </p>
+                  </div>
+                  <div className='flex items-baseline gap-2'>
+                    <p className='text-2xl font-bold tracking-tight'>{stats.active}</p>
+                    {stats.total > 0 && (
+                      <span className='text-xs font-medium text-green-600 dark:text-green-400'>
+                        {Math.round((stats.active / stats.total) * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className='text-xs text-muted-foreground'>Currently active</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className='relative overflow-hidden border-2 hover:border-primary/50 transition-colors'>
-            <div className='absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent' />
-            <CardContent className='p-6 relative'>
-              <div className='flex items-center justify-between'>
+          {/* This Month */}
+          <Card className='relative overflow-hidden border hover:shadow-lg transition-all duration-300 group'>
+            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform' />
+            <CardContent className='p-4 relative'>
+              <div className='flex items-start justify-between'>
                 <div className='space-y-1'>
-                  <p className='text-sm text-muted-foreground font-medium'>This Month</p>
-                  <p className='text-3xl font-bold'>{stats.thisMonth}</p>
-                </div>
-                <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center'>
-                  <TrendingUp className='h-6 w-6 text-white' />
+                  <div className='flex items-center gap-2'>
+                    <div className='h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30'>
+                      <TrendingUp className='h-4 w-4 text-white' />
+                    </div>
+                    <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+                      New
+                    </p>
+                  </div>
+                  <p className='text-2xl font-bold tracking-tight'>{stats.thisMonth}</p>
+                  <p className='text-xs text-muted-foreground'>Added this month</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className='relative overflow-hidden border-2 hover:border-primary/50 transition-colors'>
-            <div className='absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-transparent' />
-            <CardContent className='p-6 relative'>
-              <div className='flex items-center justify-between'>
+          {/* Industries */}
+          <Card className='relative overflow-hidden border hover:shadow-lg transition-all duration-300 group'>
+            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform' />
+            <CardContent className='p-4 relative'>
+              <div className='flex items-start justify-between'>
                 <div className='space-y-1'>
-                  <p className='text-sm text-muted-foreground font-medium'>Industries</p>
-                  <p className='text-3xl font-bold'>{industries.length}</p>
-                </div>
-                <div className='h-12 w-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center'>
-                  <Users className='h-6 w-6 text-white' />
+                  <div className='flex items-center gap-2'>
+                    <div className='h-8 w-8 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30'>
+                      <Users className='h-4 w-4 text-white' />
+                    </div>
+                    <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+                      Industries
+                    </p>
+                  </div>
+                  <p className='text-2xl font-bold tracking-tight'>{industries.length}</p>
+                  <p className='text-xs text-muted-foreground'>Different sectors</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        <Separator className='my-0' />
+
         {/* Search and Filters Toolbar */}
-        <Card className='border-2'>
-          <CardContent className='p-3'>
-            {/* Toolbar - All in One Line */}
-            <div className='flex items-center gap-2'>
-              {/* Search Input - Compact */}
-              <div className='relative w-80'>
-                <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
-                <Input
-                  placeholder='Search clients...'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='pl-8 h-9 text-sm'
-                />
-              </div>
+        <div className='flex items-center gap-3 py-2'>
+          {/* Search Input */}
+          <div className='relative w-64'>
+            <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground' />
+            <Input
+              placeholder='Search clients...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className='pl-8 h-9 text-sm'
+            />
+          </div>
 
-              {/* Divider */}
-              <div className='h-6 w-px bg-border' />
+          <Separator orientation='vertical' className='h-9 bg-border' />
 
-              {/* Filter Controls - Inline */}
-              <div className='flex items-center gap-2'>
-                <Select value={filterIndustry} onValueChange={setFilterIndustry}>
-                  <SelectTrigger className='h-9 w-[140px] text-sm'>
-                    <SelectValue placeholder='Industry' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Industries</SelectItem>
-                    {industries.map((industry) => (
-                      <SelectItem key={industry} value={industry}>
-                        {industry}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Filter Controls */}
+          <ButtonGroup>
+            <Select value={filterIndustry} onValueChange={setFilterIndustry}>
+              <SelectTrigger className='h-9 w-[110px] text-xs'>
+                <SelectValue placeholder='Industry' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>All Industries</SelectItem>
+                {industries.map((industry) => (
+                  <SelectItem key={industry} value={industry}>
+                    {industry}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className='h-9 w-[120px] text-sm'>
-                    <SelectValue placeholder='Status' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='all'>All Status</SelectItem>
-                    <SelectItem value='active'>Active</SelectItem>
-                    <SelectItem value='inactive'>Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className='h-9 w-[90px] text-xs'>
+                <SelectValue placeholder='Status' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>All</SelectItem>
+                <SelectItem value='active'>Active</SelectItem>
+                <SelectItem value='inactive'>Inactive</SelectItem>
+              </SelectContent>
+            </Select>
 
-                <Select
-                  value={sortField}
-                  onValueChange={(value) => setSortField(value as SortField)}
-                >
-                  <SelectTrigger className='h-9 w-[130px] text-sm'>
-                    <SelectValue placeholder='Sort by' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='name'>Name</SelectItem>
-                    <SelectItem value='company'>Company</SelectItem>
-                    <SelectItem value='email'>Email</SelectItem>
-                    <SelectItem value='industry'>Industry</SelectItem>
-                    <SelectItem value='createdAt'>Date</SelectItem>
-                  </SelectContent>
-                </Select>
+            <Select
+              value={sortField}
+              onValueChange={(value) => setSortField(value as SortField)}
+            >
+              <SelectTrigger className='h-9 w-[100px] text-xs'>
+                <SelectValue placeholder='Sort' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='name'>Name</SelectItem>
+                <SelectItem value='company'>Company</SelectItem>
+                <SelectItem value='email'>Email</SelectItem>
+                <SelectItem value='industry'>Industry</SelectItem>
+                <SelectItem value='createdAt'>Date</SelectItem>
+              </SelectContent>
+            </Select>
 
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className='h-9 w-9 p-0 text-base'
+              title={sortOrder === "asc" ? "Ascending" : "Descending"}
+            >
+              {sortOrder === "asc" ? "↑" : "↓"}
+            </Button>
+          </ButtonGroup>
+
+          {/* Active Filter Badges */}
+          {(filterIndustry !== "all" || filterStatus !== "all") && (
+            <>
+              <Separator orientation='vertical' className='h-6' />
+              <div className='flex items-center gap-1.5'>
+                {filterIndustry !== "all" && (
+                  <Badge
+                    variant='secondary'
+                    className='h-7 gap-1 text-xs px-2 cursor-pointer hover:bg-secondary/80'
+                    onClick={() => setFilterIndustry("all")}
+                  >
+                    {filterIndustry}
+                    <X className='h-3 w-3' />
+                  </Badge>
+                )}
+                {filterStatus !== "all" && (
+                  <Badge
+                    variant='secondary'
+                    className='h-7 gap-1 text-xs px-2 capitalize cursor-pointer hover:bg-secondary/80'
+                    onClick={() => setFilterStatus("all")}
+                  >
+                    {filterStatus}
+                    <X className='h-3 w-3' />
+                  </Badge>
+                )}
                 <Button
-                  variant='outline'
+                  variant='ghost'
                   size='sm'
-                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className='h-9 w-9 p-0'
-                  title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                  onClick={() => {
+                    setFilterIndustry("all");
+                    setFilterStatus("all");
+                  }}
+                  className='h-7 px-2 text-xs'
                 >
-                  {sortOrder === "asc" ? "↑" : "↓"}
+                  Clear
                 </Button>
               </div>
+            </>
+          )}
 
-              {/* Active Filter Badges */}
-              {(filterIndustry !== "all" || filterStatus !== "all") && (
-                <>
-                  <div className='h-6 w-px bg-border' />
-                  <div className='flex items-center gap-1.5'>
-                    {filterIndustry !== "all" && (
-                      <Badge
-                        variant='secondary'
-                        className='h-7 gap-1 text-xs cursor-pointer hover:bg-secondary/80'
-                        onClick={() => setFilterIndustry("all")}
-                      >
-                        {filterIndustry}
-                        <X className='h-3 w-3' />
-                      </Badge>
-                    )}
-                    {filterStatus !== "all" && (
-                      <Badge
-                        variant='secondary'
-                        className='h-7 gap-1 text-xs capitalize cursor-pointer hover:bg-secondary/80'
-                        onClick={() => setFilterStatus("all")}
-                      >
-                        {filterStatus}
-                        <X className='h-3 w-3' />
-                      </Badge>
-                    )}
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => {
-                        setFilterIndustry("all");
-                        setFilterStatus("all");
-                      }}
-                      className='h-7 px-2 text-xs'
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                </>
-              )}
+          {/* Spacer */}
+          <div className='flex-1' />
 
-              {/* Spacer */}
-              <div className='flex-1' />
+          {/* Right Actions */}
+          <div className='flex items-center gap-2'>
+            {/* Results Count */}
+            {(searchQuery || filterIndustry !== "all" || filterStatus !== "all") && (
+              <>
+                <span className='text-xs font-medium text-muted-foreground'>
+                  {filteredAndSortedClients.length}/{clients.length}
+                </span>
+                <Separator orientation='vertical' className='h-6' />
+              </>
+            )}
 
-              {/* Right Actions */}
-              <div className='flex items-center gap-2'>
-                {/* Results Count */}
-                {(searchQuery || filterIndustry !== "all" || filterStatus !== "all") && (
-                  <span className='text-xs text-muted-foreground'>
-                    {filteredAndSortedClients.length} of {clients.length}
-                  </span>
-                )}
+            {/* Import/Export */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-9 px-3 gap-1.5'>
+                  <Download className='h-3.5 w-3.5' />
+                  <span className='text-xs'>Import/Export</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={handleImportClick}>
+                  <Upload className='h-4 w-4 mr-2' />
+                  Import from CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  <Download className='h-4 w-4 mr-2' />
+                  Export to CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-                {/* Export */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant='outline' size='sm' className='h-9 px-3 gap-1.5'>
-                      <Download className='h-3.5 w-3.5' />
-                      <span className='text-sm'>Export</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={handleExportCSV}>
-                      <FileSpreadsheet className='h-4 w-4 mr-2' />
-                      Export as CSV
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            <Separator orientation='vertical' className='h-6' />
 
-                {/* View Mode Selector */}
-                <div className='flex items-center gap-0.5 border rounded-md p-0.5 bg-muted/30'>
+            {/* View Mode Selector */}
+            <ButtonGroup>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
-                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    variant={viewMode === "list" ? "secondary" : "outline"}
                     size='sm'
                     onClick={() => setViewMode("list")}
-                    className='h-7 w-7 p-0'
-                    title='List View'
+                    className='h-9 w-9 p-0'
                   >
                     <List className='h-3.5 w-3.5' />
                   </Button>
+                </TooltipTrigger>
+                <TooltipContent>List View</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
-                    variant={viewMode === "grid" ? "secondary" : "ghost"}
+                    variant={viewMode === "grid" ? "secondary" : "outline"}
                     size='sm'
                     onClick={() => setViewMode("grid")}
-                    className='h-7 w-7 p-0'
-                    title='Grid View'
+                    className='h-9 w-9 p-0'
                   >
                     <Grid3x3 className='h-3.5 w-3.5' />
                   </Button>
+                </TooltipTrigger>
+                <TooltipContent>Grid View</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
-                    variant={viewMode === "compact" ? "secondary" : "ghost"}
+                    variant={viewMode === "compact" ? "secondary" : "outline"}
                     size='sm'
                     onClick={() => setViewMode("compact")}
-                    className='h-7 w-7 p-0'
-                    title='Compact View'
+                    className='h-9 w-9 p-0'
                   >
                     <Rows3 className='h-3.5 w-3.5' />
                   </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                </TooltipTrigger>
+                <TooltipContent>Compact View</TooltipContent>
+              </Tooltip>
+            </ButtonGroup>
+          </div>
+        </div>
+
+        <Separator className='my-0' />
 
         {/* Bulk Actions */}
         {selectedClients.size > 0 && (
@@ -876,103 +1094,151 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
           </div>
         </div>
       ) : filteredAndSortedClients.length === 0 ? (
-        <Card className='p-12'>
-          <div className='text-center'>
-            <Building2 className='mx-auto h-12 w-12 text-muted-foreground' />
-            <h3 className='mt-4 text-lg font-semibold'>
+        <Empty className='border-2 border-dashed'>
+          <EmptyHeader>
+            <EmptyMedia variant='icon'>
+              <Building2 />
+            </EmptyMedia>
+            <EmptyTitle>
               {searchQuery || filterIndustry !== "all" || filterStatus !== "all"
                 ? "No clients found"
                 : "No clients yet"}
-            </h3>
-            <p className='mt-2 text-muted-foreground'>
+            </EmptyTitle>
+            <EmptyDescription>
               {searchQuery || filterIndustry !== "all" || filterStatus !== "all"
-                ? "Try adjusting your search or filters"
-                : "Get started by adding your first client"}
-            </p>
-            {!searchQuery && filterIndustry === "all" && filterStatus === "all" && (
-              <Button className='mt-4' onClick={() => setIsDialogOpen(true)}>
-                <Plus className='mr-2 h-4 w-4' />
-                Add Client
+                ? "Try adjusting your search or filters to find what you're looking for."
+                : "Get started by adding your first client to begin managing your client relationships."}
+            </EmptyDescription>
+          </EmptyHeader>
+          {!searchQuery && filterIndustry === "all" && filterStatus === "all" && (
+            <EmptyContent>
+              <Button onClick={() => setIsDialogOpen(true)} size='lg' className='gap-2'>
+                <Plus className='h-4 w-4' />
+                Add Your First Client
               </Button>
-            )}
-          </div>
-        </Card>
+            </EmptyContent>
+          )}
+        </Empty>
       ) : (
         <>
           {/* List View */}
           {viewMode === "list" && (
-            <div className='space-y-2'>
+            <div className='space-y-1'>
               {filteredAndSortedClients.map((client) => (
                 <Card
                   key={client.id}
-                  className='hover:shadow-md transition-all border-2 hover:border-primary/50'
+                  className='group hover:shadow-md transition-all duration-150 border hover:border-primary/40'
                 >
-                  <CardContent className='p-4'>
-                    <div className='flex items-center gap-4'>
+                  <CardContent className='p-2'>
+                    <div className='flex items-center gap-2.5'>
+                      {/* Checkbox */}
                       <Button
                         variant='ghost'
                         size='sm'
-                        className='h-8 w-8 p-0'
+                        className='h-7 w-7 p-0 hover:bg-muted rounded'
                         onClick={() => handleSelectClient(client.id)}
                       >
                         {selectedClients.has(client.id) ? (
                           <CheckSquare className='h-4 w-4 text-primary' />
                         ) : (
-                          <Square className='h-4 w-4' />
+                          <Square className='h-4 w-4 text-muted-foreground/40' />
                         )}
                       </Button>
-                      <Avatar
-                        className={`h-12 w-12 bg-gradient-to-br ${getAvatarColor(
-                          client.id
-                        )}`}
-                      >
-                        <AvatarFallback className='bg-transparent text-white font-semibold'>
-                          {getInitials(client.name, client.companyName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-center gap-2'>
-                          <h3 className='font-semibold truncate'>{client.name}</h3>
-                          {client.isActive && (
-                            <Badge variant='default' className='text-xs'>
-                              Active
-                            </Badge>
+
+                      {/* Avatar & Client Info */}
+                      <div className='flex items-center gap-2.5 flex-1 min-w-0'>
+                        <Avatar
+                          className={`h-10 w-10 bg-gradient-to-br ${getAvatarColor(
+                            client.id
+                          )} ring-2 ring-background shadow`}
+                        >
+                          <AvatarFallback className='bg-transparent text-white font-bold text-xs'>
+                            {getInitials(client.name, client.companyName)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex items-center gap-2 flex-wrap'>
+                            <h3 className='font-bold text-sm truncate text-foreground'>
+                              {client.name}
+                            </h3>
+                            {client.companyName && (
+                              <>
+                                <span className='text-muted-foreground/60 text-xs'>
+                                  ·
+                                </span>
+                                <span className='text-xs font-medium text-muted-foreground/90 truncate'>
+                                  {client.companyName}
+                                </span>
+                              </>
+                            )}
+                            {client.isActive && (
+                              <Badge
+                                variant='default'
+                                className='text-[10px] px-1.5 py-0.5 font-semibold'
+                              >
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Info & Industry */}
+                      <div className='hidden lg:flex items-center gap-4'>
+                        <div className='flex items-center gap-3'>
+                          <div className='flex items-center gap-2'>
+                            <div className='h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center'>
+                              <Mail className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
+                            </div>
+                            <span className='truncate max-w-[160px] text-xs font-medium text-foreground/80'>
+                              {client.email}
+                            </span>
+                          </div>
+                          {client.phone && (
+                            <div className='flex items-center gap-2'>
+                              <div className='h-7 w-7 rounded-md bg-green-500/10 flex items-center justify-center'>
+                                <Phone className='h-3.5 w-3.5 text-green-600 dark:text-green-400' />
+                              </div>
+                              <span className='text-xs font-medium text-foreground/80'>
+                                {client.phone}
+                              </span>
+                            </div>
                           )}
                         </div>
-                        {client.companyName && (
-                          <p className='text-sm text-muted-foreground truncate'>
-                            {client.companyName}
-                          </p>
-                        )}
-                      </div>
-                      <div className='hidden md:flex items-center gap-4 text-sm text-muted-foreground'>
-                        <div className='flex items-center gap-2'>
-                          <Mail className='h-4 w-4' />
-                          <span className='truncate max-w-[200px]'>{client.email}</span>
-                        </div>
-                        {client.phone && (
-                          <div className='flex items-center gap-2'>
-                            <Phone className='h-4 w-4' />
-                            <span>{client.phone}</span>
-                          </div>
-                        )}
+
                         {client.industry && (
-                          <Badge variant='secondary' className='text-xs'>
+                          <Badge
+                            variant='secondary'
+                            className='text-[10px] px-2.5 py-1 font-semibold'
+                          >
                             {client.industry}
                           </Badge>
                         )}
                       </div>
-                      <div className='flex items-center gap-2'>
+
+                      {/* Actions */}
+                      <div className='flex items-center gap-1'>
                         <Link href={`/clients/${client.id}`}>
-                          <Button variant='ghost' size='sm' className='gap-2'>
-                            <Eye className='h-4 w-4' />
-                            View
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='gap-1.5 h-7 px-2.5 hover:bg-primary/10 hover:text-primary transition-colors'
+                          >
+                            <Eye className='h-3.5 w-3.5' />
+                            <span className='hidden xl:inline text-xs font-medium'>
+                              View
+                            </span>
                           </Button>
                         </Link>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
-                              <MoreHorizontal className='h-4 w-4' />
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='h-7 w-7 p-0 hover:bg-muted'
+                            >
+                              <MoreHorizontal className='h-3.5 w-3.5' />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align='end'>
@@ -1250,6 +1516,221 @@ export function ClientsBrowser({ initialClients = [] }: ClientsBrowserProps) {
           )}
         </>
       )}
+
+      {/* Import Preview Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className='w-[95vw] max-w-[1800px] max-h-[75vh] flex flex-col'>
+          <DialogHeader>
+            <div className='flex items-center gap-3'>
+              <div className='h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center'>
+                <Upload className='h-5 w-5 text-white' />
+              </div>
+              <div>
+                <DialogTitle className='text-xl'>Import Clients from CSV</DialogTitle>
+                <DialogDescription className='mt-1'>
+                  Review and confirm the clients below before importing
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className='flex-1 overflow-hidden flex flex-col gap-4 mt-2'>
+            {/* Summary Card */}
+            <div className='grid grid-cols-3 gap-3'>
+              <Card className='border-2'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center gap-3'>
+                    <div className='h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center'>
+                      <Users className='h-5 w-5 text-blue-600' />
+                    </div>
+                    <div>
+                      <p className='text-2xl font-bold'>{importPreviewData.length}</p>
+                      <p className='text-xs text-muted-foreground'>Total Clients</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className='border-2'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center gap-3'>
+                    <div className='h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center'>
+                      <CheckSquare className='h-5 w-5 text-green-600' />
+                    </div>
+                    <div>
+                      <p className='text-2xl font-bold'>
+                        {importPreviewData.filter((c) => c.email && c.name).length}
+                      </p>
+                      <p className='text-xs text-muted-foreground'>Valid Entries</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className='border-2'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center gap-3'>
+                    <div className='h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center'>
+                      <Building2 className='h-5 w-5 text-purple-600' />
+                    </div>
+                    <div>
+                      <p className='text-2xl font-bold'>
+                        {importPreviewData.filter((c) => c.companyName).length}
+                      </p>
+                      <p className='text-xs text-muted-foreground'>With Company</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Info Banner */}
+            <div className='flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg'>
+              <div className='h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5'>
+                <span className='text-white text-xs font-bold'>i</span>
+              </div>
+              <div className='flex-1'>
+                <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+                  Import Requirements
+                </p>
+                <p className='text-xs text-blue-800/80 dark:text-blue-200/80 mt-1'>
+                  Only rows with both <strong>Name</strong> and <strong>Email</strong>{" "}
+                  will be imported. Optional fields include Company, Phone, Industry, and
+                  Location.
+                </p>
+              </div>
+            </div>
+
+            {/* Preview Table */}
+            <Card className='border-2 flex-1 overflow-hidden flex flex-col'>
+              <CardContent className='p-0 flex-1 overflow-hidden flex flex-col'>
+                <div className='flex-1 overflow-auto'>
+                  <table className='w-full'>
+                    <thead className='bg-muted/50 border-b sticky top-0 z-10'>
+                      <tr>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          #
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Name
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Company
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Email
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Phone
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Industry
+                        </th>
+                        <th className='text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide'>
+                          Location
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y'>
+                      {importPreviewData.map((client, index) => (
+                        <tr key={index} className='hover:bg-muted/30 transition-colors'>
+                          <td className='px-4 py-3 text-sm text-muted-foreground'>
+                            {index + 1}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <span className='text-sm font-medium'>
+                              {client.name || (
+                                <span className='text-muted-foreground'>—</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className='px-4 py-3 text-sm'>
+                            {client.companyName || (
+                              <span className='text-muted-foreground'>—</span>
+                            )}
+                          </td>
+                          <td className='px-4 py-3'>
+                            <span className='text-sm font-mono text-blue-600 dark:text-blue-400'>
+                              {client.email || (
+                                <span className='text-muted-foreground'>—</span>
+                              )}
+                            </span>
+                          </td>
+                          <td className='px-4 py-3 text-sm'>
+                            {client.phone || (
+                              <span className='text-muted-foreground'>—</span>
+                            )}
+                          </td>
+                          <td className='px-4 py-3'>
+                            {client.industry ? (
+                              <Badge variant='secondary' className='text-xs'>
+                                {client.industry}
+                              </Badge>
+                            ) : (
+                              <span className='text-sm text-muted-foreground'>—</span>
+                            )}
+                          </td>
+                          <td className='px-4 py-3 text-sm'>
+                            {client.city || client.state ? (
+                              <span>
+                                {client.city}
+                                {client.city && client.state && ", "}
+                                {client.state}
+                              </span>
+                            ) : (
+                              <span className='text-muted-foreground'>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Footer Actions */}
+          <div className='flex items-center justify-between pt-4 border-t'>
+            <p className='text-sm text-muted-foreground'>
+              {importPreviewData.length} client{importPreviewData.length !== 1 ? "s" : ""}{" "}
+              will be added to your workspace
+            </p>
+            <div className='flex gap-3'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  setIsImportDialogOpen(false);
+                  setImportPreviewData([]);
+                }}
+                disabled={isImporting}
+                size='lg'
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleImport}
+                disabled={isImporting}
+                size='lg'
+                className='gap-2 min-w-[140px]'
+              >
+                {isImporting ? (
+                  <>
+                    <div className='animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full' />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className='h-4 w-4' />
+                    Import All
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog
