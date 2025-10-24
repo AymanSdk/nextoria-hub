@@ -108,18 +108,6 @@ export function useStorageStore({
       unsubs.push(
         store.listen(
           ({ changes }: TLStoreEventInfo) => {
-            const addedCount = Object.keys(changes.added).length;
-            const updatedCount = Object.keys(changes.updated).length;
-            const removedCount = Object.keys(changes.removed).length;
-
-            if (addedCount > 0 || updatedCount > 0 || removedCount > 0) {
-              console.log("[Tldraw → Storage]", {
-                added: addedCount,
-                updated: updatedCount,
-                removed: removedCount,
-              });
-            }
-
             room.batch(() => {
               Object.values(changes.added).forEach((record) => {
                 liveRecords?.set(record.id, record);
@@ -170,57 +158,53 @@ export function useStorageStore({
       );
 
       // Update tldraw when Storage changes
-      unsubs.push(
-        room.subscribe(
-          liveRecords,
-          (storageChanges: any) => {
-            const toRemove: TLRecord["id"][] = [];
-            const toPut: TLRecord[] = [];
+      if (liveRecords) {
+        unsubs.push(
+          room.subscribe(
+            liveRecords,
+            (storageChanges: any) => {
+              const toRemove: TLRecord["id"][] = [];
+              const toPut: TLRecord[] = [];
 
-            for (const update of storageChanges) {
-              if (update.type !== "LiveMap") {
-                return;
-              }
+              for (const update of storageChanges) {
+                if (update.type !== "LiveMap") {
+                  continue; // Skip non-LiveMap updates
+                }
 
-              for (const [id, change] of Object.entries(update.updates)) {
-                const changeType = (change as any).type;
-                switch (changeType) {
-                  case "delete": {
-                    toRemove.push(id as TLRecord["id"]);
-                    break;
-                  }
+                for (const [id, change] of Object.entries(update.updates)) {
+                  const changeType = (change as any).type;
 
-                  case "add":
-                  case "update": {
-                    const curr = update.node.get(id);
-                    if (curr) {
-                      toPut.push(curr as any as TLRecord);
+                  switch (changeType) {
+                    case "delete": {
+                      toRemove.push(id as TLRecord["id"]);
+                      break;
                     }
-                    break;
+
+                    case "add":
+                    case "update": {
+                      const curr = update.node.get(id);
+                      if (curr) {
+                        toPut.push(curr as any as TLRecord);
+                      }
+                      break;
+                    }
                   }
                 }
               }
-            }
 
-            if (toRemove.length > 0 || toPut.length > 0) {
-              console.log("[Storage → Tldraw]", {
-                toAdd: toPut.length,
-                toRemove: toRemove.length,
+              store.mergeRemoteChanges(() => {
+                if (toRemove.length) {
+                  store.remove(toRemove);
+                }
+                if (toPut.length) {
+                  store.put(toPut);
+                }
               });
-            }
-
-            store.mergeRemoteChanges(() => {
-              if (toRemove.length) {
-                store.remove(toRemove);
-              }
-              if (toPut.length) {
-                store.put(toPut);
-              }
-            });
-          },
-          { isDeep: true }
-        )
-      );
+            },
+            { isDeep: true }
+          )
+        );
+      }
 
       // Set user's info
       const userPreferences = computed<{

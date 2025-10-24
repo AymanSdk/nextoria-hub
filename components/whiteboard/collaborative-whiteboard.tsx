@@ -6,6 +6,8 @@ import "tldraw/tldraw.css";
 import { useSelf } from "@/liveblocks.config";
 import { UserPresence } from "./user-presence";
 import { useStorageStore } from "./use-storage-store";
+import { LiveCursors } from "./live-cursors";
+import { DebugConsole } from "./debug-console";
 
 export function CollaborativeWhiteboard() {
   const currentUser = useSelf();
@@ -55,7 +57,15 @@ export function CollaborativeWhiteboard() {
 
       {/* Whiteboard Canvas */}
       <div className='flex-1 relative overflow-hidden'>
-        <Tldraw store={store} autoFocus />
+        <Tldraw
+          store={store}
+          autoFocus
+          components={{
+            CollaboratorScribble: null, // Disable tldraw's cursors
+          }}
+        />
+        <LiveCursors />
+        <DebugConsole />
       </div>
     </div>
   );
