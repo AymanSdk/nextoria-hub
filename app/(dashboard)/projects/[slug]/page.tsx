@@ -52,22 +52,27 @@ export default async function ProjectDetailPage({
 
   const { slug } = await params;
 
-  // Fetch project by slug with client data
-  const [projectData] = await db
-    .select({
-      project: projects,
-      client: clients,
-    })
+  // Fetch project by slug
+  const [project] = await db
+    .select()
     .from(projects)
-    .leftJoin(clients, eq(projects.clientId, clients.id))
     .where(eq(projects.slug, slug))
     .limit(1);
 
-  if (!projectData?.project) {
+  if (!project) {
     notFound();
   }
 
-  const { project, client } = projectData;
+  // Fetch client if project has one
+  let client = null;
+  if (project.clientId) {
+    const [clientData] = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.id, project.clientId))
+      .limit(1);
+    client = clientData;
+  }
 
   // Fetch all workspace team members (for task assignment)
   const { workspaceMembers, workspaces } = await import("@/src/db/schema");
@@ -148,53 +153,53 @@ export default async function ProjectDetailPage({
   const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
-    <div className="space-y-6 w-full">
+    <div className='space-y-6 w-full'>
       {/* Breadcrumb with Back Button */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/projects">
-            <ArrowLeft className="h-4 w-4" />
+      <div className='flex items-center gap-3'>
+        <Button variant='ghost' size='icon' asChild>
+          <Link href='/projects'>
+            <ArrowLeft className='h-4 w-4' />
           </Link>
         </Button>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/projects" className="hover:text-foreground transition-colors">
+        <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+          <Link href='/projects' className='hover:text-foreground transition-colors'>
             Projects
           </Link>
           <span>/</span>
-          <span className="text-foreground font-medium">{project.name}</span>
+          <span className='text-foreground font-medium'>{project.name}</span>
         </div>
       </div>
 
       {/* Project Header */}
-      <div className="space-y-4">
-        <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
-          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full">
+      <div className='space-y-4'>
+        <div className='flex flex-col lg:flex-row items-start justify-between gap-4'>
+          <div className='flex items-start gap-3 sm:gap-4 flex-1 min-w-0 w-full'>
             <div
-              className="h-14 w-14 sm:h-20 sm:w-20 rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105"
+              className='h-14 w-14 sm:h-20 sm:w-20 rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105'
               style={{ backgroundColor: project.color || "#0070f3" }}
             >
-              <Target className="h-7 w-7 sm:h-10 sm:w-10 text-white" />
+              <Target className='h-7 w-7 sm:h-10 sm:w-10 text-white' />
             </div>
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight wrap-break-word">
+            <div className='flex-1 min-w-0 space-y-2'>
+              <div className='flex items-center gap-2 flex-wrap'>
+                <h1 className='text-2xl sm:text-4xl font-bold tracking-tight wrap-break-word'>
                   {project.name}
                 </h1>
                 {project.isArchived && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant='secondary' className='text-xs'>
                     Archived
                   </Badge>
                 )}
               </div>
-              <p className="text-sm sm:text-base text-muted-foreground wrap-break-word">
+              <p className='text-sm sm:text-base text-muted-foreground wrap-break-word'>
                 {project.description || "No description provided"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto">
+          <div className='flex items-center gap-2 shrink-0 w-full lg:w-auto'>
             <EditProjectDialog project={project} clients={allClients} />
-            <ProjectQuickActions 
-              projectId={project.id} 
+            <ProjectQuickActions
+              projectId={project.id}
               projectSlug={project.slug}
               isArchived={project.isArchived}
             />
@@ -202,13 +207,16 @@ export default async function ProjectDetailPage({
         </div>
 
         {/* Project Meta Info */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className='flex items-center gap-4 flex-wrap'>
           <ProjectStatusBadge status={project.status} projectSlug={project.slug} />
+
+          <Separator orientation='vertical' className='h-6' />
+
           {project.dueDate && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Due</span>
-              <span className="font-medium">
+            <div className='flex items-center gap-2'>
+              <Calendar className='h-4 w-4 text-muted-foreground' />
+              <span className='text-sm text-muted-foreground'>Due</span>
+              <span className='text-sm font-medium'>
                 {new Date(project.dueDate).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -217,31 +225,54 @@ export default async function ProjectDetailPage({
               </span>
             </div>
           )}
+
+          {project.dueDate && (client || members.length > 0) && (
+            <Separator orientation='vertical' className='h-6' />
+          )}
+
+          {client && (
+            <div className='flex items-center gap-2'>
+              <UsersIcon className='h-4 w-4 text-muted-foreground' />
+              <span className='text-sm text-muted-foreground'>Client:</span>
+              <span className='text-sm font-medium'>{client.name}</span>
+            </div>
+          )}
+
+          {client && members.length > 0 && (
+            <Separator orientation='vertical' className='h-6' />
+          )}
+
           {members.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted">
-              <div className="flex -space-x-2">
+            <div className='flex items-center gap-2'>
+              <div className='flex -space-x-2'>
                 {members.slice(0, 3).map((member) => (
                   <HoverCard key={member.id}>
                     <HoverCardTrigger>
-                      <Avatar className="h-7 w-7 border-2 border-background hover:z-10 cursor-pointer transition-transform hover:scale-110">
-                        <AvatarImage src={member.image || undefined} alt={member.name || ""} />
-                        <AvatarFallback className="text-xs">
+                      <Avatar className='h-7 w-7 border-2 border-background hover:z-10 cursor-pointer transition-transform hover:scale-110'>
+                        <AvatarImage
+                          src={member.image || undefined}
+                          alt={member.name || ""}
+                        />
+                        <AvatarFallback className='text-xs'>
                           {member.name?.substring(0, 2).toUpperCase() || "??"}
                         </AvatarFallback>
                       </Avatar>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-64">
-                      <div className="flex gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={member.image || undefined} alt={member.name || ""} />
+                    <HoverCardContent className='w-64'>
+                      <div className='flex gap-3'>
+                        <Avatar className='h-12 w-12'>
+                          <AvatarImage
+                            src={member.image || undefined}
+                            alt={member.name || ""}
+                          />
                           <AvatarFallback>
                             {member.name?.substring(0, 2).toUpperCase() || "??"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-semibold">{member.name}</h4>
-                          <p className="text-xs text-muted-foreground">{member.email}</p>
-                          <Badge variant="secondary" className="text-xs">
+                        <div className='space-y-1'>
+                          <h4 className='text-sm font-semibold'>{member.name}</h4>
+                          <p className='text-xs text-muted-foreground'>{member.email}</p>
+                          <Badge variant='secondary' className='text-xs'>
                             {member.role}
                           </Badge>
                         </div>
@@ -250,8 +281,8 @@ export default async function ProjectDetailPage({
                   </HoverCard>
                 ))}
               </div>
-              <span className="text-sm font-medium">
-                {members.length > 3 ? `${members.length} members` : `${members.length} member${members.length > 1 ? 's' : ''}`}
+              <span className='text-sm font-medium text-muted-foreground'>
+                {members.length} team {members.length === 1 ? "member" : "members"}
               </span>
             </div>
           )}
@@ -263,38 +294,39 @@ export default async function ProjectDetailPage({
       {/* Archived Alert */}
       {project.isArchived && (
         <Alert>
-          <Archive className="h-4 w-4" />
+          <Archive className='h-4 w-4' />
           <AlertTitle>This project is archived</AlertTitle>
           <AlertDescription>
-            This project has been archived and is read-only. You can unarchive it from the quick actions menu.
+            This project has been archived and is read-only. You can unarchive it from the
+            quick actions menu.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Main Content */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="overview" className="gap-2">
-            <LayoutDashboard className="h-4 w-4" />
+      <Tabs defaultValue='overview' className='w-full'>
+        <TabsList className='grid w-full max-w-md grid-cols-3'>
+          <TabsTrigger value='overview' className='gap-2'>
+            <LayoutDashboard className='h-4 w-4' />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="gap-2">
-            <CheckCircle2 className="h-4 w-4" />
+          <TabsTrigger value='tasks' className='gap-2'>
+            <CheckCircle2 className='h-4 w-4' />
             Tasks
             {totalTasks > 0 && (
-              <span className="ml-1 text-xs bg-muted px-1.5 rounded-full">
+              <span className='ml-1 text-xs bg-muted px-1.5 rounded-full'>
                 {totalTasks}
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="files" className="gap-2">
-            <FileText className="h-4 w-4" />
+          <TabsTrigger value='files' className='gap-2'>
+            <FileText className='h-4 w-4' />
             Files
           </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <TabsContent value='overview' className='space-y-6 mt-6'>
           {/* Quick Stats */}
           <ProjectStatsCards
             progress={progress}
@@ -307,8 +339,8 @@ export default async function ProjectDetailPage({
           />
 
           {/* Overview Section with Team */}
-          <div className="grid gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4">
+          <div className='grid gap-4 lg:grid-cols-3'>
+            <div className='lg:col-span-2 space-y-4'>
               <ProjectOverviewSection
                 project={project}
                 client={client}
@@ -317,7 +349,7 @@ export default async function ProjectDetailPage({
                 completedTasks={completedTasks}
               />
             </div>
-            <div className="lg:col-span-1">
+            <div className='lg:col-span-1'>
               <ProjectTeamSection members={members} />
             </div>
           </div>
@@ -326,21 +358,21 @@ export default async function ProjectDetailPage({
           {formattedTasks.length > 0 && (
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Recent Tasks</CardTitle>
-                  <Button variant="ghost" size="sm" asChild>
+                <div className='flex items-center justify-between'>
+                  <CardTitle className='text-lg'>Recent Tasks</CardTitle>
+                  <Button variant='ghost' size='sm' asChild>
                     <Link href={`/projects/${slug}?tab=tasks`}>View All</Link>
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {formattedTasks.slice(0, 5).map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className='flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors'
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className='flex items-center gap-3 flex-1 min-w-0'>
                         <CheckCircle2
                           className={`h-4 w-4 shrink-0 ${
                             task.status === "DONE"
@@ -348,12 +380,12 @@ export default async function ProjectDetailPage({
                               : "text-muted-foreground"
                           }`}
                         />
-                        <span className="truncate">{task.title}</span>
+                        <span className='truncate'>{task.title}</span>
                       </div>
                       {task.assignee && (
-                        <Avatar className="h-6 w-6">
+                        <Avatar className='h-6 w-6'>
                           <AvatarImage src={task.assignee.image || undefined} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className='text-xs'>
                             {task.assignee.name.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -367,11 +399,11 @@ export default async function ProjectDetailPage({
         </TabsContent>
 
         {/* Tasks Tab */}
-        <TabsContent value="tasks" className="space-y-4 mt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <TabsContent value='tasks' className='space-y-4 mt-6'>
+          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
             <div>
-              <h2 className="text-lg sm:text-xl font-semibold">Project Tasks</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className='text-lg sm:text-xl font-semibold'>Project Tasks</h2>
+              <p className='text-sm text-muted-foreground'>
                 Manage and track all tasks for this project
               </p>
             </div>
@@ -381,14 +413,14 @@ export default async function ProjectDetailPage({
           {formattedTasks.length > 0 ? (
             <TaskViewSwitcher tasks={formattedTasks} members={members} />
           ) : (
-            <Card className="p-12">
-              <div className="text-center">
-                <CheckCircle2 className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">No tasks yet</h3>
-                <p className="mt-2 text-muted-foreground">
+            <Card className='p-12'>
+              <div className='text-center'>
+                <CheckCircle2 className='mx-auto h-12 w-12 text-muted-foreground' />
+                <h3 className='mt-4 text-lg font-semibold'>No tasks yet</h3>
+                <p className='mt-2 text-muted-foreground'>
                   Get started by creating your first task
                 </p>
-                <div className="mt-4 flex justify-center">
+                <div className='mt-4 flex justify-center'>
                   <CreateTaskDialog projectId={project.id} members={members} />
                 </div>
               </div>
@@ -397,10 +429,10 @@ export default async function ProjectDetailPage({
         </TabsContent>
 
         {/* Files Tab */}
-        <TabsContent value="files" className="space-y-4 mt-6">
+        <TabsContent value='files' className='space-y-4 mt-6'>
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold">Project Files</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className='text-lg sm:text-xl font-semibold'>Project Files</h2>
+            <p className='text-sm text-muted-foreground'>
               Upload and manage files related to this project
             </p>
           </div>
