@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { db } from "@/src/db";
 import { tasks, workspaceMembers, projects } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import {
   logTaskStatusChanged,
   logActivity,
@@ -47,6 +48,12 @@ export async function PATCH(
 
     const validated = updateTaskSchema.parse(body);
 
+    // 🔒 SECURITY: Get user's workspace first
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace access" }, { status: 403 });
+    }
+
     // Get original task for comparison
     const originalTask = await db.query.tasks.findFirst({
       where: eq(tasks.id, taskId),
@@ -57,6 +64,11 @@ export async function PATCH(
 
     if (!originalTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    // 🔒 SECURITY: Verify task belongs to user's workspace via project
+    if (!originalTask.project || originalTask.project.workspaceId !== workspace.id) {
+      return NextResponse.json({ error: "Task not found or no access" }, { status: 404 });
     }
 
     // Build update object
@@ -180,8 +192,31 @@ export async function DELETE(
   { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    await getCurrentUser();
+    const user = await getCurrentUser();
     const { taskId } = await params;
+
+    // 🔒 SECURITY: Verify task belongs to user's workspace
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace access" }, { status: 403 });
+    }
+
+    // Get task with project to verify workspace
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId),
+      with: {
+        project: true,
+      },
+    });
+
+    if (!task) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    // Verify task belongs to user's workspace
+    if (!task.project || task.project.workspaceId !== workspace.id) {
+      return NextResponse.json({ error: "Task not found or no access" }, { status: 404 });
+    }
 
     await db.delete(tasks).where(eq(tasks.id, taskId));
 

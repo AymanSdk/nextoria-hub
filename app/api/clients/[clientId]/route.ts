@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { db } from "@/src/db";
 import { clients } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
 const updateClientSchema = z.object({
@@ -35,14 +36,23 @@ export async function GET(
     const user = await getCurrentUser();
     const { clientId } = await params;
 
+    // 🔒 SECURITY: Verify client belongs to user's workspace
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace access" }, { status: 403 });
+    }
+
     const [client] = await db
       .select()
       .from(clients)
-      .where(eq(clients.id, clientId))
+      .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspace.id)))
       .limit(1);
 
     if (!client) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Client not found or no access" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ client });
@@ -67,17 +77,26 @@ export async function PATCH(
 
     const validated = updateClientSchema.parse(body);
 
+    // 🔒 SECURITY: Verify client belongs to user's workspace
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace access" }, { status: 403 });
+    }
+
     const [updatedClient] = await db
       .update(clients)
       .set({
         ...validated,
         updatedAt: new Date(),
       })
-      .where(eq(clients.id, clientId))
+      .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspace.id)))
       .returning();
 
     if (!updatedClient) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Client not found or no access" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ client: updatedClient });
@@ -103,7 +122,31 @@ export async function DELETE(
     const user = await getCurrentUser();
     const { clientId } = await params;
 
-    await db.delete(clients).where(eq(clients.id, clientId));
+    // 🔒 SECURITY: Verify client belongs to user's workspace and user has permission
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace access" }, { status: 403 });
+    }
+
+    // Only admins can delete clients
+    if (user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Only admins can delete clients" },
+        { status: 403 }
+      );
+    }
+
+    const result = await db
+      .delete(clients)
+      .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspace.id)))
+      .returning();
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: "Client not found or no access" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
