@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { RoomProvider as LiveblocksRoomProvider } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { LiveList, LiveObject } from "@liveblocks/client";
+import { LiveMap } from "@liveblocks/client";
 
 interface WhiteboardRoomProviderProps {
   roomId: string;
@@ -18,12 +18,10 @@ export function WhiteboardRoomProvider({
     <LiveblocksRoomProvider
       id={`whiteboard:${roomId}`}
       initialPresence={{
-        cursor: null,
-        selectedElementIds: {},
-        username: undefined,
+        presence: null,
       }}
       initialStorage={{
-        whiteboardData: {},
+        tldrawRecords: new LiveMap(),
       }}
     >
       <ClientSideSuspense

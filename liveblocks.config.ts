@@ -11,6 +11,7 @@ declare global {
         email: string;
         avatar?: string;
         role: string;
+        color?: string;
       };
     };
 
@@ -25,10 +26,9 @@ declare global {
     Presence: {
       isTyping?: boolean;
       lastSeenAt?: number;
-      // Whiteboard presence
-      cursor?: { x: number; y: number } | null;
-      selectedElementIds?: Record<string, boolean>;
-      username?: string;
+      // Whiteboard presence (tldraw)
+      presence?: any;
+      [key: string]: any;
     };
 
     // Room events for custom real-time events

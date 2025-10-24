@@ -1,46 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Tldraw, createTLStore, defaultShapeUtils, TLStoreWithStatus } from "tldraw";
+import { useMemo } from "react";
+import { Tldraw } from "tldraw";
 import "tldraw/tldraw.css";
-import { useSelf, useRoom } from "@/liveblocks.config";
+import { useSelf } from "@/liveblocks.config";
 import { UserPresence } from "./user-presence";
-import { useOthers } from "@/liveblocks.config";
-import { LiveblocksYjsProvider } from "@/components/whiteboard/liveblocks-yjs-provider";
-import * as Y from "yjs";
+import { useStorageStore } from "./use-storage-store";
 
 export function CollaborativeWhiteboard() {
-  const room = useRoom();
   const currentUser = useSelf();
-  const others = useOthers();
-  const [store, setStore] = useState<TLStoreWithStatus>({ status: "loading" });
 
-  useEffect(() => {
-    // Create Yjs document
-    const yDoc = new Y.Doc();
+  // Memoize user object to prevent infinite re-renders
+  const user = useMemo(
+    () => ({
+      id: currentUser?.id || "anonymous",
+      color: currentUser?.info?.color || "#000000",
+      name: currentUser?.info?.name || "Anonymous",
+    }),
+    [currentUser?.id, currentUser?.info?.color, currentUser?.info?.name]
+  );
 
-    // Create tldraw store
-    const tlStore = createTLStore({
-      shapeUtils: defaultShapeUtils,
-    });
-
-    // Set up Liveblocks Yjs provider for real-time sync
-    const provider = new LiveblocksYjsProvider(room, yDoc);
-
-    // Sync tldraw store with Yjs
-    provider.syncTldrawStore(tlStore);
-
-    setStore({
-      store: tlStore,
-      status: "synced-remote",
-      connectionStatus: "online",
-    });
-
-    return () => {
-      provider.destroy();
-      tlStore.dispose();
-    };
-  }, [room]);
+  // Use official Liveblocks + tldraw storage integration
+  const store = useStorageStore({ user });
 
   return (
     <div className='fixed inset-0 w-full h-full flex flex-col bg-white dark:bg-gray-900'>
@@ -69,24 +50,12 @@ export function CollaborativeWhiteboard() {
           <div className='h-4 w-px bg-border' />
           <span className='text-sm font-medium'>Collaborative Whiteboard</span>
         </div>
-        <UserPresence others={Array.from(others)} />
+        <UserPresence />
       </div>
 
       {/* Whiteboard Canvas */}
       <div className='flex-1 relative overflow-hidden'>
-        <Tldraw
-          store={store}
-          autoFocus
-          onMount={(editor) => {
-            // Set user info
-            if (currentUser?.info?.name) {
-              editor.user.updateUserPreferences({
-                name: currentUser.info.name,
-                color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
-              });
-            }
-          }}
-        />
+        <Tldraw store={store} autoFocus />
       </div>
     </div>
   );

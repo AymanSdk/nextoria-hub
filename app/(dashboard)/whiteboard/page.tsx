@@ -95,7 +95,8 @@ export default async function WhiteboardIndexPage() {
           </CardHeader>
           <CardContent>
             <p className='text-sm text-muted-foreground'>
-              See your teammates' changes instantly with CRDT-based sync
+              See your teammates' changes instantly with smooth cursors and real-time sync
+              powered by Liveblocks
             </p>
           </CardContent>
         </Card>
@@ -106,7 +107,8 @@ export default async function WhiteboardIndexPage() {
           </CardHeader>
           <CardContent>
             <p className='text-sm text-muted-foreground'>
-              Access shapes, text, arrows, sticky notes, and more with tldraw
+              Access shapes, text, arrows, sticky notes, and more with tldraw's powerful
+              canvas
             </p>
           </CardContent>
         </Card>

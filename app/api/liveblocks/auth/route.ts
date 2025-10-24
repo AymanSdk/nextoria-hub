@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
       email: user.email || "",
       avatar: user.image || undefined,
       role: user.role || "USER",
+      color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
     };
 
     // Create a session for the current user

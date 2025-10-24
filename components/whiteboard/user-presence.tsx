@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useOthers } from "@/liveblocks.config";
 
-interface UserPresenceProps {
-  others: any[];
-}
+export function UserPresence() {
+  const others = useOthers();
 
-export function UserPresence({ others }: UserPresenceProps) {
-  const [activeUsers, setActiveUsers] = useState<
-    Array<{ id: string; name: string; avatar?: string; color: string }>
-  >([]);
-
-  useEffect(() => {
+  const activeUsers = useMemo(() => {
     // Generate a color for each user based on their ID
     const colors = [
       "bg-blue-500",
@@ -25,14 +20,12 @@ export function UserPresence({ others }: UserPresenceProps) {
       "bg-orange-500",
     ];
 
-    const users = others.map((other, index) => ({
+    return others.map((other, index) => ({
       id: other.id,
       name: other.presence?.username || other.info?.name || "Anonymous",
       avatar: other.info?.avatar,
       color: colors[index % colors.length],
     }));
-
-    setActiveUsers(users);
   }, [others]);
 
   if (activeUsers.length === 0) {
@@ -41,7 +34,7 @@ export function UserPresence({ others }: UserPresenceProps) {
 
   return (
     <div className='flex items-center gap-2'>
-      <span className='text-sm text-muted-foreground'>
+      <span className='text-sm text-muted-foreground mr-1'>
         {activeUsers.length + 1} {activeUsers.length + 1 === 1 ? "user" : "users"}
       </span>
       <div className='flex -space-x-2'>
