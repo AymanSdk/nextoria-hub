@@ -272,7 +272,7 @@ export function AppSidebar({
                   <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
                     <Link href={item.href} className='relative'>
                       <Icon />
-                      <span>{item.title}</span>
+                      <span className='font-medium tracking-tight'>{item.title}</span>
                       {/* Show dot when collapsed */}
                       {item.badge && item.badge > 0 && isSidebarCollapsed && (
                         <span className='absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background' />
@@ -309,9 +309,13 @@ export function AppSidebar({
                     priority
                   />
                 </div>
-                <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-semibold'>Nextoria</span>
-                  <span className='truncate text-xs text-muted-foreground'>Hub</span>
+                <div className='grid flex-1 text-left leading-tight'>
+                  <span className='truncate font-display text-[15px] font-bold tracking-tight'>
+                    Nextoria
+                  </span>
+                  <span className='truncate text-[11px] font-medium tracking-wide uppercase text-muted-foreground/70'>
+                    Hub
+                  </span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -373,9 +377,11 @@ export function AppSidebar({
                     size={32}
                     className='rounded-lg'
                   />
-                  <div className='grid flex-1 text-left text-sm leading-tight'>
-                    <span className='truncate font-semibold'>{userName}</span>
-                    <span className='truncate text-xs text-muted-foreground'>
+                  <div className='grid flex-1 text-left leading-tight'>
+                    <span className='truncate text-sm font-semibold tracking-tight'>
+                      {userName}
+                    </span>
+                    <span className='truncate text-[11px] font-medium text-muted-foreground/80 tracking-normal'>
                       {userEmail}
                     </span>
                   </div>
@@ -397,9 +403,11 @@ export function AppSidebar({
                       size={32}
                       className='rounded-lg'
                     />
-                    <div className='grid flex-1 text-left text-sm leading-tight'>
-                      <span className='truncate font-semibold'>{userName}</span>
-                      <span className='truncate text-xs text-muted-foreground'>
+                    <div className='grid flex-1 text-left leading-tight'>
+                      <span className='truncate text-sm font-semibold tracking-tight'>
+                        {userName}
+                      </span>
+                      <span className='truncate text-[11px] font-medium text-muted-foreground/80 tracking-normal'>
                         {userEmail}
                       </span>
                     </div>
@@ -407,26 +415,26 @@ export function AppSidebar({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href='/settings/profile'>
+                  <Link href='/settings/profile' className='font-medium tracking-tight'>
                     <User2 className='mr-2 h-4 w-4' />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href='/settings'>
+                  <Link href='/settings' className='font-medium tracking-tight'>
                     <Settings className='mr-2 h-4 w-4' />
                     Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href='/docs'>
+                  <Link href='/docs' className='font-medium tracking-tight'>
                     <BookOpen className='mr-2 h-4 w-4' />
                     Documentation
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className='text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
+                  className='font-medium tracking-tight text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400'
                   onClick={() => signOut({ callbackUrl: "/auth/signin" })}
                 >
                   Log out

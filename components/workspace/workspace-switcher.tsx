@@ -85,9 +85,11 @@ export function WorkspaceSwitcher({
           <div className='flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground'>
             <Building2 className='size-4' />
           </div>
-          <div className='grid flex-1 text-left text-sm leading-tight'>
-            <span className='truncate font-semibold'>{currentWorkspace.name}</span>
-            <span className='truncate text-xs'>
+          <div className='grid flex-1 text-left leading-tight'>
+            <span className='truncate text-sm font-semibold tracking-tight'>
+              {currentWorkspace.name}
+            </span>
+            <span className='truncate text-[11px] font-medium text-muted-foreground/80 tracking-normal'>
               {currentWorkspace.description || "Workspace"}
             </span>
           </div>
@@ -104,7 +106,7 @@ export function WorkspaceSwitcher({
         align='start'
         sideOffset={4}
       >
-        <DropdownMenuLabel className='text-xs text-muted-foreground'>
+        <DropdownMenuLabel className='text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70'>
           Switch Workspace
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -123,19 +125,27 @@ export function WorkspaceSwitcher({
                 <div className='flex items-center gap-2 flex-1 min-w-0'>
                   {isCurrent && <Check className='h-4 w-4 shrink-0' />}
                   <div className='flex-1 min-w-0'>
-                    <p className='text-sm font-medium truncate'>{workspace.name}</p>
-                    <p className='text-xs text-muted-foreground truncate'>
+                    <p className='text-[13px] font-semibold truncate tracking-tight'>
+                      {workspace.name}
+                    </p>
+                    <p className='text-[11px] text-muted-foreground/80 truncate font-medium tracking-normal'>
                       {workspace.description || workspace.slug}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center gap-1 shrink-0'>
                   {isOwner && (
-                    <Badge variant='secondary' className='text-xs'>
+                    <Badge
+                      variant='secondary'
+                      className='text-[10px] font-bold tracking-tight'
+                    >
                       Owner
                     </Badge>
                   )}
-                  <Badge variant='outline' className='text-xs'>
+                  <Badge
+                    variant='outline'
+                    className='text-[10px] font-bold tracking-tight'
+                  >
                     {workspace.role}
                   </Badge>
                 </div>
