@@ -149,7 +149,7 @@ function getActivityBadge(
 export function ActivityFeed({ activities }: ActivityFeedProps) {
   if (activities.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center py-16 px-4 text-center'>
+      <div className='h-full flex flex-col items-center justify-center text-center'>
         <div className='relative mb-5'>
           <div className='h-14 w-14 rounded-2xl bg-muted/80 flex items-center justify-center border border-border/60'>
             <Sparkles className='h-6 w-6 text-muted-foreground' />
@@ -164,8 +164,8 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
   }
 
   return (
-    <ScrollArea className='h-[400px] pr-2.5'>
-      <div className='space-y-2'>
+    <ScrollArea className='h-full w-full'>
+      <div className='space-y-2.5'>
         {activities.map((activity) => {
           const url = getActivityUrl(activity.entityType, activity.entityId);
           const badge = getActivityBadge(activity.activityType);
@@ -178,7 +178,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
               <div className='shrink-0 relative'>
                 {activity.user ? (
                   <div className='relative'>
-                    <Avatar className='h-9 w-9 ring-2 ring-card'>
+                    <Avatar className='h-10 w-10 ring-2 ring-card shadow-sm'>
                       <AvatarImage src={activity.user.avatarUrl || undefined} />
                       <AvatarFallback className='text-[10px] bg-muted text-muted-foreground font-medium'>
                         {activity.user.name
@@ -192,7 +192,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                     {/* Activity type indicator */}
                     <div
                       className={cn(
-                        "absolute -bottom-0.5 -right-0.5 h-[18px] w-[18px] rounded-full flex items-center justify-center ring-2 ring-card",
+                        "absolute -bottom-0.5 -right-0.5 h-[19px] w-[19px] rounded-full flex items-center justify-center ring-2 ring-card shadow-sm",
                         iconConfig.bg
                       )}
                       style={{ color: iconConfig.color }}
@@ -203,22 +203,22 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                 ) : (
                   <div
                     className={cn(
-                      "h-9 w-9 rounded-lg flex items-center justify-center ring-2 ring-card",
+                      "h-10 w-10 rounded-lg flex items-center justify-center ring-2 ring-card shadow-sm",
                       iconConfig.bg
                     )}
                   >
-                    <Icon className='h-4 w-4' style={{ color: iconConfig.color }} />
+                    <Icon className='h-4.5 w-4.5' style={{ color: iconConfig.color }} />
                   </div>
                 )}
               </div>
 
               {/* Content */}
               <div className='flex-1 min-w-0'>
-                <div className='flex items-start justify-between gap-2 mb-0.5'>
+                <div className='flex items-start justify-between gap-2 mb-1'>
                   <div className='flex-1 min-w-0'>
-                    <p className='text-[13px] leading-relaxed text-foreground/90'>
+                    <p className='text-sm leading-relaxed text-foreground/90'>
                       {activity.user && (
-                        <span className='font-medium text-foreground'>
+                        <span className='font-semibold text-foreground'>
                           {activity.user.name}{" "}
                         </span>
                       )}
@@ -238,13 +238,13 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                 </div>
 
                 {activity.description && (
-                  <p className='text-xs text-muted-foreground/70 line-clamp-1 mb-1 leading-relaxed'>
+                  <p className='text-xs text-muted-foreground/70 line-clamp-1 mb-1.5 leading-relaxed'>
                     {activity.description}
                   </p>
                 )}
 
                 <div className='flex items-center gap-1.5 text-[11px] text-muted-foreground/60'>
-                  <Clock className='h-3 w-3' />
+                  <Clock className='h-3.5 w-3.5' />
                   <time>
                     {formatDistanceToNow(new Date(activity.createdAt), {
                       addSuffix: true,
@@ -253,7 +253,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                   {url && (
                     <>
                       <Dot className='h-3 w-3 opacity-50' />
-                      <span className='text-primary opacity-0 group-hover:opacity-100 transition-opacity'>
+                      <span className='text-primary opacity-0 group-hover:opacity-100 transition-opacity font-medium'>
                         View
                       </span>
                     </>
@@ -269,10 +269,10 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                 <Link
                   href={url}
                   className={cn(
-                    "flex gap-3 p-3 rounded-lg transition-all duration-200 relative group",
+                    "flex gap-3.5 p-3.5 rounded-lg transition-all duration-200 relative group",
                     "bg-linear-to-r from-primary/5 via-card/50 to-card/50",
                     "hover:from-primary/10 hover:bg-card cursor-pointer",
-                    "border border-primary/10 hover:border-primary/20"
+                    "border border-primary/10 hover:border-primary/20 hover:shadow-md"
                   )}
                 >
                   {content}
@@ -280,7 +280,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
               ) : (
                 <div
                   className={cn(
-                    "flex gap-3 p-3 rounded-lg",
+                    "flex gap-3.5 p-3.5 rounded-lg",
                     "bg-linear-to-r from-primary/3 via-card/30 to-card/30",
                     "border border-primary/5"
                   )}

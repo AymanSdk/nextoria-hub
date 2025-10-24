@@ -40,6 +40,7 @@ import { isAdmin } from "@/src/lib/auth/rbac";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TaskDistributionChart } from "@/components/dashboard/task-distribution-chart";
 import { ProjectStatusChart } from "@/components/dashboard/project-status-chart";
 import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
@@ -547,73 +548,72 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </CardHeader>
-          <CardContent
-            className={
-              recentProjects.length === 0
-                ? "pt-0 pb-2 px-3 min-h-[300px] flex items-center"
-                : "pt-0 pb-2 px-3"
-            }
-          >
-            {recentProjects.length > 0 ? (
-              <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-3 backdrop-blur-sm shadow-inner'>
-                <div className='space-y-2'>
-                  {recentProjects.slice(0, 3).map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects/${project.slug}`}
-                      className='flex items-center justify-between p-3 rounded-lg transition-all duration-200 relative group bg-linear-to-r from-primary/5 via-card/50 to-card/50 hover:from-primary/10 hover:bg-card cursor-pointer border border-primary/10 hover:border-primary/20'
-                    >
-                      <div className='flex items-center gap-3'>
-                        <div
-                          className='h-10 w-10 rounded-lg flex items-center justify-center shadow-sm'
-                          style={{
-                            backgroundColor: project.color || "hsl(var(--primary))",
-                          }}
-                        >
-                          <FolderKanban className='h-5 w-5 text-white' />
-                        </div>
-                        <div>
-                          <p className='font-semibold group-hover:text-primary transition-colors'>
-                            {project.name}
-                          </p>
-                          <p className='text-sm text-muted-foreground'>
-                            {project.description?.substring(0, 50)}
-                            {project.description && project.description.length > 50
-                              ? "..."
-                              : ""}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant={project.status === "ACTIVE" ? "default" : "secondary"}
+          <CardContent className='p-3'>
+            <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 backdrop-blur-sm shadow-inner overflow-hidden h-[420px]'>
+              {recentProjects.length > 0 ? (
+                <ScrollArea className='h-full w-full'>
+                  <div className='space-y-2.5 p-4'>
+                    {recentProjects.slice(0, 5).map((project) => (
+                      <Link
+                        key={project.id}
+                        href={`/projects/${project.slug}`}
+                        className='flex items-center justify-between p-3.5 rounded-lg transition-all duration-200 relative group bg-linear-to-r from-primary/5 via-card/50 to-card/50 hover:from-primary/10 hover:bg-card cursor-pointer border border-primary/10 hover:border-primary/20 hover:shadow-md'
                       >
-                        {project.status}
-                      </Badge>
-                    </Link>
-                  ))}
+                        <div className='flex items-center gap-3.5 min-w-0 flex-1'>
+                          <div
+                            className='h-11 w-11 shrink-0 rounded-lg flex items-center justify-center shadow-sm'
+                            style={{
+                              backgroundColor: project.color || "hsl(var(--primary))",
+                            }}
+                          >
+                            <FolderKanban className='h-5 w-5 text-white' />
+                          </div>
+                          <div className='min-w-0 flex-1'>
+                            <p className='font-semibold text-sm group-hover:text-primary transition-colors truncate'>
+                              {project.name}
+                            </p>
+                            <p className='text-xs text-muted-foreground line-clamp-1 mt-0.5'>
+                              {project.description?.substring(0, 60)}
+                              {project.description && project.description.length > 60
+                                ? "..."
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge
+                          variant={project.status === "ACTIVE" ? "default" : "secondary"}
+                          className='shrink-0 ml-2'
+                        >
+                          {project.status}
+                        </Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className='h-full flex items-center justify-center p-4'>
+                  <Empty>
+                    <EmptyHeader>
+                      <EmptyMedia variant='icon'>
+                        <FolderKanban />
+                      </EmptyMedia>
+                      <EmptyTitle>No projects yet</EmptyTitle>
+                      <EmptyDescription>
+                        Get started by creating your first project to organize your work
+                      </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <Link href='/projects/new'>
+                        <Button>
+                          <Plus className='h-4 w-4 mr-2' />
+                          Create Your First Project
+                        </Button>
+                      </Link>
+                    </EmptyContent>
+                  </Empty>
                 </div>
-              </div>
-            ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant='icon'>
-                    <FolderKanban />
-                  </EmptyMedia>
-                  <EmptyTitle>No projects yet</EmptyTitle>
-                  <EmptyDescription>
-                    Get started by creating your first project to organize your work
-                  </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Link href='/projects/new'>
-                    <Button>
-                      <Plus className='h-4 w-4 mr-2' />
-                      Create Your First Project
-                    </Button>
-                  </Link>
-                </EmptyContent>
-              </Empty>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -648,8 +648,8 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='pt-0 pb-2 px-3'>
-            <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-3 backdrop-blur-sm shadow-inner'>
+          <CardContent className='p-3'>
+            <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-4 backdrop-blur-sm shadow-inner overflow-hidden h-[420px]'>
               <ActivityFeed activities={recentActivities} />
             </div>
           </CardContent>
