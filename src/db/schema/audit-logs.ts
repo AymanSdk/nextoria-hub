@@ -16,6 +16,10 @@ export const auditEntityTypeEnum = pgEnum("audit_entity_type", [
   "ROLE",
   "INTEGRATION",
   "SETTING",
+  "CONTENT",
+  "CAMPAIGN",
+  "APPROVAL",
+  "EXPENSE",
 ]);
 
 /**

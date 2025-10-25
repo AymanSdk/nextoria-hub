@@ -616,10 +616,10 @@ function FlowchartGridCard({
   onDuplicate: (flowchart: Flowchart) => void;
 }) {
   return (
-    <Card className='group hover:border-primary transition-all hover:shadow-lg overflow-hidden'>
+    <Card className='group hover:border-primary transition-all hover:shadow-lg overflow-hidden p-0'>
       {/* Thumbnail */}
       <Link href={`/flowchart/${flowchart.id}`}>
-        <div className='aspect-video bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 flex items-center justify-center relative overflow-hidden'>
+        <div className='aspect-video bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/30 dark:via-indigo-950/30 dark:to-purple-950/30 flex items-center justify-center relative overflow-hidden'>
           <div className='absolute inset-0 bg-grid-slate-200 dark:bg-grid-slate-700 opacity-30' />
           <Workflow className='h-12 w-12 text-muted-foreground/30' />
           {flowchart.isPublic && (
@@ -633,7 +633,7 @@ function FlowchartGridCard({
         </div>
       </Link>
 
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-3 pt-6 px-6'>
         <div className='flex items-start justify-between gap-2'>
           <div className='flex-1 min-w-0'>
             <Link href={`/flowchart/${flowchart.id}`}>
@@ -680,7 +680,7 @@ function FlowchartGridCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className='px-6 pb-6'>
         {flowchart.description && (
           <p className='text-sm text-muted-foreground mb-3 line-clamp-2'>
             {flowchart.description}
@@ -720,7 +720,7 @@ function FlowchartListItem({
         <div className='flex items-center gap-4'>
           {/* Thumbnail */}
           <Link href={`/flowchart/${flowchart.id}`}>
-            <div className='w-24 h-16 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 flex items-center justify-center flex-shrink-0'>
+            <div className='w-24 h-16 rounded-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 flex items-center justify-center shrink-0'>
               <Workflow className='h-6 w-6 text-muted-foreground/40' />
             </div>
           </Link>

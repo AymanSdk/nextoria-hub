@@ -7,18 +7,34 @@ export async function GET() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const workspace = await getCurrentWorkspace(session.user.id);
 
     if (!workspace) {
-      return NextResponse.json({ error: "No workspace found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "No workspace found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ workspaceId: workspace.id });
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+      },
+    });
   } catch (error) {
     console.error("Error fetching workspace:", error);
-    return NextResponse.json({ error: "Failed to fetch workspace" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch workspace" },
+      { status: 500 }
+    );
   }
 }

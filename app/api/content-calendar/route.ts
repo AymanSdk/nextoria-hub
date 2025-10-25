@@ -89,46 +89,65 @@ export async function POST(request: NextRequest) {
       isRecurring,
     } = body;
 
+    console.log("POST /api/content-calendar - Request body:", body);
+    console.log("Auth user:", auth.user);
+
     if (!title || !workspaceId || !type) {
       return apiError("Missing required fields: title, workspaceId, type", 400);
     }
 
-    const [item] = await db
-      .insert(contentCalendar)
-      .values({
-        title,
-        description,
-        workspaceId,
-        projectId,
-        campaignId,
-        type,
-        status: status || "IDEA",
-        platform,
-        publishDate: publishDate ? new Date(publishDate) : undefined,
-        assignedTo,
-        createdBy: auth.user.id,
-        contentBody,
-        tags,
-        keywords,
-        isRecurring: isRecurring || false,
-      })
-      .returning();
-
-    // Audit log
-    await logCreate({
+    const insertData = {
+      title,
+      description: description || null,
       workspaceId,
-      userId: auth.user.id,
-      userEmail: auth.user.email || "",
-      userRole: auth.user.role,
-      entityType: "PROJECT",
-      entityId: item.id,
-      entityName: item.title,
-      ipAddress: getClientIp(request),
-    });
+      projectId: projectId || null,
+      campaignId: campaignId || null,
+      type,
+      status: status || "IDEA",
+      platform: platform || null,
+      publishDate: publishDate ? new Date(publishDate) : null,
+      assignedTo: assignedTo || null,
+      createdBy: auth.user.id,
+      contentBody: contentBody || null,
+      tags: tags || null,
+      keywords: keywords || null,
+      isRecurring: isRecurring || false,
+    };
+
+    console.log("Inserting data:", insertData);
+
+    const [item] = await db.insert(contentCalendar).values(insertData).returning();
+
+    console.log("Created item:", item);
+
+    // Audit log (non-blocking)
+    try {
+      await logCreate({
+        workspaceId,
+        userId: auth.user.id,
+        userEmail: auth.user.email || "",
+        userRole: auth.user.role,
+        entityType: "CONTENT",
+        entityId: item.id,
+        entityName: item.title,
+        ipAddress: getClientIp(request),
+      });
+    } catch (auditError) {
+      // Log the error but don't fail the request
+      console.error("Failed to create audit log:", auditError);
+    }
 
     return apiSuccess(item, 201);
-  } catch (error) {
-    console.error("Failed to create content calendar item:", error);
+  } catch (error: any) {
+    console.error("Failed to create content calendar item - Full error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+
+    // Return more detailed error in development
+    if (process.env.NODE_ENV === "development") {
+      return apiError(`Failed to create content: ${error.message}`, 500);
+    }
+
     return apiError("Failed to create content calendar item", 500);
   }
 }

@@ -517,8 +517,8 @@ export default async function DashboardPage() {
 
       {/* Recent Projects and Activity */}
       <div className='grid gap-6 md:grid-cols-2'>
-        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl'>
-          <CardHeader className='pb-3 pt-5'>
+        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl p-0'>
+          <CardHeader className='pb-3 pt-6 px-6'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-4'>
                 <div className='relative'>
@@ -548,7 +548,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='p-3'>
+          <CardContent className='px-6 pb-6 pt-0'>
             <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 backdrop-blur-sm shadow-inner overflow-hidden h-[420px]'>
               {recentProjects.length > 0 ? (
                 <ScrollArea className='h-full w-full'>
@@ -617,8 +617,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl'>
-          <CardHeader className='pb-3 pt-5'>
+        <Card className='border-border/60 shadow-lg overflow-visible bg-card/50 backdrop-blur-xl p-0'>
+          <CardHeader className='pb-3 pt-6 px-6'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-4'>
                 <div className='relative'>
@@ -648,7 +648,7 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </CardHeader>
-          <CardContent className='p-3'>
+          <CardContent className='px-6 pb-6 pt-0'>
             <div className='rounded-xl border border-primary/10 bg-linear-to-br from-primary/5 to-muted/30 p-4 backdrop-blur-sm shadow-inner overflow-hidden h-[420px]'>
               <ActivityFeed activities={recentActivities} />
             </div>
