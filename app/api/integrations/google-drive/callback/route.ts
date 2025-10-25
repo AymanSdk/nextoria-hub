@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=unauthorized`
       );
     }
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
         console.error("User has no workspace memberships!");
         return NextResponse.redirect(
           `${
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+            process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
           }/files?error=no_workspace`
         );
       }
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     if (!workspace) {
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=no_workspace`
       );
     }
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       console.error("Non-admin user attempted to connect integration");
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=forbidden`
       );
     }
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
       console.error("Google Drive OAuth error:", error);
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=access_denied`
       );
     }
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     if (!code) {
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=no_code`
       );
     }
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
     if (state !== user.id) {
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=invalid_state`
       );
     }
@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=config_missing`
       );
     }
@@ -144,7 +144,7 @@ export async function GET(req: NextRequest) {
       console.error("Token exchange error:", error);
       return NextResponse.redirect(
         `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
         }/files?error=token_exchange_failed`
       );
     }
@@ -210,7 +210,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.redirect(
       `${
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
       }/files?tab=drive&connected=true`
     );
   } catch (error) {
@@ -222,7 +222,7 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.redirect(
       `${
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
       }/files?error=callback_failed`
     );
   }

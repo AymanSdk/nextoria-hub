@@ -19,7 +19,25 @@ function createTransporter() {
   // In production, use a real email service (SendGrid, Mailgun, etc.)
   // For now, using a test configuration
   if (process.env.SMTP_HOST) {
-    return nodemailer.createTransporter({
+    // Handle both CommonJS and ES Module exports
+    // Note: The method is createTransport (not createTransporter!)
+    const createTransport =
+      (nodemailer as any).createTransport || (nodemailer as any).default?.createTransport;
+
+    if (!createTransport) {
+      console.error("Nodemailer createTransport not available, falling back to dev mode");
+      return {
+        sendMail: async (options: any) => {
+          console.log("📧 Email (dev mode - nodemailer unavailable):");
+          console.log("To:", options.to);
+          console.log("Subject:", options.subject);
+          console.log("---");
+          return { messageId: "dev-" + Date.now() };
+        },
+      };
+    }
+
+    return createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || "587"),
       secure: process.env.SMTP_SECURE === "true",
@@ -124,7 +142,7 @@ export async function sendWelcomeEmail(params: {
             <li>Connect with your team</li>
           </ul>
           <a href="${
-            process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+            process.env.NEXT_PUBLIC_APP_URL || "https://app.nextoria.studio"
           }" class="button">Get Started</a>
           <p style="margin-top: 30px; font-size: 14px; color: #666;">
             If you have any questions, feel free to reach out to your project manager.
@@ -145,10 +163,7 @@ export async function sendWelcomeEmail(params: {
 /**
  * Send password reset email
  */
-export async function sendPasswordResetEmail(params: {
-  to: string;
-  resetLink: string;
-}) {
+export async function sendPasswordResetEmail(params: { to: string; resetLink: string }) {
   const html = `
     <!DOCTYPE html>
     <html>
@@ -195,5 +210,195 @@ export async function sendPasswordResetEmail(params: {
     to: params.to,
     subject: "Reset Your Password",
     html,
+  });
+}
+
+/**
+ * Send invitation email
+ */
+export async function sendInvitationEmail(params: {
+  to: string;
+  inviterName: string;
+  workspaceName: string;
+  role: string;
+  invitationLink: string;
+  expiresAt: Date;
+}) {
+  const roleDisplay = params.role.charAt(0) + params.role.slice(1).toLowerCase();
+  const expiryDate = params.expiresAt.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #f5f5f5;
+        }
+        .email-container {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 40px 30px;
+          text-align: center;
+          color: white;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+        .header p {
+          margin: 10px 0 0 0;
+          opacity: 0.95;
+          font-size: 16px;
+        }
+        .content {
+          padding: 40px 30px;
+        }
+        .content h2 {
+          color: #111;
+          font-size: 20px;
+          margin-top: 0;
+        }
+        .content p {
+          color: #555;
+          font-size: 16px;
+          line-height: 1.6;
+        }
+        .invitation-details {
+          background: #f9fafb;
+          border-left: 4px solid #667eea;
+          padding: 20px;
+          margin: 25px 0;
+          border-radius: 6px;
+        }
+        .invitation-details p {
+          margin: 8px 0;
+          font-size: 15px;
+        }
+        .invitation-details strong {
+          color: #333;
+        }
+        .button-container {
+          text-align: center;
+          margin: 35px 0;
+        }
+        .button {
+          display: inline-block;
+          padding: 16px 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 16px;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          transition: transform 0.2s;
+        }
+        .button:hover {
+          transform: translateY(-2px);
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 30px;
+          text-align: center;
+          border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
+          margin: 8px 0;
+          font-size: 13px;
+          color: #666;
+        }
+        .footer a {
+          color: #667eea;
+          text-decoration: none;
+        }
+        .expiry-notice {
+          background: #fef3c7;
+          border: 1px solid #fbbf24;
+          border-radius: 6px;
+          padding: 15px;
+          margin: 25px 0;
+          font-size: 14px;
+          color: #92400e;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <h1>🎉 You're Invited!</h1>
+          <p>Join ${params.workspaceName} on Nextoria</p>
+        </div>
+        
+        <div class="content">
+          <h2>Hello!</h2>
+          <p><strong>${params.inviterName}</strong> has invited you to join <strong>${
+    params.workspaceName
+  }</strong> as a <strong>${roleDisplay}</strong>.</p>
+          
+          <div class="invitation-details">
+            <p><strong>Workspace:</strong> ${params.workspaceName}</p>
+            <p><strong>Role:</strong> ${roleDisplay}</p>
+            <p><strong>Invited by:</strong> ${params.inviterName}</p>
+          </div>
+
+          <p>Click the button below to accept your invitation and create your account:</p>
+          
+          <div class="button-container">
+            <a href="${params.invitationLink}" class="button">Accept Invitation</a>
+          </div>
+
+          <div class="expiry-notice">
+            ⏰ <strong>Important:</strong> This invitation will expire on ${expiryDate}. Please accept it before then.
+          </div>
+
+          <p>If you're not sure why you received this email, you can safely ignore it.</p>
+        </div>
+
+        <div class="footer">
+          <p>Powered by <strong>Nextoria</strong></p>
+          <p>© ${new Date().getFullYear()} Nextoria Studio. All rights reserved.</p>
+          <p style="margin-top: 15px;">
+            <a href="https://app.nextoria.studio">Visit Website</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+You're Invited to ${params.workspaceName}!
+
+${params.inviterName} has invited you to join ${params.workspaceName} as a ${roleDisplay}.
+
+Accept your invitation: ${params.invitationLink}
+
+This invitation expires on ${expiryDate}.
+
+If you're not sure why you received this email, you can safely ignore it.
+  `;
+
+  return sendEmail({
+    to: params.to,
+    subject: `You're invited to join ${params.workspaceName}`,
+    html,
+    text,
   });
 }
