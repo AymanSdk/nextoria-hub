@@ -9,10 +9,8 @@ import { ChatMessageList } from "@/components/chat/chat-message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatSync } from "@/components/chat/chat-sync";
 import { MobileChatTabs } from "@/components/chat/mobile-chat-tabs";
-import { Button } from "@/components/ui/button";
 import { MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { ChatMessage, ChatChannel } from "@/types/chat";
 
 type Message = ChatMessage;
@@ -189,7 +187,10 @@ export default function ChatPage() {
     }
   };
 
-  const handleSendMessage = async (content: string, attachments?: any[]) => {
+  const handleSendMessage = async (
+    content: string,
+    attachments?: { name: string; url: string; type: string; size: number }[]
+  ) => {
     if (!currentChannel || !session?.user) return;
 
     try {
@@ -261,7 +262,7 @@ export default function ChatPage() {
 
   if (!session?.user) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
+      <div className='flex items-center justify-center h-full'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>Loading...</p>
@@ -272,7 +273,7 @@ export default function ChatPage() {
 
   if (isLoading || !workspaceId) {
     return (
-      <div className='flex items-center justify-center h-[calc(100vh-4rem)]'>
+      <div className='flex items-center justify-center h-full'>
         <div className='text-center'>
           <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-neutral-400' />
           <p className='text-neutral-500'>
@@ -357,7 +358,7 @@ export default function ChatPage() {
   return (
     <>
       {/* Desktop Layout */}
-      <div className='hidden md:flex gap-0 h-[calc(100vh-4rem)] -m-4 md:-m-6 lg:-m-8 overflow-hidden bg-background'>
+      <div className='hidden md:flex gap-0 h-full overflow-hidden bg-background'>
         {/* Channel Panel - Toggleable */}
         <ChannelPanel
           channels={channels}
@@ -380,7 +381,7 @@ export default function ChatPage() {
       </div>
 
       {/* Mobile Layout - Bottom Tabs */}
-      <div className='md:hidden h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background'>
+      <div className='md:hidden h-full overflow-hidden bg-background'>
         <MobileChatTabs
           channels={channels}
           currentChannelId={currentChannel?.id}
