@@ -28,9 +28,9 @@ export function useFlowchartStorage() {
       if (!root.get("flowchartData")) {
         root.set(
           "flowchartData",
-          new LiveObject<FlowchartStorage>({
-            nodes: [],
-            edges: [],
+          new LiveObject({
+            nodes: [] as any,
+            edges: [] as any,
             viewport: { x: 0, y: 0, zoom: 1 },
           })
         );

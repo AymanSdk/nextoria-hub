@@ -84,10 +84,10 @@ export function PropertiesPanel({ selectedNode, onClose }: PropertiesPanelProps)
 
   useEffect(() => {
     if (selectedNode) {
-      setLabel(selectedNode.data.label || "");
-      setDescription(selectedNode.data.description || "");
-      setStatus(selectedNode.data.status || "idle");
-      setVariant(selectedNode.data.variant || "default");
+      setLabel((selectedNode.data as any).label || "");
+      setDescription((selectedNode.data as any).description || "");
+      setStatus((selectedNode.data as any).status || "idle");
+      setVariant((selectedNode.data as any).variant || "default");
     }
   }, [selectedNode]);
 

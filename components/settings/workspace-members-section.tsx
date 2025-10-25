@@ -45,6 +45,7 @@ interface WorkspaceMember {
   role: string;
   isActive: boolean;
   joinedAt: Date;
+  isOwner: boolean;
 }
 
 interface WorkspaceMembersSectionProps {
@@ -124,9 +125,12 @@ export function WorkspaceMembersSection({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/members/${currentUserId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/workspaces/${workspaceId}/members/${currentUserId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();

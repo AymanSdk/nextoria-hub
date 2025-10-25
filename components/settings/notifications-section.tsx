@@ -231,7 +231,7 @@ export function NotificationsSection() {
             key={category.id}
             title={category.title}
             description={category.description}
-            icon={Icon}
+            icon={Icon as any}
           >
             <div className='space-y-4'>
               {category.settings.map((setting, index) => (

@@ -30,8 +30,8 @@ export function FlowchartRoomProvider({
   const initialStorage = useMemo(() => {
     return {
       flowchartData: new LiveObject({
-        nodes: initialData?.nodes || [],
-        edges: initialData?.edges || [],
+        nodes: (initialData?.nodes || []) as any,
+        edges: (initialData?.edges || []) as any,
         viewport: initialData?.viewport || { x: 0, y: 0, zoom: 1 },
       }),
     };

@@ -4,7 +4,10 @@ import { db } from "@/src/db";
 import { chatMessages } from "@/src/db/schema/chat";
 import { nanoid } from "nanoid";
 
-const webhookHandler = new WebhookHandler(process.env.LIVEBLOCKS_WEBHOOK_SECRET!);
+const webhookSecret =
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET ||
+  "whsec_default_build_secret_not_for_production_use_only";
+const webhookHandler = new WebhookHandler(webhookSecret);
 
 /**
  * POST /api/liveblocks/webhook

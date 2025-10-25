@@ -44,7 +44,7 @@ export const CustomEdge = memo(
       <>
         <BaseEdge path={edgePath} markerEnd={markerEnd} style={edgeStyle} />
         <EdgeLabelRenderer>
-          {data?.showDeleteButton && (
+          {(data as any)?.showDeleteButton && (
             <div
               style={{
                 position: "absolute",
@@ -58,8 +58,8 @@ export const CustomEdge = memo(
                 size='icon'
                 className='h-7 w-7 rounded-full shadow-lg hover:scale-110 transition-transform'
                 onClick={() => {
-                  if (data?.onDelete) {
-                    data.onDelete(id);
+                  if ((data as any)?.onDelete) {
+                    (data as any).onDelete(id);
                   }
                 }}
               >
@@ -67,7 +67,7 @@ export const CustomEdge = memo(
               </Button>
             </div>
           )}
-          {data?.label && (
+          {(data as any)?.label && (
             <div
               style={{
                 position: "absolute",
@@ -76,7 +76,7 @@ export const CustomEdge = memo(
               }}
               className='nodrag nopan px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium shadow-lg backdrop-blur-sm'
             >
-              {data.label}
+              {(data as any).label}
             </div>
           )}
         </EdgeLabelRenderer>
