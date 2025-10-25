@@ -1,9 +1,8 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { Pool } from "@neondatabase/serverless";
 import * as schema from "./schema";
 
-// Configure Neon for serverless/edge environments
-neonConfig.fetchConnectionCache = true;
+// Note: fetchConnectionCache is now always enabled by default in @neondatabase/serverless
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set");
@@ -18,4 +17,3 @@ export const db = drizzle(pool, { schema });
 // Export types for use throughout the app
 export type Database = typeof db;
 export { schema };
-

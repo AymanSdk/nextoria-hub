@@ -54,12 +54,24 @@ export default function ChatPage() {
       try {
         const response = await fetch("/api/user/workspace");
         if (response.ok) {
-          const data = await response.json();
-          setWorkspaceId(data.workspaceId);
+          const result = await response.json();
+          // API returns workspace data in result.data.id
+          if (result.success && result.data?.id) {
+            setWorkspaceId(result.data.id);
+          } else {
+            console.error("Invalid workspace response:", result);
+            toast.error("Failed to load workspace");
+            setIsLoading(false);
+          }
+        } else {
+          console.error("Workspace fetch failed with status:", response.status);
+          toast.error("Failed to load workspace");
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching workspace:", error);
         toast.error("Failed to load workspace");
+        setIsLoading(false);
       }
     };
 
