@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
-import { getCurrentWorkspaceId } from "@/src/lib/workspace/context";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { db } from "@/src/db";
 import { integrations } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { isAdmin } from "@/src/lib/auth/rbac";
 
 /**
  * POST /api/integrations/google-drive/disconnect
  * Disconnect Google Drive integration
+ * 🔒 ADMIN ONLY - Only workspace admins can disconnect integrations
  */
 export async function POST(req: NextRequest) {
   try {
@@ -16,9 +18,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workspaceId = await getCurrentWorkspaceId();
-    if (!workspaceId) {
+    // 🔒 SECURITY: Get user's workspace with role
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
       return NextResponse.json({ error: "No workspace found" }, { status: 400 });
+    }
+
+    // 🔒 SECURITY: Only admins can disconnect integrations
+    if (!isAdmin(workspace.role)) {
+      return NextResponse.json(
+        { error: "Forbidden: Only workspace admins can disconnect integrations" },
+        { status: 403 }
+      );
     }
 
     // Deactivate the integration
@@ -30,7 +41,7 @@ export async function POST(req: NextRequest) {
       })
       .where(
         and(
-          eq(integrations.workspaceId, workspaceId),
+          eq(integrations.workspaceId, workspace.id),
           eq(integrations.type, "GOOGLE_DRIVE")
         )
       );

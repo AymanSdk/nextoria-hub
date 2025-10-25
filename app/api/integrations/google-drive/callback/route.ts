@@ -2,15 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import {
   getCurrentWorkspaceId,
+  getCurrentWorkspace,
   setCurrentWorkspaceId,
 } from "@/src/lib/workspace/context";
 import { db } from "@/src/db";
 import { integrations } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { isAdmin } from "@/src/lib/auth/rbac";
 
 /**
  * GET /api/integrations/google-drive/callback
  * Handles OAuth callback from Google
+ * 🔒 ADMIN ONLY - Only workspace admins can complete integration setup
  */
 export async function GET(req: NextRequest) {
   try {
@@ -55,6 +58,25 @@ export async function GET(req: NextRequest) {
 
       // Set the workspace cookie for future requests
       await setCurrentWorkspaceId(workspaceId);
+    }
+
+    // 🔒 SECURITY: Verify user is admin before completing OAuth
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.redirect(
+        `${
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        }/files?error=no_workspace`
+      );
+    }
+
+    if (!isAdmin(workspace.role)) {
+      console.error("Non-admin user attempted to connect integration");
+      return NextResponse.redirect(
+        `${
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        }/files?error=forbidden`
+      );
     }
 
     const { searchParams } = new URL(req.url);

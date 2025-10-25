@@ -11,6 +11,7 @@ import { Role } from "@/src/lib/constants/roles";
  */
 export const permissions = {
   // Admin: Full access to everything
+  // 🔒 ONLY admins can connect/disconnect integrations (like Slack/ClickUp model)
   ADMIN: {
     workspaces: ["create", "read", "update", "delete"],
     users: ["create", "read", "update", "delete", "invite", "manage_roles"],
@@ -23,12 +24,13 @@ export const permissions = {
     content: ["create", "read", "update", "delete", "publish"],
     approvals: ["create", "read", "update", "approve", "reject"],
     chat: ["create", "read", "update", "delete"],
-    integrations: ["create", "read", "update", "delete"],
+    integrations: ["connect", "disconnect", "read", "update", "manage_folders"],
     analytics: ["read"],
     auditLogs: ["read"],
   },
 
   // Developer: Full access to projects and tasks
+  // 🔒 Can only READ integrations, cannot connect/disconnect
   DEVELOPER: {
     workspaces: ["read"],
     users: ["read"],
@@ -41,12 +43,13 @@ export const permissions = {
     content: ["read"],
     approvals: ["create", "read"],
     chat: ["create", "read", "update"],
-    integrations: ["read"],
+    integrations: ["read"], // Can use but not manage
     analytics: ["read"],
     auditLogs: [],
   },
 
   // Designer: Focus on creative work
+  // 🔒 Can only READ integrations, cannot connect/disconnect
   DESIGNER: {
     workspaces: ["read"],
     users: ["read"],
@@ -59,12 +62,13 @@ export const permissions = {
     content: ["create", "read", "update"],
     approvals: ["create", "read"],
     chat: ["create", "read", "update"],
-    integrations: ["read"],
+    integrations: ["read"], // Can use but not manage
     analytics: ["read"],
     auditLogs: [],
   },
 
   // Marketer: Focus on campaigns and content
+  // 🔒 Can only READ integrations, cannot connect/disconnect
   MARKETER: {
     workspaces: ["read"],
     users: ["read"],
@@ -77,12 +81,13 @@ export const permissions = {
     content: ["create", "read", "update", "delete", "publish"],
     approvals: ["create", "read"],
     chat: ["create", "read", "update"],
-    integrations: ["read", "update"],
+    integrations: ["read"], // Can use but not manage
     analytics: ["read"],
     auditLogs: [],
   },
 
   // Client: Limited read access and approvals
+  // 🔒 NO access to integrations at all
   CLIENT: {
     workspaces: ["read"],
     users: ["read"],
@@ -95,7 +100,7 @@ export const permissions = {
     content: ["read"],
     approvals: ["read", "approve", "reject"],
     chat: ["create", "read"],
-    integrations: [],
+    integrations: [], // No access to integrations
     analytics: [],
     auditLogs: [],
   },

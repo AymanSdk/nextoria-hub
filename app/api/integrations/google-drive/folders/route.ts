@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
-import { getCurrentWorkspaceId } from "@/src/lib/workspace/context";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { db } from "@/src/db";
 import { integrations } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { isAdmin } from "@/src/lib/auth/rbac";
 
 /**
  * Refresh access token if needed
@@ -71,8 +72,8 @@ async function getValidAccessToken(integration: any) {
 }
 
 /**
- * GET /api/integrations/google-drive/files
- * List files from Google Drive
+ * GET /api/integrations/google-drive/folders
+ * List folders from Google Drive
  */
 export async function GET(req: NextRequest) {
   try {
@@ -81,16 +82,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workspaceId = await getCurrentWorkspaceId();
-    if (!workspaceId) {
+    // 🔒 SECURITY: Get user's workspace with role
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
       return NextResponse.json({ error: "No workspace found" }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const folderId = searchParams.get("folderId");
-    const pageSize = parseInt(searchParams.get("pageSize") || "100");
-    const pageToken = searchParams.get("pageToken");
-    const query = searchParams.get("query");
+    // 🔒 SECURITY: Only admins can view folders for selection
+    if (!isAdmin(workspace.role)) {
+      return NextResponse.json(
+        { error: "Forbidden: Only admins can manage folder access" },
+        { status: 403 }
+      );
+    }
 
     // Get active Google Drive integration
     const integration = await db
@@ -98,7 +102,7 @@ export async function GET(req: NextRequest) {
       .from(integrations)
       .where(
         and(
-          eq(integrations.workspaceId, workspaceId),
+          eq(integrations.workspaceId, workspace.id),
           eq(integrations.type, "GOOGLE_DRIVE"),
           eq(integrations.isActive, true)
         )
@@ -112,39 +116,16 @@ export async function GET(req: NextRequest) {
     // Get valid access token (refresh if needed)
     const accessToken = await getValidAccessToken(integration[0]);
 
-    // Build query for Google Drive API
-    let driveQuery = "trashed=false";
+    // Query to get only folders
+    const driveQuery = "mimeType='application/vnd.google-apps.folder' and trashed=false";
 
-    // Check for allowed folder restrictions
-    const config = JSON.parse(integration[0].config);
-    const allowedFolderIds = config.allowedFolderIds || [];
-
-    if (folderId) {
-      driveQuery += ` and '${folderId}' in parents`;
-    } else if (allowedFolderIds.length > 0) {
-      // If specific folders are allowed, only show files from those folders
-      const folderConditions = allowedFolderIds
-        .map((id: string) => `'${id}' in parents`)
-        .join(" or ");
-      driveQuery += ` and (${folderConditions})`;
-    }
-
-    if (query) {
-      driveQuery += ` and name contains '${query}'`;
-    }
-
-    // Fetch files from Google Drive
+    // Fetch folders from Google Drive
     const params = new URLSearchParams({
       q: driveQuery,
-      pageSize: pageSize.toString(),
-      fields:
-        "nextPageToken, files(id, name, mimeType, size, createdTime, modifiedTime, webViewLink, thumbnailLink, iconLink, owners, shared)",
-      orderBy: "modifiedTime desc",
+      pageSize: "100",
+      fields: "files(id, name, shared)",
+      orderBy: "name",
     });
-
-    if (pageToken) {
-      params.set("pageToken", pageToken);
-    }
 
     const response = await fetch(
       `https://www.googleapis.com/drive/v3/files?${params.toString()}`,
@@ -159,29 +140,20 @@ export async function GET(req: NextRequest) {
       const error = await response.text();
       console.error("Google Drive API error:", error);
       return NextResponse.json(
-        { error: "Failed to fetch files from Google Drive" },
+        { error: "Failed to fetch folders from Google Drive" },
         { status: response.status }
       );
     }
 
     const data = await response.json();
 
-    // Update last sync time
-    await db
-      .update(integrations)
-      .set({
-        lastSyncAt: new Date(),
-      })
-      .where(eq(integrations.id, integration[0].id));
-
     return NextResponse.json({
-      files: data.files || [],
-      nextPageToken: data.nextPageToken,
+      folders: data.files || [],
     });
   } catch (error) {
-    console.error("Google Drive files error:", error);
+    console.error("Google Drive folders error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch Google Drive files" },
+      { error: "Failed to fetch Google Drive folders" },
       { status: 500 }
     );
   }

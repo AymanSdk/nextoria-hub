@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/empty";
 import { LinkDriveFileDialog } from "./link-drive-file-dialog";
 import { FilePreviewDialog } from "./file-preview-dialog";
+import { GoogleDriveFolderSelector } from "./google-drive-folder-selector";
 import {
   Pagination,
   PaginationContent,
@@ -71,9 +72,12 @@ export function GoogleDriveBrowser() {
   const [currentPage, setCurrentPage] = useState(1);
   const [previewFile, setPreviewFile] = useState<DriveFile | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [allowedFolderIds, setAllowedFolderIds] = useState<string[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const itemsPerPage = 20;
 
   useEffect(() => {
+    fetchStatus();
     fetchFiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -84,6 +88,19 @@ export function GoogleDriveBrowser() {
     const endIndex = startIndex + itemsPerPage;
     setFiles(allFiles.slice(startIndex, endIndex));
   }, [currentPage, allFiles, itemsPerPage]);
+
+  const fetchStatus = async () => {
+    try {
+      const response = await fetch("/api/integrations/google-drive/status");
+      if (response.ok) {
+        const data = await response.json();
+        setAllowedFolderIds(data.allowedFolderIds || []);
+        setIsAdmin(data.isAdmin || false);
+      }
+    } catch (error) {
+      console.error("Error fetching Drive status:", error);
+    }
+  };
 
   const fetchFiles = async () => {
     try {
@@ -113,6 +130,21 @@ export function GoogleDriveBrowser() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateFolders = async (folderIds: string[]) => {
+    const response = await fetch("/api/integrations/google-drive/folders/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update folders");
+    }
+
+    setAllowedFolderIds(folderIds);
+    await fetchFiles(); // Refresh files with new folder restrictions
   };
 
   const handleSearch = () => {
@@ -176,8 +208,32 @@ export function GoogleDriveBrowser() {
 
   return (
     <div className='space-y-4'>
+      {/* 🔒 Info badge for non-admins when folder restrictions are active */}
+      {!isAdmin && allowedFolderIds.length > 0 && (
+        <div className='bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-start gap-3'>
+          <FolderKanban className='h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0' />
+          <div className='flex-1 min-w-0'>
+            <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+              Folder Access Restricted
+            </p>
+            <p className='text-xs text-blue-700 dark:text-blue-300 mt-1'>
+              Only files from {allowedFolderIds.length} selected folder
+              {allowedFolderIds.length === 1 ? "" : "s"} are visible. Contact your
+              workspace admin to modify folder access.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header with search and view options */}
-      <div className='flex items-center gap-3'>
+      <div className='flex items-center gap-3 flex-wrap'>
+        {/* 🔒 Only show folder selector to admins */}
+        {isAdmin && (
+          <GoogleDriveFolderSelector
+            allowedFolderIds={allowedFolderIds}
+            onUpdate={handleUpdateFolders}
+          />
+        )}
         <div className='flex-1 flex gap-2'>
           <Input
             placeholder='Search files in Google Drive...'

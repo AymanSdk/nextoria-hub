@@ -35,6 +35,7 @@ export default function FilesPage() {
     connected: boolean;
     email?: string;
     loading: boolean;
+    isAdmin?: boolean;
   }>({ connected: false, loading: true });
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "local");
@@ -60,6 +61,8 @@ export default function FilesPage() {
         config_missing: "Google Drive is not configured",
         token_exchange_failed: "Failed to exchange authorization code",
         callback_failed: "Failed to complete Google Drive connection",
+        forbidden: "Only workspace admins can connect integrations",
+        no_workspace: "No workspace found",
       };
       toast.error(errorMessages[error] || "Failed to connect Google Drive");
       router.replace("/files");
@@ -76,21 +79,31 @@ export default function FilesPage() {
           connected: data.connected,
           email: data.email,
           loading: false,
+          isAdmin: data.isAdmin,
         });
       } else {
-        setDriveStatus({ connected: false, loading: false });
+        setDriveStatus({ connected: false, loading: false, isAdmin: false });
       }
     } catch (error) {
       console.error("Error checking Google Drive status:", error);
-      setDriveStatus({ connected: false, loading: false });
+      setDriveStatus({ connected: false, loading: false, isAdmin: false });
     }
   };
 
   const handleConnectDrive = () => {
+    if (!driveStatus.isAdmin) {
+      toast.error("Only workspace admins can connect integrations");
+      return;
+    }
     window.location.href = "/api/integrations/google-drive/auth";
   };
 
   const handleDisconnectDrive = async () => {
+    if (!driveStatus.isAdmin) {
+      toast.error("Only workspace admins can disconnect integrations");
+      return;
+    }
+
     try {
       const response = await fetch("/api/integrations/google-drive/disconnect", {
         method: "POST",
@@ -98,15 +111,20 @@ export default function FilesPage() {
 
       if (response.ok) {
         toast.success("Google Drive disconnected successfully");
-        setDriveStatus({ connected: false, loading: false });
+        setDriveStatus({
+          connected: false,
+          loading: false,
+          isAdmin: driveStatus.isAdmin,
+        });
         setShowDisconnectDialog(false);
         setActiveTab("local");
       } else {
-        throw new Error("Failed to disconnect");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to disconnect");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error disconnecting Google Drive:", error);
-      toast.error("Failed to disconnect Google Drive");
+      toast.error(error.message || "Failed to disconnect Google Drive");
     }
   };
 
@@ -165,22 +183,34 @@ export default function FilesPage() {
                     />
                     Open Google Drive
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setShowDisconnectDialog(true)}
-                    className='cursor-pointer text-destructive focus:text-destructive'
-                  >
-                    <Link2Off className='mr-2 h-4 w-4 text-destructive' />
-                    Disconnect
-                  </DropdownMenuItem>
+                  {/* 🔒 Only show disconnect option to admins */}
+                  {driveStatus.isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setShowDisconnectDialog(true)}
+                        className='cursor-pointer text-destructive focus:text-destructive'
+                      >
+                        <Link2Off className='mr-2 h-4 w-4 text-destructive' />
+                        Disconnect
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          ) : (
+          ) : // 🔒 Only show connect button to admins
+          driveStatus.isAdmin ? (
             <Button variant='outline' onClick={handleConnectDrive}>
               <FaGoogleDrive className='mr-2 h-4 w-4' style={{ color: "#4285F4" }} />
               Connect Google Drive
             </Button>
+          ) : (
+            <div className='flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'>
+              <span className='text-xs text-neutral-600 dark:text-neutral-400'>
+                Contact admin to connect Google Drive
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -215,13 +245,18 @@ export default function FilesPage() {
               <div>
                 <h3 className='text-lg font-semibold'>Google Drive Not Connected</h3>
                 <p className='text-sm text-neutral-500 mt-1'>
-                  Connect your Google Drive to access your files
+                  {driveStatus.isAdmin
+                    ? "Connect your Google Drive to access your files"
+                    : "Contact your workspace admin to connect Google Drive"}
                 </p>
               </div>
-              <Button onClick={handleConnectDrive}>
-                <FaGoogleDrive className='mr-2 h-4 w-4' style={{ color: "#4285F4" }} />
-                Connect Google Drive
-              </Button>
+              {/* 🔒 Only show connect button to admins */}
+              {driveStatus.isAdmin && (
+                <Button onClick={handleConnectDrive}>
+                  <FaGoogleDrive className='mr-2 h-4 w-4' style={{ color: "#4285F4" }} />
+                  Connect Google Drive
+                </Button>
+              )}
             </div>
           )}
         </TabsContent>

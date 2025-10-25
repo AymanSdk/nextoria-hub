@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/src/lib/auth/session";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
+import { isAdmin } from "@/src/lib/auth/rbac";
 
 /**
  * GET /api/integrations/google-drive/auth
  * Initiates Google Drive OAuth flow
+ * 🔒 ADMIN ONLY - Only workspace admins can connect integrations
  */
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 🔒 SECURITY: Get user's workspace with role
+    const workspace = await getCurrentWorkspace(user.id);
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace found" }, { status: 400 });
+    }
+
+    // 🔒 SECURITY: Only admins can connect integrations
+    if (!isAdmin(workspace.role)) {
+      return NextResponse.json(
+        { error: "Forbidden: Only workspace admins can connect integrations" },
+        { status: 403 }
+      );
     }
 
     const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
