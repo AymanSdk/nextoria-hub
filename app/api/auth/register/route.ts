@@ -5,6 +5,10 @@ import { hashPassword, validatePassword } from "@/src/lib/auth/password";
 import { eq, and, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { setCurrentWorkspaceId } from "@/src/lib/workspace/context";
+import {
+  generateVerificationToken,
+  sendVerificationEmail,
+} from "@/src/lib/auth/verification";
 
 export async function POST(req: NextRequest) {
   try {
@@ -144,6 +148,16 @@ export async function POST(req: NextRequest) {
 
     console.log(`✓ User ${email} created with role ${finalRole} and added to workspace`);
 
+    // Generate verification token and send email
+    const verificationToken = await generateVerificationToken(newUser.email);
+    await sendVerificationEmail({
+      to: newUser.email,
+      name: newUser.name || "User",
+      token: verificationToken,
+    });
+
+    console.log(`✓ Verification email sent to ${email}`);
+
     // Set the workspace cookie for the user
     if (workspaceId) {
       await setCurrentWorkspaceId(workspaceId);
@@ -157,6 +171,7 @@ export async function POST(req: NextRequest) {
         name: newUser.name,
         email: newUser.email,
       },
+      message: "Account created! Please check your email to verify your account.",
     });
   } catch (error) {
     console.error("Registration error:", error);

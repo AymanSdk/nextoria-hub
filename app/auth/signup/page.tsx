@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +17,7 @@ import {
 import { Icons } from "@/components/icons";
 import { toast } from "sonner";
 import { UserPlus, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -63,32 +63,36 @@ export default function SignUpPage() {
         return;
       }
 
-      toast.success("Account created successfully!");
-
-      // Auto sign-in after registration
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
+      toast.success(data.message || "Account created successfully!");
+      toast.info("Please check your email for the verification code", {
+        duration: 5000,
       });
 
-      if (result?.error) {
-        toast.error("Failed to sign in. Please try again.");
-        router.push("/auth/signin");
-      } else {
-        router.push("/");
-        router.refresh();
-      }
-    } catch (error) {
+      // Redirect to verification page with email
+      router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
+      // Keep loading state active during navigation
+    } catch {
       toast.error("Something went wrong. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-950 dark:to-neutral-900 px-4 py-8'>
-      <Card className='w-full max-w-md shadow-xl'>
+      <Card className='w-full max-w-md shadow-xl relative overflow-hidden'>
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className='absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center'>
+            <div className='space-y-4 text-center'>
+              <Spinner className='h-12 w-12 text-primary mx-auto' />
+              <div className='space-y-2'>
+                <h3 className='text-lg font-semibold'>Creating your account...</h3>
+                <p className='text-sm text-muted-foreground'>Please wait a moment</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <CardHeader className='space-y-3 text-center'>
           <div className='mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2'>
             <UserPlus className='h-6 w-6 text-primary-foreground' />

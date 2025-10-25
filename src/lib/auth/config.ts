@@ -71,6 +71,11 @@ export const {
           throw new Error("Account is deactivated");
         }
 
+        // Check if email is verified
+        if (!user.emailVerified) {
+          throw new Error("Please verify your email address before signing in");
+        }
+
         // Verify password
         const isValidPassword = await compare(
           credentials.password as string,
