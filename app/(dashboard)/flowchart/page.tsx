@@ -52,7 +52,6 @@ import {
   Clock,
   Trash2,
   MoreVertical,
-  Sparkles,
   Loader2,
   Search,
   Grid3x3,
@@ -74,6 +73,14 @@ import { formatDistanceToNow, format } from "date-fns";
 import type { Flowchart } from "@/src/db/schema";
 import { flowchartTemplates } from "@/src/lib/flowchart/templates";
 import { cn } from "@/lib/utils";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from "@/components/ui/empty";
 
 type ViewMode = "grid" | "list";
 type SortBy = "updated" | "created" | "name" | "nodes";
@@ -246,7 +253,7 @@ export default function FlowchartIndexPage() {
 
   return (
     <TooltipProvider>
-      <div className='container max-w-7xl py-8 space-y-6'>
+      <div className='container py-8 space-y-6'>
         {/* Hero Section */}
         <div className='flex items-center justify-between'>
           <div>
@@ -324,7 +331,7 @@ export default function FlowchartIndexPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
-          <TabsList className='grid w-full max-w-md grid-cols-2'>
+          <TabsList className='grid w-full grid-cols-2'>
             <TabsTrigger value='flowcharts'>My Flowcharts</TabsTrigger>
             <TabsTrigger value='templates'>Templates</TabsTrigger>
           </TabsList>
@@ -462,20 +469,24 @@ export default function FlowchartIndexPage() {
                 <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
               </div>
             ) : filteredAndSortedFlowcharts.length === 0 ? (
-              <Card className='border-dashed'>
-                <CardContent className='flex flex-col items-center justify-center py-12'>
-                  <Workflow className='h-12 w-12 text-muted-foreground mb-4' />
-                  <h3 className='text-lg font-semibold mb-2'>
+              <Empty className='border'>
+                <EmptyHeader>
+                  <EmptyMedia variant='icon'>
+                    <Workflow />
+                  </EmptyMedia>
+                  <EmptyTitle>
                     {searchQuery || filterBy !== "all"
                       ? "No flowcharts found"
                       : "No flowcharts yet"}
-                  </h3>
-                  <p className='text-sm text-muted-foreground mb-4 text-center max-w-sm'>
+                  </EmptyTitle>
+                  <EmptyDescription>
                     {searchQuery || filterBy !== "all"
                       ? "Try adjusting your search or filters"
                       : "Create your first flowchart or start with a template"}
-                  </p>
-                  {!(searchQuery || filterBy !== "all") && (
+                  </EmptyDescription>
+                </EmptyHeader>
+                {!(searchQuery || filterBy !== "all") && (
+                  <EmptyContent>
                     <div className='flex gap-2'>
                       <Button
                         onClick={() => {
@@ -487,15 +498,14 @@ export default function FlowchartIndexPage() {
                         Create Flowchart
                       </Button>
                       <Button variant='outline' onClick={() => setActiveTab("templates")}>
-                        <Sparkles className='mr-2 h-4 w-4' />
                         Browse Templates
                       </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </EmptyContent>
+                )}
+              </Empty>
             ) : viewMode === "grid" ? (
-              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5'>
                 {filteredAndSortedFlowcharts.map((flowchart) => (
                   <FlowchartGridCard
                     key={flowchart.id}
@@ -527,7 +537,7 @@ export default function FlowchartIndexPage() {
 
           {/* Templates Tab */}
           <TabsContent value='templates' className='space-y-4 mt-6'>
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5'>
               {flowchartTemplates.map((template) => {
                 const Icon = template.icon;
                 const categoryColors = {
@@ -587,7 +597,6 @@ export default function FlowchartIndexPage() {
                         variant='outline'
                         onClick={() => createFromTemplate(template.id)}
                       >
-                        <Sparkles className='mr-2 h-3.5 w-3.5' />
                         Use Template
                       </Button>
                     </CardContent>
@@ -651,7 +660,7 @@ function FlowchartGridCard({
         </div>
       </Link>
 
-      <CardHeader className='pb-3 pt-6 px-6'>
+      <CardHeader className='pb-2 pt-4 px-4'>
         <div className='flex items-start justify-between gap-2'>
           <div className='flex-1 min-w-0'>
             <Link href={`/flowchart/${flowchart.id}`}>
@@ -698,9 +707,9 @@ function FlowchartGridCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className='px-6 pb-6'>
+      <CardContent className='px-4 pb-4 pt-0'>
         {flowchart.description && (
-          <p className='text-sm text-muted-foreground mb-3 line-clamp-2'>
+          <p className='text-sm text-muted-foreground mb-2 line-clamp-2'>
             {flowchart.description}
           </p>
         )}

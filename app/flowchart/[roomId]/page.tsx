@@ -40,7 +40,7 @@ export default function FlowchartPage() {
 
   // Load template data if template parameter exists
   let initialData;
-  let initialName = `Flowchart ${roomId}`;
+  let initialName: string | undefined;
 
   if (templateId) {
     const template = getTemplateById(templateId);
@@ -49,6 +49,10 @@ export default function FlowchartPage() {
       initialName = template.name;
     }
   }
+
+  // For existing flowcharts (no template), don't set initialName
+  // Let the hook load the name from the database
+  // Only set a default name if it's a new flowchart (will be determined by the hook)
 
   // Show loading state while fetching workspace
   if (isLoading || !workspaceId) {

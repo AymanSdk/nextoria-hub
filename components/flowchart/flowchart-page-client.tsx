@@ -76,8 +76,11 @@ function FlowchartHeader({
 
   const handleRenameSubmit = () => {
     if (saveState && tempName.trim()) {
-      saveState.setFlowchartName(tempName.trim());
+      const newName = tempName.trim();
+      saveState.setFlowchartName(newName);
       setIsRenaming(false);
+      // Trigger save immediately with the new name
+      saveState.onSave(newName);
       toast.success("Flowchart renamed");
     }
   };
@@ -254,7 +257,7 @@ function FlowchartHeader({
               <Button
                 variant={saveState?.hasUnsavedChanges ? "default" : "outline"}
                 size='sm'
-                onClick={saveState?.onSave}
+                onClick={() => saveState?.onSave()}
                 disabled={saveState?.isSaving || !saveState?.hasUnsavedChanges}
                 className={cn(
                   "gap-2 transition-all",

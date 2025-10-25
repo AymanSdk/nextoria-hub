@@ -54,16 +54,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's current workspace
-    const workspace = await getCurrentWorkspace(session.user.id);
-
-    if (!workspace) {
-      return NextResponse.json(
-        { error: "No active workspace found. Please create or join a workspace first." },
-        { status: 400 }
-      );
-    }
-
     const body = await req.json();
     const {
       id, // Optional: specify the ID (e.g., roomId from URL)
@@ -75,10 +65,27 @@ export async function POST(req: NextRequest) {
       templateCategory,
       isPublic,
       shareToken,
+      workspaceId, // Get workspaceId from request body
     } = body;
 
     if (!name || !data) {
       return NextResponse.json({ error: "Name and data are required" }, { status: 400 });
+    }
+
+    // Use provided workspaceId or fall back to getting user's current workspace
+    let finalWorkspaceId = workspaceId;
+
+    if (!finalWorkspaceId) {
+      const workspace = await getCurrentWorkspace(session.user.id);
+      if (!workspace) {
+        return NextResponse.json(
+          {
+            error: "No active workspace found. Please create or join a workspace first.",
+          },
+          { status: 400 }
+        );
+      }
+      finalWorkspaceId = workspace.id;
     }
 
     // Create new flowchart - use provided ID or let database generate one
@@ -92,7 +99,7 @@ export async function POST(req: NextRequest) {
       isPublic: isPublic || false,
       shareToken,
       createdBy: session.user.id,
-      workspaceId: workspace.id,
+      workspaceId: finalWorkspaceId,
     };
 
     // If ID is provided (e.g., roomId), use it
@@ -100,14 +107,31 @@ export async function POST(req: NextRequest) {
       flowchartValues.id = id;
     }
 
+    console.log("Creating flowchart with values:", {
+      id: flowchartValues.id,
+      name: flowchartValues.name,
+      workspaceId: flowchartValues.workspaceId,
+      createdBy: flowchartValues.createdBy,
+    });
+
     const [newFlowchart] = await db
       .insert(flowcharts)
       .values(flowchartValues)
       .returning();
 
+    console.log("Flowchart created successfully:", newFlowchart.id);
     return NextResponse.json(newFlowchart, { status: 201 });
   } catch (error) {
     console.error("Error creating flowchart:", error);
-    return NextResponse.json({ error: "Failed to create flowchart" }, { status: 500 });
+    // Return more detailed error information
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to create flowchart";
+    return NextResponse.json(
+      {
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

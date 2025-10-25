@@ -9,7 +9,7 @@ import type { Node, Edge } from "@xyflow/react";
 export interface FlowchartSaveState {
   flowchartName: string;
   setFlowchartName: (name: string) => void;
-  onSave: () => void;
+  onSave: (name?: string) => void; // Optional name parameter
   isSaving: boolean;
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
@@ -186,20 +186,20 @@ export function CollaborativeFlowchartCanvas({
   );
 
   // Manual save handler - stable reference using ref
-  const handleManualSaveRef = useRef(() => {
-    handleSave(currentNodes, currentEdges, flowchartName);
+  const handleManualSaveRef = useRef((name?: string) => {
+    handleSave(currentNodes, currentEdges, name || flowchartName);
   });
 
   // Update ref on every render but keep the function reference stable
   useEffect(() => {
-    handleManualSaveRef.current = () => {
-      handleSave(currentNodes, currentEdges, flowchartName);
+    handleManualSaveRef.current = (name?: string) => {
+      handleSave(currentNodes, currentEdges, name || flowchartName);
     };
   }, [currentNodes, currentEdges, flowchartName, handleSave]);
 
-  // Create stable callback
-  const handleManualSave = useCallback(() => {
-    handleManualSaveRef.current();
+  // Create stable callback that accepts optional name
+  const handleManualSave = useCallback((name?: string) => {
+    handleManualSaveRef.current(name);
   }, []);
 
   // Notify parent of save state changes - using ref to avoid recreating on every render
