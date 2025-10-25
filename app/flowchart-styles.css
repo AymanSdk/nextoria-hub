@@ -1,12 +1,29 @@
 /* Enhanced Box Selection Styling */
 .react-flow__selection {
-  background: rgba(59, 130, 246, 0.15) !important; /* Blue with transparency */
-  border: 2px solid rgb(59, 130, 246) !important; /* Solid blue border */
-  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15) !important;
+  border: 2px dashed rgb(59, 130, 246) !important;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1) !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: 5 !important;
+}
+
+/* Dark mode selection */
+.dark .react-flow__selection {
+  background: rgba(96, 165, 250, 0.2) !important;
+  border: 2px dashed rgb(96, 165, 250) !important;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4), inset 0 0 20px rgba(96, 165, 250, 0.15) !important;
 }
 
 .react-flow__selectionpane {
   cursor: crosshair !important;
+  z-index: 4 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* When in pan mode */
@@ -18,29 +35,70 @@
   cursor: grabbing !important;
 }
 
-/* Selection animation */
-.react-flow__selection {
-  animation: selectionPulse 0.3s ease-in-out;
-}
-
-@keyframes selectionPulse {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* Selected nodes styling enhancement */
 .react-flow__node.selected {
-  box-shadow: 0 0 0 2px rgb(59, 130, 246) !important;
+  z-index: 1000 !important;
 }
 
 /* Selected edges styling enhancement */
 .react-flow__edge.selected .react-flow__edge-path {
   stroke: rgb(59, 130, 246) !important;
   stroke-width: 3px !important;
+}
+
+.dark .react-flow__edge.selected .react-flow__edge-path {
+  stroke: rgb(96, 165, 250) !important;
+}
+
+/* Handle styling */
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  transition: all 0.2s ease;
+}
+
+.react-flow__handle:hover {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Node dragging cursor */
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+  opacity: 0.8;
+}
+
+/* Connection line styling */
+.react-flow__connection-path {
+  stroke: rgb(59, 130, 246) !important;
+  stroke-width: 2px;
+  stroke-dasharray: 5, 5;
+  animation: dash 0.5s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Improve pane interactions */
+.react-flow__pane {
+  cursor: default;
+}
+
+/* Ensure ReactFlow wrapper doesn't interfere with positioning */
+.react-flow {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+.react-flow__renderer {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-flow__viewport {
+  transform-origin: 0 0 !important;
 }

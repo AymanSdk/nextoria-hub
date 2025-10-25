@@ -19,6 +19,13 @@ declare global {
     Storage: {
       messages?: LiveList<LiveObject<ChatMessage>>;
       // Whiteboard storage (tldraw)
+      tldrawRecords?: any;
+      // Flowchart storage (React Flow)
+      flowchartData?: LiveObject<{
+        nodes: any[];
+        edges: any[];
+        viewport: { x: number; y: number; zoom: number };
+      }>;
       [key: string]: any;
     };
 
@@ -28,6 +35,9 @@ declare global {
       lastSeenAt?: number;
       // Whiteboard presence (tldraw)
       presence?: any;
+      // Flowchart presence
+      cursor?: { x: number; y: number } | null;
+      selectedNodeIds?: string[];
       [key: string]: any;
     };
 

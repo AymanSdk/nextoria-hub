@@ -48,12 +48,17 @@ import { nanoid } from "nanoid";
 import { toast } from "sonner";
 import { FileCode } from "lucide-react";
 
-// Start with a blank canvas
-const initialNodes: Node[] = [];
+interface FlowchartCanvasInnerProps {
+  initialNodes?: Node[];
+  initialEdges?: Edge[];
+  onStateChange?: (nodes: Node[], edges: Edge[]) => void;
+}
 
-const initialEdges: Edge[] = [];
-
-function FlowchartCanvasInner() {
+function FlowchartCanvasInner({
+  initialNodes = [],
+  initialEdges = [],
+  onStateChange,
+}: FlowchartCanvasInnerProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -451,6 +456,13 @@ function FlowchartCanvasInner() {
 
   const hasSelection = nodes.some((n) => n.selected) || edges.some((e) => e.selected);
 
+  // Notify parent of state changes
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange(nodes, edges);
+    }
+  }, [nodes, edges, onStateChange]);
+
   return (
     <div className='w-full h-full relative'>
       <FlowchartContextMenu
@@ -481,16 +493,22 @@ function FlowchartCanvasInner() {
           edgeTypes={edgeTypes}
           fitView
           defaultEdgeOptions={{
+            type: "smoothstep",
             animated: false,
-            style: { strokeWidth: 2 },
+            style: {
+              strokeWidth: 2,
+              stroke: "#94a3b8",
+            },
           }}
           deleteKeyCode={["Backspace", "Delete"]}
           multiSelectionKeyCode='Control'
           selectionMode={SelectionMode.Partial}
           panOnDrag={interactionMode === "pan"}
+          selectionOnDrag={interactionMode === "select"}
           nodesDraggable={interactionMode === "select"}
           nodesConnectable={interactionMode === "select"}
           elementsSelectable={interactionMode === "select"}
+          selectNodesOnDrag={false}
           className='bg-background'
           snapToGrid
           snapGrid={[15, 15]}
@@ -579,10 +597,10 @@ function FlowchartCanvasInner() {
   );
 }
 
-export function FlowchartCanvas() {
+export function FlowchartCanvas(props: FlowchartCanvasInnerProps) {
   return (
     <ReactFlowProvider>
-      <FlowchartCanvasInner />
+      <FlowchartCanvasInner {...props} />
     </ReactFlowProvider>
   );
 }

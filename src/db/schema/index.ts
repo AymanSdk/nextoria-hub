@@ -59,6 +59,9 @@ export * from "./recurring-tasks";
 // Whiteboards
 export * from "./whiteboards";
 
+// Flowcharts
+export * from "./flowcharts";
+
 // Relations (for Drizzle relational queries)
 import { relations } from "drizzle-orm";
 import { users, accounts, sessions, invitations } from "./users";
@@ -86,6 +89,7 @@ import { clients, clientContacts } from "./clients";
 import { projectRequests, projectRequestComments } from "./project-requests";
 import { activityLogs } from "./activity-logs";
 import { whiteboards } from "./whiteboards";
+import { flowcharts } from "./flowcharts";
 
 /**
  * User Relations
@@ -107,6 +111,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   chatMessages: many(chatMessages),
   projectRequests: many(projectRequests),
   whiteboards: many(whiteboards),
+  flowcharts: many(flowcharts),
 }));
 
 /**
@@ -124,6 +129,7 @@ export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   chatChannels: many(chatChannels),
   projectRequests: many(projectRequests),
   whiteboards: many(whiteboards),
+  flowcharts: many(flowcharts),
 }));
 
 /**
@@ -292,6 +298,20 @@ export const whiteboardsRelations = relations(whiteboards, ({ one }) => ({
   }),
   workspace: one(workspaces, {
     fields: [whiteboards.workspaceId],
+    references: [workspaces.id],
+  }),
+}));
+
+/**
+ * Flowchart Relations
+ */
+export const flowchartsRelations = relations(flowcharts, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [flowcharts.createdBy],
+    references: [users.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [flowcharts.workspaceId],
     references: [workspaces.id],
   }),
 }));

@@ -1,40 +1,24 @@
 import { NextResponse } from "next/server";
-import { db } from "@/src/db";
-import { workspaceMembers, workspaces } from "@/src/db/schema/workspaces";
-import { getCurrentUser } from "@/src/lib/auth/session";
-import { eq } from "drizzle-orm";
+import { getSession } from "@/src/lib/auth/session";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 
-/**
- * GET /api/user/workspace
- * Get the current user's default workspace
- */
 export async function GET() {
   try {
-    const user = await getCurrentUser();
+    const session = await getSession();
 
-    // Get user's first workspace (primary workspace)
-    const [membership] = await db
-      .select({
-        workspaceId: workspaceMembers.workspaceId,
-        workspaceName: workspaces.name,
-        workspaceSlug: workspaces.slug,
-        role: workspaceMembers.role,
-      })
-      .from(workspaceMembers)
-      .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
-      .where(eq(workspaceMembers.userId, user.id))
-      .limit(1);
-
-    if (!membership) {
-      return NextResponse.json(
-        { error: "No workspace found. Please contact your administrator." },
-        { status: 404 }
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(membership);
+    const workspace = await getCurrentWorkspace(session.user.id);
+
+    if (!workspace) {
+      return NextResponse.json({ error: "No workspace found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ workspaceId: workspace.id });
   } catch (error) {
-    console.error("Error fetching user workspace:", error);
+    console.error("Error fetching workspace:", error);
     return NextResponse.json({ error: "Failed to fetch workspace" }, { status: 500 });
   }
 }
