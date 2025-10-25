@@ -1,4 +1,5 @@
 import { getSession } from "@/src/lib/auth/session";
+import { getCurrentWorkspace } from "@/src/lib/workspace/context";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,10 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { nanoid } from "nanoid";
+import { db } from "@/src/db";
+import { whiteboards } from "@/src/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { SavedWhiteboards } from "@/components/whiteboard/saved-whiteboards";
 
 export default async function WhiteboardIndexPage() {
   const session = await getSession();
@@ -17,6 +22,24 @@ export default async function WhiteboardIndexPage() {
   if (!session?.user) {
     redirect("/auth/signin");
   }
+
+  // Get current workspace
+  const workspace = await getCurrentWorkspace(session.user.id);
+
+  // Fetch saved whiteboards
+  const savedWhiteboards = workspace
+    ? await db
+        .select({
+          id: whiteboards.id,
+          name: whiteboards.name,
+          description: whiteboards.description,
+          createdAt: whiteboards.createdAt,
+          updatedAt: whiteboards.updatedAt,
+        })
+        .from(whiteboards)
+        .where(eq(whiteboards.workspaceId, workspace.id))
+        .orderBy(desc(whiteboards.updatedAt))
+    : [];
 
   // Generate a random room ID for quick start
   const randomRoomId = nanoid(10);
@@ -87,6 +110,12 @@ export default async function WhiteboardIndexPage() {
         </Card>
       </div>
 
+      {/* Saved Whiteboards */}
+      <div className='mb-8'>
+        <h2 className='text-2xl font-bold tracking-tight mb-4'>Saved Whiteboards</h2>
+        <SavedWhiteboards whiteboards={savedWhiteboards} />
+      </div>
+
       {/* Features */}
       <div className='grid gap-6 md:grid-cols-3'>
         <Card>
@@ -115,11 +144,11 @@ export default async function WhiteboardIndexPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className='text-lg'>Full-Screen Canvas</CardTitle>
+            <CardTitle className='text-lg'>Save & Load</CardTitle>
           </CardHeader>
           <CardContent>
             <p className='text-sm text-muted-foreground'>
-              Canvas opens in full-screen mode for distraction-free work
+              Save your whiteboards and load them later to continue where you left off
             </p>
           </CardContent>
         </Card>

@@ -56,6 +56,9 @@ export * from "./approvals";
 // Recurring Tasks
 export * from "./recurring-tasks";
 
+// Whiteboards
+export * from "./whiteboards";
+
 // Relations (for Drizzle relational queries)
 import { relations } from "drizzle-orm";
 import { users, accounts, sessions, invitations } from "./users";
@@ -66,12 +69,12 @@ import { files, fileAccessLog } from "./files";
 import { invoices, invoiceLineItems, payments } from "./invoices";
 import { notifications, notificationPreferences } from "./notifications";
 import { integrations, webhooks, webhookDeliveries } from "./integrations";
-import { 
-  chatChannels, 
-  chatMessages, 
+import {
+  chatChannels,
+  chatMessages,
   chatChannelMembers,
   chatMentions,
-  messageReactions 
+  messageReactions,
 } from "./chat";
 import { auditLogs } from "./audit-logs";
 import { campaigns, campaignUpdates } from "./campaigns";
@@ -82,6 +85,7 @@ import { recurringTasks } from "./recurring-tasks";
 import { clients, clientContacts } from "./clients";
 import { projectRequests, projectRequestComments } from "./project-requests";
 import { activityLogs } from "./activity-logs";
+import { whiteboards } from "./whiteboards";
 
 /**
  * User Relations
@@ -102,6 +106,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   notificationPreferences: one(notificationPreferences),
   chatMessages: many(chatMessages),
   projectRequests: many(projectRequests),
+  whiteboards: many(whiteboards),
 }));
 
 /**
@@ -118,6 +123,7 @@ export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   integrations: many(integrations),
   chatChannels: many(chatChannels),
   projectRequests: many(projectRequests),
+  whiteboards: many(whiteboards),
 }));
 
 /**
@@ -273,5 +279,19 @@ export const filesRelations = relations(files, ({ one }) => ({
   client: one(clients, {
     fields: [files.clientId],
     references: [clients.id],
+  }),
+}));
+
+/**
+ * Whiteboard Relations
+ */
+export const whiteboardsRelations = relations(whiteboards, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [whiteboards.createdBy],
+    references: [users.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [whiteboards.workspaceId],
+    references: [workspaces.id],
   }),
 }));

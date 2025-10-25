@@ -1,28 +1,45 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { RoomProvider as LiveblocksRoomProvider } from "@/liveblocks.config";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveMap } from "@liveblocks/client";
+import { TLRecord } from "tldraw";
 
 interface WhiteboardRoomProviderProps {
   roomId: string;
   children: ReactNode;
+  savedData?: Record<string, TLRecord>;
 }
 
 export function WhiteboardRoomProvider({
   roomId,
   children,
+  savedData,
 }: WhiteboardRoomProviderProps) {
+  const initialStorage = useRef(() => {
+    const tldrawRecords = new LiveMap();
+
+    // If we have saved data, pre-populate the LiveMap
+    if (savedData) {
+      const entries = Object.entries(savedData);
+      entries.forEach(([key, value]) => {
+        tldrawRecords.set(key, value);
+      });
+    }
+
+    return {
+      tldrawRecords,
+    };
+  }).current();
+
   return (
     <LiveblocksRoomProvider
       id={`whiteboard:${roomId}`}
       initialPresence={{
         presence: null,
       }}
-      initialStorage={{
-        tldrawRecords: new LiveMap(),
-      }}
+      initialStorage={initialStorage}
     >
       <ClientSideSuspense
         fallback={

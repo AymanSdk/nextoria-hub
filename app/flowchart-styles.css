@@ -1,0 +1,46 @@
+/* Enhanced Box Selection Styling */
+.react-flow__selection {
+  background: rgba(59, 130, 246, 0.15) !important; /* Blue with transparency */
+  border: 2px solid rgb(59, 130, 246) !important; /* Solid blue border */
+  border-radius: 4px;
+}
+
+.react-flow__selectionpane {
+  cursor: crosshair !important;
+}
+
+/* When in pan mode */
+.react-flow__pane[data-pan="true"] {
+  cursor: grab !important;
+}
+
+.react-flow__pane[data-pan="true"]:active {
+  cursor: grabbing !important;
+}
+
+/* Selection animation */
+.react-flow__selection {
+  animation: selectionPulse 0.3s ease-in-out;
+}
+
+@keyframes selectionPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Selected nodes styling enhancement */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px rgb(59, 130, 246) !important;
+}
+
+/* Selected edges styling enhancement */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: rgb(59, 130, 246) !important;
+  stroke-width: 3px !important;
+}

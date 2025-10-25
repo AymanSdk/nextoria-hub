@@ -138,6 +138,11 @@ const toolsItems: NavItem[] = [
     icon: MessageSquare,
   },
   {
+    title: "Flowchart",
+    href: "/flowchart",
+    icon: Presentation,
+  },
+  {
     title: "Whiteboard",
     href: "/whiteboard",
     icon: Presentation,

@@ -104,7 +104,7 @@ export function useStorageStore({
         "initialize"
       );
 
-      // Sync tldraw changes with Storage
+      // Sync tldraw changes with Storage - Listen to ALL sources
       unsubs.push(
         store.listen(
           ({ changes }: TLStoreEventInfo) => {
@@ -122,7 +122,7 @@ export function useStorageStore({
               });
             });
           },
-          { source: "user", scope: "document" }
+          { source: "all" } // Changed to "all" to capture everything including shapes
         )
       );
 

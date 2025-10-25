@@ -67,15 +67,19 @@
     "@tiptap/starter-kit": "^3.7.2",
     "@tldraw/store": "^4.1.1",
     "@tldraw/sync": "^4.1.1",
+    "@types/dagre": "^0.7.53",
     "@uploadthing/react": "^7.3.3",
+    "@xyflow/react": "^12.9.0",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dagre": "^0.8.5",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.38.3",
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
+    "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "jose": "^5.9.6",
     "jspdf": "^2.5.2",
@@ -106,7 +110,7 @@
     "yet-another-react-lightbox": "^3.25.0",
     "yjs": "^13.6.27",
     "zod": "^4.1.12",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
