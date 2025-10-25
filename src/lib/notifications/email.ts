@@ -235,148 +235,177 @@ export async function sendInvitationEmail(params: {
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           line-height: 1.6;
-          color: #333;
-          max-width: 600px;
+          color: #1f2937;
+          background-color: #f3f4f6;
+          padding: 40px 20px;
+        }
+        .email-wrapper {
+          max-width: 480px;
           margin: 0 auto;
-          padding: 20px;
-          background-color: #f5f5f5;
         }
         .email-container {
-          background: white;
-          border-radius: 12px;
+          background: #ffffff;
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 40px 30px;
+          background: #6366f1;
+          padding: 32px 32px 28px;
           text-align: center;
-          color: white;
         }
         .header h1 {
-          margin: 0;
-          font-size: 28px;
+          color: #ffffff;
+          font-size: 24px;
           font-weight: 600;
+          margin-bottom: 8px;
+          letter-spacing: -0.01em;
         }
         .header p {
-          margin: 10px 0 0 0;
-          opacity: 0.95;
-          font-size: 16px;
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 15px;
+          font-weight: 400;
         }
         .content {
-          padding: 40px 30px;
+          padding: 32px;
         }
-        .content h2 {
-          color: #111;
-          font-size: 20px;
-          margin-top: 0;
+        .greeting {
+          color: #111827;
+          font-size: 18px;
+          font-weight: 600;
+          margin-bottom: 16px;
         }
         .content p {
-          color: #555;
-          font-size: 16px;
-          line-height: 1.6;
-        }
-        .invitation-details {
-          background: #f9fafb;
-          border-left: 4px solid #667eea;
-          padding: 20px;
-          margin: 25px 0;
-          border-radius: 6px;
-        }
-        .invitation-details p {
-          margin: 8px 0;
+          color: #4b5563;
           font-size: 15px;
+          line-height: 1.6;
+          margin-bottom: 16px;
         }
-        .invitation-details strong {
-          color: #333;
+        .invitation-card {
+          background: #f9fafb;
+          border-radius: 10px;
+          padding: 20px;
+          margin: 24px 0;
+          border: 1px solid #e5e7eb;
+        }
+        .invitation-card .detail-row {
+          display: flex;
+          padding: 8px 0;
+        }
+        .invitation-card .detail-label {
+          color: #6b7280;
+          font-size: 14px;
+          min-width: 90px;
+        }
+        .invitation-card .detail-value {
+          color: #111827;
+          font-size: 14px;
+          font-weight: 600;
         }
         .button-container {
           text-align: center;
-          margin: 35px 0;
+          margin: 28px 0;
         }
         .button {
           display: inline-block;
-          padding: 16px 40px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+          padding: 14px 32px;
+          background: #6366f1;
+          color: #ffffff;
           text-decoration: none;
-          border-radius: 8px;
+          border-radius: 10px;
           font-weight: 600;
-          font-size: 16px;
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-          transition: transform 0.2s;
+          font-size: 15px;
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
         }
         .button:hover {
-          transform: translateY(-2px);
-        }
-        .footer {
-          background: #f9fafb;
-          padding: 30px;
-          text-align: center;
-          border-top: 1px solid #e5e7eb;
-        }
-        .footer p {
-          margin: 8px 0;
-          font-size: 13px;
-          color: #666;
-        }
-        .footer a {
-          color: #667eea;
-          text-decoration: none;
+          background: #5558e3;
         }
         .expiry-notice {
-          background: #fef3c7;
-          border: 1px solid #fbbf24;
-          border-radius: 6px;
-          padding: 15px;
-          margin: 25px 0;
-          font-size: 14px;
+          background: #fef9f3;
+          border: 1px solid #fed7aa;
+          border-radius: 10px;
+          padding: 14px 16px;
+          margin: 24px 0;
+          font-size: 13px;
           color: #92400e;
+          text-align: center;
+        }
+        .expiry-notice strong {
+          color: #78350f;
+        }
+        .footer-text {
+          padding: 0 32px 32px;
+          text-align: center;
+          font-size: 13px;
+          color: #9ca3af;
+        }
+        @media only screen and (max-width: 480px) {
+          body {
+            padding: 20px 12px;
+          }
+          .content {
+            padding: 24px;
+          }
+          .header {
+            padding: 28px 24px 24px;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="email-container">
-        <div class="header">
-          <h1>🎉 You're Invited!</h1>
-          <p>Join ${params.workspaceName} on Nextoria</p>
-        </div>
-        
-        <div class="content">
-          <h2>Hello!</h2>
-          <p><strong>${params.inviterName}</strong> has invited you to join <strong>${
-    params.workspaceName
-  }</strong> as a <strong>${roleDisplay}</strong>.</p>
+      <div class="email-wrapper">
+        <div class="email-container">
+          <div class="header">
+            <h1>You're Invited</h1>
+            <p>Join ${params.workspaceName}</p>
+          </div>
           
-          <div class="invitation-details">
-            <p><strong>Workspace:</strong> ${params.workspaceName}</p>
-            <p><strong>Role:</strong> ${roleDisplay}</p>
-            <p><strong>Invited by:</strong> ${params.inviterName}</p>
+          <div class="content">
+            <div class="greeting">Hello there!</div>
+            <p><strong>${params.inviterName}</strong> has invited you to join <strong>${params.workspaceName}</strong> as a <strong>${roleDisplay}</strong>.</p>
+            
+            <div class="invitation-card">
+              <div class="detail-row">
+                <div class="detail-label">Workspace:</div>
+                <div class="detail-value">${params.workspaceName}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Your Role:</div>
+                <div class="detail-value">${roleDisplay}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Invited by:</div>
+                <div class="detail-value">${params.inviterName}</div>
+              </div>
+            </div>
+
+            <p>Click the button below to accept your invitation and get started:</p>
+            
+            <div class="button-container">
+              <a href="${params.invitationLink}" class="button">Accept Invitation</a>
+            </div>
+
+            <div class="expiry-notice">
+              <strong>Note:</strong> This invitation expires on ${expiryDate}
+            </div>
+
+            <p style="margin-bottom: 0;">If you weren't expecting this invitation, you can safely ignore this email.</p>
           </div>
 
-          <p>Click the button below to accept your invitation and create your account:</p>
-          
-          <div class="button-container">
-            <a href="${params.invitationLink}" class="button">Accept Invitation</a>
+          <div class="footer-text">
+            Nextoria Studio
           </div>
-
-          <div class="expiry-notice">
-            ⏰ <strong>Important:</strong> This invitation will expire on ${expiryDate}. Please accept it before then.
-          </div>
-
-          <p>If you're not sure why you received this email, you can safely ignore it.</p>
-        </div>
-
-        <div class="footer">
-          <p>Powered by <strong>Nextoria</strong></p>
-          <p>© ${new Date().getFullYear()} Nextoria Studio. All rights reserved.</p>
-          <p style="margin-top: 15px;">
-            <a href="https://app.nextoria.studio">Visit Website</a>
-          </p>
         </div>
       </div>
     </body>
