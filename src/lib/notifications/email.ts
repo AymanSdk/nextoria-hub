@@ -10,6 +10,7 @@ interface EmailParams {
   subject: string;
   html: string;
   text?: string;
+  from?: string;
 }
 
 /**
@@ -68,7 +69,7 @@ export async function sendEmail(params: EmailParams) {
 
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "noreply@nextoria.app",
+      from: params.from || process.env.EMAIL_FROM || "noreply@nextoria.app",
       to: params.to,
       subject: params.subject,
       html: params.html,
@@ -219,6 +220,7 @@ export async function sendPasswordResetEmail(params: { to: string; resetLink: st
 export async function sendInvitationEmail(params: {
   to: string;
   inviterName: string;
+  inviterEmail: string;
   workspaceName: string;
   role: string;
   invitationLink: string;
@@ -425,6 +427,9 @@ If you're not sure why you received this email, you can safely ignore it.
   `;
 
   return sendEmail({
+    from: `${params.inviterName} via Nextoria <${
+      process.env.EMAIL_FROM || "manager@nextoria.studio"
+    }>`,
     to: params.to,
     subject: `You're invited to join ${params.workspaceName}`,
     html,

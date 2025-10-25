@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
       await sendInvitationEmail({
         to: validated.email,
         inviterName: user.name || user.email,
+        inviterEmail: user.email,
         workspaceName: workspace.name,
         role: validated.role,
         invitationLink,
