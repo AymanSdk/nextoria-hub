@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
+      id, // Optional: specify the ID (e.g., roomId from URL)
       name,
       description,
       data,
@@ -80,21 +81,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name and data are required" }, { status: 400 });
     }
 
-    // Create new flowchart
+    // Create new flowchart - use provided ID or let database generate one
+    const flowchartValues: any = {
+      name,
+      description,
+      data,
+      thumbnail,
+      isTemplate: isTemplate || false,
+      templateCategory,
+      isPublic: isPublic || false,
+      shareToken,
+      createdBy: session.user.id,
+      workspaceId: workspace.id,
+    };
+
+    // If ID is provided (e.g., roomId), use it
+    if (id) {
+      flowchartValues.id = id;
+    }
+
     const [newFlowchart] = await db
       .insert(flowcharts)
-      .values({
-        name,
-        description,
-        data,
-        thumbnail,
-        isTemplate: isTemplate || false,
-        templateCategory,
-        isPublic: isPublic || false,
-        shareToken,
-        createdBy: session.user.id,
-        workspaceId: workspace.id,
-      })
+      .values(flowchartValues)
       .returning();
 
     return NextResponse.json(newFlowchart, { status: 201 });

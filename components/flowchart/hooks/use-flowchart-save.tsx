@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 interface UseFlowchartSaveOptions {
   flowchartId?: string;
+  roomId: string; // The roomId from URL - used as ID when creating new flowcharts
   workspaceId: string;
   initialName?: string;
   autoSaveInterval?: number; // milliseconds
@@ -14,6 +15,7 @@ interface UseFlowchartSaveOptions {
 
 export function useFlowchartSave({
   flowchartId,
+  roomId,
   workspaceId,
   initialName = "Untitled Flowchart",
   autoSaveInterval = 10000, // 10 seconds
@@ -30,6 +32,14 @@ export function useFlowchartSave({
     nodes: Node[];
     edges: Edge[];
   } | null>(null);
+
+  // Sync currentFlowchartId with flowchartId prop when it changes
+  useEffect(() => {
+    if (flowchartId && flowchartId !== currentFlowchartId) {
+      console.log("🔄 Syncing flowchart ID:", flowchartId);
+      setCurrentFlowchartId(flowchartId);
+    }
+  }, [flowchartId, currentFlowchartId]);
 
   // Save flowchart to database
   const saveFlowchart = useCallback(
@@ -69,6 +79,7 @@ export function useFlowchartSave({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              id: roomId, // Use roomId as the database ID
               name: name || flowchartName,
               data: flowchartData,
               workspaceId,

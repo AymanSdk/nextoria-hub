@@ -98,12 +98,20 @@ export default function FlowchartIndexPage() {
   useEffect(() => {
     fetch("/api/user/workspace")
       .then((res) => res.json())
-      .then((data) => {
-        if (data.workspaceId) {
-          setWorkspaceId(data.workspaceId);
+      .then((result) => {
+        if (result.success && result.data?.id) {
+          setWorkspaceId(result.data.id);
+        } else {
+          console.error("Invalid workspace response:", result);
+          toast.error("Failed to load workspace");
+          setIsLoading(false);
         }
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error("Error fetching workspace:", error);
+        toast.error("Failed to load workspace");
+        setIsLoading(false);
+      });
   }, []);
 
   // Fetch flowcharts for the workspace
@@ -253,11 +261,16 @@ export default function FlowchartIndexPage() {
             </p>
           </div>
 
-          <Button asChild size='lg' className='shadow-lg'>
-            <Link href={`/flowchart/${nanoid(10)}`}>
-              <Plus className='mr-2 h-4 w-4' />
-              New Flowchart
-            </Link>
+          <Button
+            size='lg'
+            className='shadow-lg'
+            onClick={() => {
+              const roomId = nanoid(10);
+              window.location.href = `/flowchart/${roomId}`;
+            }}
+          >
+            <Plus className='mr-2 h-4 w-4' />
+            New Flowchart
           </Button>
         </div>
 
@@ -464,11 +477,14 @@ export default function FlowchartIndexPage() {
                   </p>
                   {!(searchQuery || filterBy !== "all") && (
                     <div className='flex gap-2'>
-                      <Button asChild>
-                        <Link href={`/flowchart/${nanoid(10)}`}>
-                          <Plus className='mr-2 h-4 w-4' />
-                          Create Flowchart
-                        </Link>
+                      <Button
+                        onClick={() => {
+                          const roomId = nanoid(10);
+                          window.location.href = `/flowchart/${roomId}`;
+                        }}
+                      >
+                        <Plus className='mr-2 h-4 w-4' />
+                        Create Flowchart
                       </Button>
                       <Button variant='outline' onClick={() => setActiveTab("templates")}>
                         <Sparkles className='mr-2 h-4 w-4' />

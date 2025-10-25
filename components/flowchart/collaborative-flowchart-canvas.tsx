@@ -63,6 +63,7 @@ export function CollaborativeFlowchartCanvas({
     loadFlowchart,
   } = useFlowchartSave({
     flowchartId: savedFlowchartId,
+    roomId,
     workspaceId,
     initialName,
     onSave: (newId) => {
