@@ -45,6 +45,7 @@ declare global {
     RoomEvent: {
       type: "MESSAGE_SENT" | "USER_JOINED" | "USER_LEFT" | "yjs-update";
       update?: number[];
+      data?: any;
     };
 
     // Thread metadata for comments

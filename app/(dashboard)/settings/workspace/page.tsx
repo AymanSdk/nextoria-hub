@@ -84,6 +84,7 @@ export default async function WorkspaceSettingsPage() {
   // Add isOwner flag to each member
   const members = membersData.map((member) => ({
     ...member,
+    name: member.name ?? member.email,
     isOwner: member.id === workspace.ownerId,
   }));
 
@@ -94,7 +95,10 @@ export default async function WorkspaceSettingsPage() {
       {/* Workspace Info Card */}
       <WorkspaceInfoCard
         workspace={workspace}
-        owner={owner}
+        owner={{
+          ...owner,
+          name: owner.name ?? owner.email,
+        }}
         memberCount={memberCount.count}
         projectCount={projectCount.count}
       />

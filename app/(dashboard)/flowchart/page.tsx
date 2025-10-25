@@ -162,7 +162,9 @@ export default function FlowchartIndexPage() {
         case "name":
           return a.name.localeCompare(b.name);
         case "nodes":
-          return (b.data?.nodes?.length || 0) - (a.data?.nodes?.length || 0);
+          return (
+            ((b.data as any)?.nodes?.length || 0) - ((a.data as any)?.nodes?.length || 0)
+          );
         default:
           return 0;
       }
@@ -691,11 +693,11 @@ function FlowchartGridCard({
           <div className='flex items-center gap-3 text-xs text-muted-foreground'>
             <div className='flex items-center gap-1'>
               <div className='h-1.5 w-1.5 rounded-full bg-blue-500' />
-              {flowchart.data?.nodes?.length || 0} nodes
+              {(flowchart.data as any)?.nodes?.length || 0} nodes
             </div>
             <div className='flex items-center gap-1'>
               <div className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
-              {flowchart.data?.edges?.length || 0} edges
+              {(flowchart.data as any)?.edges?.length || 0} edges
             </div>
           </div>
         </div>
@@ -752,11 +754,11 @@ function FlowchartListItem({
               </span>
               <span className='flex items-center gap-1'>
                 <div className='h-1.5 w-1.5 rounded-full bg-blue-500' />
-                {flowchart.data?.nodes?.length || 0} nodes
+                {(flowchart.data as any)?.nodes?.length || 0} nodes
               </span>
               <span className='flex items-center gap-1'>
                 <div className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
-                {flowchart.data?.edges?.length || 0} edges
+                {(flowchart.data as any)?.edges?.length || 0} edges
               </span>
             </div>
           </div>

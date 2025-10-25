@@ -51,10 +51,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ preferences: prefs });
   } catch (error) {
     console.error("Error fetching preferences:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch preferences" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch preferences" }, { status: 500 });
   }
 }
 
@@ -101,13 +98,9 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ preferences: prefs });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error("Error updating preferences:", error);
-    return NextResponse.json(
-      { error: "Failed to update preferences" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update preferences" }, { status: 500 });
   }
 }
-

@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "storageUpdated": {
         // When storage is updated (new message added)
-        const { roomId, updates } = event.data;
+        const { roomId } = event.data;
+        const updates = (event.data as any).updates;
 
         // Extract channel ID from room ID (format: workspace:{id}:channel:{id})
         const channelId = roomId.split(":")[3];

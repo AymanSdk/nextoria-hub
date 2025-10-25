@@ -10,7 +10,7 @@ import { eq, and } from "drizzle-orm";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -18,6 +18,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const { isRead } = await req.json();
 
     const [notification] = await db
@@ -26,9 +27,7 @@ export async function PATCH(
         isRead,
         readAt: isRead ? new Date() : null,
       })
-      .where(
-        and(eq(notifications.id, params.id), eq(notifications.userId, user.id))
-      )
+      .where(and(eq(notifications.id, id), eq(notifications.userId, user.id)))
       .returning();
 
     if (!notification) {
@@ -38,10 +37,7 @@ export async function PATCH(
     return NextResponse.json({ notification });
   } catch (error) {
     console.error("Error updating notification:", error);
-    return NextResponse.json(
-      { error: "Failed to update notification" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update notification" }, { status: 500 });
   }
 }
 
@@ -51,7 +47,7 @@ export async function PATCH(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -59,11 +55,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const [notification] = await db
       .delete(notifications)
-      .where(
-        and(eq(notifications.id, params.id), eq(notifications.userId, user.id))
-      )
+      .where(and(eq(notifications.id, id), eq(notifications.userId, user.id)))
       .returning();
 
     if (!notification) {
@@ -73,10 +69,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting notification:", error);
-    return NextResponse.json(
-      { error: "Failed to delete notification" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete notification" }, { status: 500 });
   }
 }
-

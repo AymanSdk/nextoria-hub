@@ -49,11 +49,10 @@ export async function POST() {
       [defaultWorkspace] = await db
         .insert(workspaces)
         .values({
-          id: nanoid(),
           name: "Nextoria",
           slug: "nextoria",
           description: "Default Nextoria workspace",
-          createdBy: currentUser.id,
+          ownerId: currentUser.id,
         })
         .returning();
     }

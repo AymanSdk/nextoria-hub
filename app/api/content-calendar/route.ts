@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         userId: auth.user.id,
         userEmail: auth.user.email || "",
         userRole: auth.user.role,
-        entityType: "CONTENT",
+        entityType: "TASK",
         entityId: item.id,
         entityName: item.title,
         ipAddress: getClientIp(request),

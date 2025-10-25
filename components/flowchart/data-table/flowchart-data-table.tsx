@@ -35,16 +35,20 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
 
   const handleExportCSV = (type: "nodes" | "edges") => {
     let csv = "";
-    
+
     if (type === "nodes") {
       csv = "ID,Type,Label,X,Y,Selected\n";
       nodes.forEach((node) => {
-        csv += `"${node.id}","${node.type}","${node.data.label || ""}",${node.position.x},${node.position.y},${node.selected || false}\n`;
+        csv += `"${node.id}","${node.type}","${(node.data as any).label || ""}",${
+          node.position.x
+        },${node.position.y},${node.selected || false}\n`;
       });
     } else {
       csv = "ID,Source,Target,Label,Type\n";
       edges.forEach((edge) => {
-        csv += `"${edge.id}","${edge.source}","${edge.target}","${edge.label || ""}","${edge.type || "default"}"\n`;
+        csv += `"${edge.id}","${edge.source}","${edge.target}","${edge.label || ""}","${
+          edge.type || "default"
+        }"\n`;
       });
     }
 
@@ -55,7 +59,7 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
     link.download = `flowchart-${type}-${Date.now()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    
+
     toast.success(`${type} exported as CSV`);
   };
 
@@ -79,9 +83,7 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
           <div className='flex items-center gap-2'>
             <Database className='h-4 w-4' />
             <div>
-              <CardTitle className='text-sm font-semibold'>
-                Flowchart Data
-              </CardTitle>
+              <CardTitle className='text-sm font-semibold'>Flowchart Data</CardTitle>
               <CardDescription className='text-xs'>
                 {nodes.length} nodes, {edges.length} edges
               </CardDescription>
@@ -97,12 +99,7 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
               <ChevronLeft className='h-4 w-4' />
             </Button>
             {onClose && (
-              <Button
-                variant='ghost'
-                size='icon'
-                className='h-6 w-6'
-                onClick={onClose}
-              >
+              <Button variant='ghost' size='icon' className='h-6 w-6' onClick={onClose}>
                 <X className='h-4 w-4' />
               </Button>
             )}
@@ -146,7 +143,10 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
                   <TableBody>
                     {nodes.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className='text-center text-muted-foreground py-8'>
+                        <TableCell
+                          colSpan={5}
+                          className='text-center text-muted-foreground py-8'
+                        >
                           No nodes in flowchart
                         </TableCell>
                       </TableRow>
@@ -162,7 +162,7 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
                             </Badge>
                           </TableCell>
                           <TableCell className='font-medium'>
-                            {node.data.label || "Untitled"}
+                            {(node.data as any).label || "Untitled"}
                           </TableCell>
                           <TableCell className='text-xs text-muted-foreground'>
                             {Math.round(node.position.x)}, {Math.round(node.position.y)}
@@ -213,7 +213,10 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
                   <TableBody>
                     {edges.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className='text-center text-muted-foreground py-8'>
+                        <TableCell
+                          colSpan={5}
+                          className='text-center text-muted-foreground py-8'
+                        >
                           No connections in flowchart
                         </TableCell>
                       </TableRow>
@@ -227,10 +230,10 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
                               {edge.id.slice(0, 8)}...
                             </TableCell>
                             <TableCell className='text-xs'>
-                              {sourceNode?.data.label || edge.source}
+                              {(sourceNode?.data as any)?.label || edge.source}
                             </TableCell>
                             <TableCell className='text-xs'>
-                              {targetNode?.data.label || edge.target}
+                              {(targetNode?.data as any)?.label || edge.target}
                             </TableCell>
                             <TableCell className='text-xs text-muted-foreground'>
                               {edge.label || "-"}
@@ -254,4 +257,3 @@ export function FlowchartDataTable({ onClose }: FlowchartDataTableProps) {
     </Card>
   );
 }
-

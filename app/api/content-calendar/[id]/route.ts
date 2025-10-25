@@ -14,15 +14,20 @@ import { logUpdate, logDelete } from "@/src/lib/audit/logger";
  * GET /api/content-calendar/[id]
  * Get a single content calendar item
  */
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const auth = await requirePermission(request, "content", "read");
   if ("error" in auth) return apiError(auth.error, auth.status);
+
+  const { id } = await params;
 
   try {
     const [item] = await db
       .select()
       .from(contentCalendar)
-      .where(eq(contentCalendar.id, params.id))
+      .where(eq(contentCalendar.id, id))
       .limit(1);
 
     if (!item) {
@@ -42,10 +47,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requirePermission(request, "content", "update");
   if ("error" in auth) return apiError(auth.error, auth.status);
+
+  const { id } = await params;
 
   try {
     const body = await request.json();
@@ -67,7 +74,7 @@ export async function PATCH(
     const [existingItem] = await db
       .select()
       .from(contentCalendar)
-      .where(eq(contentCalendar.id, params.id))
+      .where(eq(contentCalendar.id, id))
       .limit(1);
 
     if (!existingItem) {
@@ -92,7 +99,7 @@ export async function PATCH(
         ...(isRecurring !== undefined && { isRecurring }),
         updatedAt: new Date(),
       })
-      .where(eq(contentCalendar.id, params.id))
+      .where(eq(contentCalendar.id, id))
       .returning();
 
     // Audit log (non-blocking)
@@ -102,7 +109,7 @@ export async function PATCH(
         userId: auth.user.id,
         userEmail: auth.user.email || "",
         userRole: auth.user.role,
-        entityType: "CONTENT",
+        entityType: "TASK",
         entityId: updatedItem.id,
         entityName: updatedItem.title,
         changes: body,
@@ -125,24 +132,26 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requirePermission(request, "content", "delete");
   if ("error" in auth) return apiError(auth.error, auth.status);
+
+  const { id } = await params;
 
   try {
     // Get existing item for audit log
     const [existingItem] = await db
       .select()
       .from(contentCalendar)
-      .where(eq(contentCalendar.id, params.id))
+      .where(eq(contentCalendar.id, id))
       .limit(1);
 
     if (!existingItem) {
       return apiError("Content not found", 404);
     }
 
-    await db.delete(contentCalendar).where(eq(contentCalendar.id, params.id));
+    await db.delete(contentCalendar).where(eq(contentCalendar.id, id));
 
     // Audit log (non-blocking)
     try {
@@ -151,7 +160,7 @@ export async function DELETE(
         userId: auth.user.id,
         userEmail: auth.user.email || "",
         userRole: auth.user.role,
-        entityType: "CONTENT",
+        entityType: "TASK",
         entityId: existingItem.id,
         entityName: existingItem.title,
         ipAddress: getClientIp(request),

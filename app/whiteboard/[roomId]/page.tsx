@@ -52,7 +52,7 @@ export default async function WhiteboardPage({ params }: WhiteboardPageProps) {
 
   return (
     <div className='fixed inset-0 overflow-hidden bg-background'>
-      <WhiteboardRoomProvider roomId={roomId} savedData={savedData}>
+      <WhiteboardRoomProvider roomId={roomId} savedData={savedData ?? undefined}>
         <CollaborativeWhiteboard
           whiteboardId={savedWhiteboard?.id}
           whiteboardName={savedWhiteboard?.name}

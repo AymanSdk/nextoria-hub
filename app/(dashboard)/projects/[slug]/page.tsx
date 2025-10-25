@@ -203,7 +203,7 @@ export default async function ProjectDetailPage({
             <ProjectQuickActions
               projectId={project.id}
               projectSlug={project.slug}
-              isArchived={project.isArchived}
+              isArchived={project.isArchived ?? false}
             />
           </div>
         </div>

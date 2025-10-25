@@ -101,7 +101,7 @@ const sections = {
 };
 
 // Documentation content
-const content: Record<string, { title: string; content: JSX.Element }> = {
+const content: Record<string, { title: string; content: React.ReactElement }> = {
   introduction: {
     title: "Introduction to Nextoria Hub",
     content: (
@@ -149,7 +149,7 @@ const content: Record<string, { title: string; content: JSX.Element }> = {
         </div>
 
         <div className='mt-8'>
-          <h3 className='text-xl font-semibold mb-4'>What's Included?</h3>
+          <h3 className='text-xl font-semibold mb-4'>What&apos;s Included?</h3>
           <div className='grid gap-3'>
             <div className='flex gap-3 border rounded-lg p-3'>
               <Shield className='h-5 w-5 text-green-500 shrink-0 mt-0.5' />
@@ -307,15 +307,15 @@ NEXTAUTH_SECRET="generate-with: openssl rand -base64 32"`}
             <ol className='text-sm space-y-1 text-muted-foreground list-decimal list-inside'>
               <li>Visit /auth/signup</li>
               <li>Fill in your name, email, and password</li>
-              <li>Click "Create Account"</li>
-              <li>You'll automatically become the admin of your workspace</li>
+              <li>Click &quot;Create Account&quot;</li>
+              <li>You&apos;ll automatically become the admin of your workspace</li>
             </ol>
           </div>
         </div>
 
         <div className='border-l-4 border-green-500 pl-4 py-2 bg-green-50 dark:bg-green-950/30 rounded-r mt-6'>
           <p className='text-sm font-medium text-green-700 dark:text-green-400'>
-            🎉 You're done! Total time: ~5 minutes
+            🎉 You&apos;re done! Total time: ~5 minutes
           </p>
         </div>
       </div>
@@ -599,7 +599,9 @@ NEXTAUTH_SECRET="generate-with: openssl rand -base64 32"`}
               </div>
               <div className='text-muted-foreground space-y-1'>
                 <div>❌ Missing: Workspace verification on PATCH</div>
-                <div>✅ Fixed: Verifies task belongs to user's workspace via project</div>
+                <div>
+                  ✅ Fixed: Verifies task belongs to user&apos;s workspace via project
+                </div>
               </div>
             </div>
           </div>
@@ -970,7 +972,7 @@ NEXTAUTH_SECRET="generate-with: openssl rand -base64 32"`}
               <div>
                 <h4 className='font-medium'>Presence Indicators</h4>
                 <p className='text-sm text-muted-foreground'>
-                  See who's online and typing in real-time
+                  See who&apos;s online and typing in real-time
                 </p>
               </div>
             </div>
@@ -1324,7 +1326,7 @@ export default function DocsPage() {
       item.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
     if (filteredItems.length > 0) {
-      acc[key] = { ...section, items: filteredItems };
+      (acc as any)[key] = { ...section, items: filteredItems };
     }
     return acc;
   }, {} as typeof sections);
